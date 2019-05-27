@@ -8288,9 +8288,9 @@
         "extra_labels_add": [
             "PSOC6_01",
             "CM0P_SLEEP",
-            "WICED",
+            "WHD",
+            "4343W",
             "CYW43XXX",
-            "CYW4343X",
             "CORDIO"
         ],
         "macros_add": ["CY8C6247BZI_D54"],
@@ -8362,9 +8362,9 @@
         "extra_labels_add": [
             "PSOC6_02",
             "CM0P_SLEEP",
-            "WICED",
+            "WHD",
+            "4343W",
             "CYW43XXX",
-            "CYW4343X",
             "CORDIO"
         ],
         "macros_add": ["CY8C624ABZI_D44"],

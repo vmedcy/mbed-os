@@ -19,6 +19,9 @@
 #include "device.h"
 #include "cycfg.h"
 #include "cyhal_hwmgr.h"
+#if defined(TARGET_WHD)
+#include "cybsp_api_wifi.h"
+#endif
 
 #if defined(COMPONENT_SPM_MAILBOX)
 void mailbox_init(void);
@@ -53,3 +56,19 @@ void mbed_sdk_init(void)
     __enable_irq();
 #endif
 }
+
+/*******************************************************************************
+* Function Name: mbed_main
+****************************************************************************//**
+*
+* Mbed's post-memory-initialization function.
+* Used here to initialize common parts of the Cypress libraries.
+*
+*******************************************************************************/
+void mbed_main(void)
+{
+#if defined(TARGET_WHD)
+    cybsp_wifi_init();
+#endif
+}
+

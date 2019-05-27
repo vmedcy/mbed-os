@@ -1,8 +1,8 @@
 /*******************************************************************************
-* File Name: cycfg_platform.c
+* File Name: cycfg_system.c
 *
 * Description:
-* Platform configuration
+* System configuration
 * This file was automatically generated and should not be modified.
 * 
 ********************************************************************************
@@ -22,7 +22,7 @@
 * limitations under the License.
 ********************************************************************************/
 
-#include "cycfg_platform.h"
+#include "cycfg_system.h"
 
 #define CY_CFG_SYSCLK_ECO_ERROR 1
 #define CY_CFG_SYSCLK_ALTHF_ERROR 2
@@ -59,10 +59,11 @@
 #define CY_CFG_SYSCLK_CLKSLOW_ENABLED 1
 #define CY_CFG_SYSCLK_WCO_ENABLED 1
 #define CY_CFG_PWR_ENABLED 1
+#define CY_CFG_PWR_INIT 1
 #define CY_CFG_PWR_USING_LDO 1
 #define CY_CFG_PWR_USING_PMIC 0
-#define CY_CFG_PWR_VBAC_SUPPLY CY_CFG_PWR_VBAC_SUPPLY_VDD
-#define CY_CFG_PWR_LDO_VOLTAGE CY_SYSPM_LDO_VOLTAGE_1_1V
+#define CY_CFG_PWR_VBAC_SUPPLY CY_SYSPM_VDDBACKUP_DEFAULT
+#define CY_CFG_PWR_LDO_VOLTAGE CY_SYSPM_LDO_VOLTAGE_LP
 #define CY_CFG_PWR_USING_ULP 0
 
 static const cy_stc_fll_manual_config_t srss_0_clock_0_fll_0_fllConfig = 
@@ -168,14 +169,45 @@ __STATIC_INLINE void Cy_SysClk_WcoInit()
         cycfg_ClockStartupError(CY_CFG_SYSCLK_WCO_ERROR);
     }
 }
+__STATIC_INLINE void Cy_Power_Init()
+{
+     /* Reset the Backup domain on POR, XRES, BOD only if Backup domain is supplied by VDDD */
+     #if (CY_CFG_PWR_VBAC_SUPPLY == CY_SYSPM_VDDBACKUP_DEFAULT)
+     if (0u == Cy_SysLib_GetResetReason() /* POR, XRES, or BOD */)
+     {
+         Cy_SysLib_ResetBackupDomain();
+         Cy_SysClk_IloDisable();
+         Cy_SysClk_IloInit();
+     }
+     #endif /* CY_CFG_PWR_VBAC_SUPPLY == CY_SYSPM_VDDBACKUP_DEFAULT */
+     /* Configure core regulator */
+     #if CY_CFG_PWR_USING_LDO
+     Cy_SysPm_LdoSetVoltage(CY_SYSPM_LDO_VOLTAGE_LP);
+     Cy_SysPm_LdoSetMode(CY_SYSPM_LDO_MODE_NORMAL);
+     #else
+     Cy_SysPm_BuckEnable(CY_SYSPM_BUCK_OUT1_VOLTAGE_LP);
+     #endif /* CY_CFG_PWR_USING_LDO */
+     /* Configure PMIC */
+     Cy_SysPm_UnlockPmic();
+     #if CY_CFG_PWR_USING_PMIC
+     Cy_SysPm_PmicEnableOutput();
+     #else
+     Cy_SysPm_PmicDisableOutput();
+     #endif /* CY_CFG_PWR_USING_PMIC */
+}
 
 
-void init_cycfg_platform(void)
+void init_cycfg_system(void)
 {
 	/* Set worst case memory wait states (! ultra low power, 150 MHz), will update at the end */
 	Cy_SysLib_SetWaitStates(false, 150UL);
 	#if (CY_CFG_PWR_VBAC_SUPPLY == CY_CFG_PWR_VBAC_SUPPLY_VDD)
-	if (0u == Cy_SysLib_GetResetReason() /* POR, XRES, or BOD */){ Cy_SysLib_ResetBackupDomain(); }
+	if (0u == Cy_SysLib_GetResetReason() /* POR, XRES, or BOD */)
+	{
+	    Cy_SysLib_ResetBackupDomain();
+	    Cy_SysClk_IloDisable();
+	    Cy_SysClk_IloInit();
+	}
 	#endif
 	#ifdef CY_CFG_PWR_ENABLED
 	/* Configure power mode */
@@ -210,6 +242,9 @@ void init_cycfg_platform(void)
 	Cy_SysClk_FllDisable();
 	Cy_SysClk_ClkPathSetSource(CY_SYSCLK_CLKHF_IN_CLKPATH0, CY_SYSCLK_CLKPATH_IN_IMO);
 	Cy_SysClk_ClkHfSetSource(0UL, CY_SYSCLK_CLKHF_IN_CLKPATH0);
+	#ifdef CY_IP_MXBLESS
+	(void)Cy_BLE_EcoReset();
+	#endif
 	
 	#ifdef CY_CFG_SYSCLK_PLL1_AVAILABLE
 	(void)Cy_SysClk_PllDisable(CY_SYSCLK_CLKHF_IN_CLKPATH2);

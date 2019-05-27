@@ -31,15 +31,15 @@ extern "C" {
 
 #include "cycfg_notices.h"
 void init_cycfg_routing(void);
+
 #define init_cycfg_connectivity() init_cycfg_routing()
-#define ioss_0_port_11_pin_1_HSIOM P11_1_TCPWM0_LINE_COMPL1
 #define ioss_0_port_11_pin_2_HSIOM P11_2_SMIF_SPI_SELECT0
 #define ioss_0_port_11_pin_3_HSIOM P11_3_SMIF_SPI_DATA3
 #define ioss_0_port_11_pin_4_HSIOM P11_4_SMIF_SPI_DATA2
 #define ioss_0_port_11_pin_5_HSIOM P11_5_SMIF_SPI_DATA1
 #define ioss_0_port_11_pin_6_HSIOM P11_6_SMIF_SPI_DATA0
 #define ioss_0_port_11_pin_7_HSIOM P11_7_SMIF_SPI_CLK
-#define ioss_0_port_1_pin_0_HSIOM HSIOM_SEL_AMUXB
+#define ioss_0_port_1_pin_0_HSIOM HSIOM_SEL_AMUXA
 #define ioss_0_port_2_pin_0_HSIOM P2_0_SDHC0_CARD_DAT_3TO00
 #define ioss_0_port_2_pin_1_HSIOM P2_1_SDHC0_CARD_DAT_3TO01
 #define ioss_0_port_2_pin_2_HSIOM P2_2_SDHC0_CARD_DAT_3TO02
@@ -56,16 +56,16 @@ void init_cycfg_routing(void);
 #define ioss_0_port_6_pin_4_HSIOM P6_4_CPUSS_SWJ_SWO_TDO
 #define ioss_0_port_6_pin_6_HSIOM P6_6_CPUSS_SWJ_SWDIO_TMS
 #define ioss_0_port_6_pin_7_HSIOM P6_7_CPUSS_SWJ_SWCLK_TCLK
-#define ioss_0_port_7_pin_1_HSIOM HSIOM_SEL_AMUXB
+#define ioss_0_port_7_pin_1_HSIOM HSIOM_SEL_AMUXA
 #define ioss_0_port_7_pin_2_HSIOM HSIOM_SEL_AMUXB
-#define ioss_0_port_7_pin_7_HSIOM HSIOM_SEL_AMUXB
-#define ioss_0_port_8_pin_1_HSIOM HSIOM_SEL_AMUXB
+#define ioss_0_port_7_pin_7_HSIOM HSIOM_SEL_AMUXA
+#define ioss_0_port_8_pin_1_HSIOM HSIOM_SEL_AMUXA
 #define ioss_0_port_8_pin_2_HSIOM HSIOM_SEL_AMUXB
-#define ioss_0_port_8_pin_3_HSIOM HSIOM_SEL_AMUXB
-#define ioss_0_port_8_pin_4_HSIOM HSIOM_SEL_AMUXB
-#define ioss_0_port_8_pin_5_HSIOM HSIOM_SEL_AMUXB
-#define ioss_0_port_8_pin_6_HSIOM HSIOM_SEL_AMUXB
-#define ioss_0_port_8_pin_7_HSIOM HSIOM_SEL_AMUXB
+#define ioss_0_port_8_pin_3_HSIOM HSIOM_SEL_AMUXA
+#define ioss_0_port_8_pin_4_HSIOM HSIOM_SEL_AMUXA
+#define ioss_0_port_8_pin_5_HSIOM HSIOM_SEL_AMUXA
+#define ioss_0_port_8_pin_6_HSIOM HSIOM_SEL_AMUXA
+#define ioss_0_port_8_pin_7_HSIOM HSIOM_SEL_AMUXA
 
 #if defined(__cplusplus)
 }

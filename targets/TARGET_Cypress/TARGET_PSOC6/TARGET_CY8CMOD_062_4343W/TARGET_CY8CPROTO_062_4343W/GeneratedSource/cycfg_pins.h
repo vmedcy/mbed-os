@@ -53,16 +53,6 @@ extern "C" {
 #endif
 #define WCO_OUT_HSIOM ioss_0_port_0_pin_1_HSIOM
 #define WCO_OUT_IRQ ioss_interrupts_gpio_0_IRQn
-#define LED_RED_PORT GPIO_PRT0
-#define LED_RED_PIN 3U
-#define LED_RED_NUM 3U
-#define LED_RED_DRIVEMODE CY_GPIO_DM_STRONG_IN_OFF
-#define LED_RED_INIT_DRIVESTATE 1
-#ifndef ioss_0_port_0_pin_3_HSIOM
-	#define ioss_0_port_0_pin_3_HSIOM HSIOM_SEL_GPIO
-#endif
-#define LED_RED_HSIOM ioss_0_port_0_pin_3_HSIOM
-#define LED_RED_IRQ ioss_interrupts_gpio_0_IRQn
 #define SW2_PORT GPIO_PRT0
 #define SW2_PIN 4U
 #define SW2_NUM 4U
@@ -73,16 +63,6 @@ extern "C" {
 #endif
 #define SW2_HSIOM ioss_0_port_0_pin_4_HSIOM
 #define SW2_IRQ ioss_interrupts_gpio_0_IRQn
-#define LED_BLUE_PORT GPIO_PRT11
-#define LED_BLUE_PIN 1U
-#define LED_BLUE_NUM 1U
-#define LED_BLUE_DRIVEMODE CY_GPIO_DM_STRONG_IN_OFF
-#define LED_BLUE_INIT_DRIVESTATE 1
-#ifndef ioss_0_port_11_pin_1_HSIOM
-	#define ioss_0_port_11_pin_1_HSIOM HSIOM_SEL_GPIO
-#endif
-#define LED_BLUE_HSIOM ioss_0_port_11_pin_1_HSIOM
-#define LED_BLUE_IRQ ioss_interrupts_gpio_11_IRQn
 #define QSPI_SS0_PORT GPIO_PRT11
 #define QSPI_SS0_PIN 2U
 #define QSPI_SS0_NUM 2U
@@ -143,16 +123,16 @@ extern "C" {
 #endif
 #define QSPI_SPI_CLOCK_HSIOM ioss_0_port_11_pin_7_HSIOM
 #define QSPI_SPI_CLOCK_IRQ ioss_interrupts_gpio_11_IRQn
-#define LED9_PORT GPIO_PRT13
-#define LED9_PIN 7U
-#define LED9_NUM 7U
-#define LED9_DRIVEMODE CY_GPIO_DM_STRONG_IN_OFF
-#define LED9_INIT_DRIVESTATE 1
+#define LED_RED_PORT GPIO_PRT13
+#define LED_RED_PIN 7U
+#define LED_RED_NUM 7U
+#define LED_RED_DRIVEMODE CY_GPIO_DM_STRONG_IN_OFF
+#define LED_RED_INIT_DRIVESTATE 1
 #ifndef ioss_0_port_13_pin_7_HSIOM
 	#define ioss_0_port_13_pin_7_HSIOM HSIOM_SEL_GPIO
 #endif
-#define LED9_HSIOM ioss_0_port_13_pin_7_HSIOM
-#define LED9_IRQ ioss_interrupts_gpio_13_IRQn
+#define LED_RED_HSIOM ioss_0_port_13_pin_7_HSIOM
+#define LED_RED_IRQ ioss_interrupts_gpio_13_IRQn
 #define CSD_TX_PORT GPIO_PRT1
 #define CSD_TX_PIN 0U
 #define CSD_TX_NUM 0U
@@ -173,16 +153,6 @@ extern "C" {
 #endif
 #define LED_GREEN_HSIOM ioss_0_port_1_pin_1_HSIOM
 #define LED_GREEN_IRQ ioss_interrupts_gpio_1_IRQn
-#define LED8_PORT GPIO_PRT1
-#define LED8_PIN 5U
-#define LED8_NUM 5U
-#define LED8_DRIVEMODE CY_GPIO_DM_STRONG_IN_OFF
-#define LED8_INIT_DRIVESTATE 1
-#ifndef ioss_0_port_1_pin_5_HSIOM
-	#define ioss_0_port_1_pin_5_HSIOM HSIOM_SEL_GPIO
-#endif
-#define LED8_HSIOM ioss_0_port_1_pin_5_HSIOM
-#define LED8_IRQ ioss_interrupts_gpio_1_IRQn
 #define SDHC0_DAT0_PORT GPIO_PRT2
 #define SDHC0_DAT0_PIN 0U
 #define SDHC0_DAT0_NUM 0U
@@ -476,19 +446,16 @@ extern "C" {
 
 extern const cy_stc_gpio_pin_config_t WCO_IN_config;
 extern const cy_stc_gpio_pin_config_t WCO_OUT_config;
-extern const cy_stc_gpio_pin_config_t LED_RED_config;
 extern const cy_stc_gpio_pin_config_t SW2_config;
-extern const cy_stc_gpio_pin_config_t LED_BLUE_config;
 extern const cy_stc_gpio_pin_config_t QSPI_SS0_config;
 extern const cy_stc_gpio_pin_config_t QSPI_DATA3_config;
 extern const cy_stc_gpio_pin_config_t QSPI_DATA2_config;
 extern const cy_stc_gpio_pin_config_t QSPI_DATA1_config;
 extern const cy_stc_gpio_pin_config_t QSPI_DATA0_config;
 extern const cy_stc_gpio_pin_config_t QSPI_SPI_CLOCK_config;
-extern const cy_stc_gpio_pin_config_t LED9_config;
+extern const cy_stc_gpio_pin_config_t LED_RED_config;
 extern const cy_stc_gpio_pin_config_t CSD_TX_config;
 extern const cy_stc_gpio_pin_config_t LED_GREEN_config;
-extern const cy_stc_gpio_pin_config_t LED8_config;
 extern const cy_stc_gpio_pin_config_t SDHC0_DAT0_config;
 extern const cy_stc_gpio_pin_config_t SDHC0_DAT1_config;
 extern const cy_stc_gpio_pin_config_t SDHC0_DAT2_config;

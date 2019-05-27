@@ -1,8 +1,8 @@
 /*******************************************************************************
-* File Name: cycfg_platform.c
+* File Name: cycfg_system.c
 *
 * Description:
-* Platform configuration
+* System configuration
 * This file was automatically generated and should not be modified.
 * 
 ********************************************************************************
@@ -22,7 +22,7 @@
 * limitations under the License.
 ********************************************************************************/
 
-#include "cycfg_platform.h"
+#include "cycfg_system.h"
 
 #define CY_CFG_SYSCLK_ECO_ERROR 1
 #define CY_CFG_SYSCLK_ALTHF_ERROR 2
@@ -63,12 +63,6 @@
 #define CY_CFG_SYSCLK_CLKSLOW_ENABLED 1
 #define CY_CFG_SYSCLK_CLKTIMER_ENABLED 1
 #define CY_CFG_SYSCLK_WCO_ENABLED 1
-#define CY_CFG_PWR_ENABLED 1
-#define CY_CFG_PWR_USING_LDO 1
-#define CY_CFG_PWR_USING_PMIC 0
-#define CY_CFG_PWR_VBAC_SUPPLY CY_CFG_PWR_VBAC_SUPPLY_VDD
-#define CY_CFG_PWR_LDO_VOLTAGE CY_SYSPM_LDO_VOLTAGE_1_1V
-#define CY_CFG_PWR_USING_ULP 0
 
 static const cy_stc_fll_manual_config_t srss_0_clock_0_fll_0_fllConfig = 
 {
@@ -211,7 +205,7 @@ __STATIC_INLINE void Cy_SysClk_WcoInit()
 }
 
 
-void init_cycfg_platform(void)
+void init_cycfg_system(void)
 {
 	/* Set worst case memory wait states (! ultra low power, 150 MHz), will update at the end */
 	Cy_SysLib_SetWaitStates(false, 150UL);

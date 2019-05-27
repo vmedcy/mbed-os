@@ -34,7 +34,7 @@ extern "C" {
 #include "cycfg_dmas.h"
 #include "cycfg_peripherals.h"
 #include "cycfg_pins.h"
-#include "cycfg_platform.h"
+#include "cycfg_system.h"
 #include "cycfg_routing.h"
 
 void init_cycfg_all(void);

@@ -1,0 +1,9 @@
+//
+// Note - syntax is very imporant.  The line should start with
+// the slash comments, a single space, and the word Resource followed
+// by a colon to ID a resource.  Anything after the colon is the resource
+// path.
+//
+
+// Resource:resources/firmware/43012/43012C0.bin
+// Resource:resources/firmware/43012/43012C0.clm_blob

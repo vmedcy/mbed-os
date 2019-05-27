@@ -1,0 +1,76 @@
+/* mbed Microcontroller Library
+ * Copyright (c) 2006-2013 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "analogout_api.h"
+#include "mbed_error.h"
+#include "cyhal_dac.h"
+
+#if DEVICE_ANALOGOUT
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void analogout_init(dac_t *obj, PinName pin)
+{
+    if (CY_RSLT_SUCCESS != cyhal_dac_init(&(obj->hal_dac), pin))
+        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_ANALOG, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_dac_init");
+    if (CY_RSLT_SUCCESS != cyhal_dac_get_max(&(obj->hal_dac), &(obj->max)))
+        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_ANALOG, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_dac_get_max");
+}
+
+void analogout_free(dac_t *obj)
+{
+    if (CY_RSLT_SUCCESS != cyhal_dac_free(&(obj->hal_dac)))
+        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_ANALOG, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_dac_free");
+}
+
+void analogout_write(dac_t *obj, float value)
+{
+    MBED_ASSERT(value >= 0.0 && value <= 100.0f);
+    analogout_write_u16(obj, (uint16_t)(value * 0.01f * obj->max));
+}
+
+void analogout_write_u16(dac_t *obj, uint16_t value)
+{
+    if (CY_RSLT_SUCCESS != cyhal_dac_write(&(obj->hal_dac), value))
+        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_ANALOG, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_dac_write");
+}
+
+float analogout_read(dac_t *obj)
+{
+    return 100.0f / obj->max * analogout_read_u16(obj);
+}
+
+uint16_t analogout_read_u16(dac_t *obj)
+{
+    uint16_t value;
+    if (CY_RSLT_SUCCESS != cyhal_dac_read(&(obj->hal_dac), &value))
+        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_ANALOG, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_dac_read");
+    return value;
+}
+
+const PinMap *analogout_pinmap(void)
+{
+    return PinMap_DAC;
+}
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

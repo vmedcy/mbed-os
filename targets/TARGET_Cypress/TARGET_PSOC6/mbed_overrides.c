@@ -17,8 +17,8 @@
  */
 
 #include "device.h"
-#include "psoc6_utils.h"
 #include "cycfg.h"
+#include "cyhal_hwmgr.h"
 
 #if defined(COMPONENT_SPM_MAILBOX)
 void mailbox_init(void);
@@ -34,12 +34,12 @@ void mailbox_init(void);
 *******************************************************************************/
 void mbed_sdk_init(void)
 {
-    /* Initialize shared resource manager */
-    cy_srm_initialize();
-
     /* Initialize system and clocks. */
     /* Placed here as it must be done after proper LIBC initialization. */
     SystemInit();
+
+    /* Initialize hardware resource manager */
+    cyhal_hwmgr_init();
 
 #if defined(COMPONENT_SPM_MAILBOX)
     mailbox_init();

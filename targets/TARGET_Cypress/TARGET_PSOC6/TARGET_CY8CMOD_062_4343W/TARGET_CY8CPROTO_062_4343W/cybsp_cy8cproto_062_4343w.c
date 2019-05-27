@@ -1,0 +1,91 @@
+/***************************************************************************//**
+* \file cybsp_cy8cproto_062_4343w.c
+*
+* Description:
+* Provides APIs for interacting with the hardware contained on the Cypress
+* CY8CPROTO-062-4343W prototyping kit.
+*
+********************************************************************************
+* \copyright
+* Copyright 2018-2019 Cypress Semiconductor Corporation
+* SPDX-License-Identifier: Apache-2.0
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*******************************************************************************/
+
+#include <stdlib.h>
+#include "cybsp_cy8cproto_062_4343w.h"
+#include "cycfg.h"
+
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+/*******************************************************************************
+*       Functions
+*******************************************************************************/
+
+cy_rslt_t cybsp_init(void)
+{
+    init_cycfg_all();
+    return CY_RSLT_SUCCESS;
+}
+
+cy_rslt_t cybsp_led_init(cybsp_led_t which)
+{
+    return cyhal_gpio_init((cyhal_gpio_t)which, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, CYBSP_LED_STATE_OFF);
+}
+cy_rslt_t cybsp_led_set_state(cybsp_led_t which, bool on)
+{
+    return cyhal_gpio_write((cyhal_gpio_t)which, on);
+}
+
+cy_rslt_t cybsp_led_toggle(cybsp_led_t which)
+{
+    return cyhal_gpio_toggle((cyhal_gpio_t)which);
+}
+
+cy_rslt_t cybsp_btn_init(cybsp_btn_t which)
+{
+    return cyhal_gpio_init((cyhal_gpio_t)which, CYHAL_GPIO_DIR_INPUT, CYHAL_GPIO_DRIVE_PULLUP, CYBSP_BTN_OFF);
+}
+
+cy_rslt_t cybsp_btn_get_state(cybsp_btn_t which, bool *state)
+{
+    return cyhal_gpio_read((cyhal_gpio_t)which, state);
+}
+
+static void (*btn_interrupt_call_back) (void);
+static void gpio_call_back_wrapper(void *handler_arg, cyhal_gpio_irq_event_t event)
+{
+    if (btn_interrupt_call_back != NULL)
+    {
+        btn_interrupt_call_back();
+    }
+}
+
+cy_rslt_t cybsp_btn_set_interrupt(cybsp_btn_t which, cyhal_gpio_irq_event_t type, void (*callback)(void))
+{
+    btn_interrupt_call_back = callback;
+    cy_rslt_t result = cyhal_gpio_register_irq((cyhal_gpio_t)which, 7, &gpio_call_back_wrapper, NULL);
+    if (result == CY_RSLT_SUCCESS)
+    {
+        result = cyhal_gpio_irq_enable((cyhal_gpio_t)which, type, 1);
+    }
+    return result;
+}
+
+#if defined(__cplusplus)
+}
+#endif

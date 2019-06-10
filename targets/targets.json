@@ -8288,9 +8288,9 @@
         "inherits": ["MCU_PSOC6_M4"],
         "features": ["BLE"],
         "supported_form_factors": ["ARDUINO"],
+        "components_add": ["CM0P_SLEEP"],
         "extra_labels_add": [
             "PSOC6_01",
-            "CM0P_SLEEP",
             "WHD",
             "4343W",
             "CYW43XXX",
@@ -8336,8 +8336,8 @@
     "CY8CKIT_062_WIFI_BT_PSA": {
         "inherits": ["NSPE_Target", "CY8CKIT_062_WIFI_BT"],
         "extra_labels_add": ["PSA", "MBED_SPM"],
-        "extra_labels_remove": ["CM0P_SLEEP"],
         "components_add": ["SPM_MAILBOX", "FLASHIAP"],
+        "components_remove": ["CM0P_SLEEP"],
         "device_has_remove": ["CRC"],
         "macros_add": ["MBEDTLS_PSA_CRYPTO_C"],
         "hex_filename": "psa_release_1.0.hex",
@@ -8362,9 +8362,9 @@
         "inherits": ["MCU_PSOC6_M4"],
         "features": ["BLE"],
         "device_has_remove": ["ANALOGOUT"],
+        "components_add": ["CM0P_SLEEP"],
         "extra_labels_add": [
             "PSOC6_02",
-            "CM0P_SLEEP",
             "WHD",
             "4343W",
             "CYW43XXX",
@@ -8386,9 +8386,9 @@
     "CY8CKIT_062_BLE": {
         "inherits": ["MCU_PSOC6_M4"],
         "supported_form_factors": ["ARDUINO"],
+        "components_add": ["CM0P_SLEEP"],
         "extra_labels_add": [
-            "PSOC6_01",
-            "CM0P_SLEEP"
+            "PSOC6_01"
         ],
         "macros_add": ["CY8C6347BZI_BLD53"],
         "detect_code": ["1902"],
@@ -8403,9 +8403,9 @@
         "features": ["BLE"],
         "supported_form_factors": ["ARDUINO"],
         "device_has_remove": ["ANALOGOUT"],
+        "components_add": ["CM0P_SLEEP"],
         "extra_labels_add": [
             "PSOC6_02",
-            "CM0P_SLEEP",
             "WICED",
             "CYW43XXX",
             "CYW4343X",
@@ -8431,9 +8431,9 @@
     "CYW943012P6EVB_01": {
         "inherits": ["MCU_PSOC6_M4"],
         "features": ["BLE"],
+        "components_add": ["CM0P_SLEEP"],
         "extra_labels_add": [
             "PSOC6_01",
-            "CM0P_SLEEP",
             "WICED",
             "CYW43XXX",
             "CYW43012",

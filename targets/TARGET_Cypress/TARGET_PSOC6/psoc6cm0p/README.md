@@ -18,4 +18,4 @@ Use the following links for more information, as needed:
 * [ModusToolbox](https://www.cypress.com/products/modustoolbox-software-environment)
 
 ---
-© Cypress Semiconductor Corporation, 2019.
+Copyright (c) Cypress Semiconductor Corporation, 2019.

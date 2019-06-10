@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2018 ARM Limited
+ * Copyright (c) 2018-2019 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,11 +40,13 @@ WHD_EMAC::WHD_EMAC()
 {
 }
 
-WHD_EMAC &WHD_EMAC::get_instance() {
+WHD_EMAC &WHD_EMAC::get_instance()
+{
     return get_instance(WHD_STA_ROLE);
 }
 
-WHD_EMAC &WHD_EMAC::get_instance(whd_interface_role_t role) {
+WHD_EMAC &WHD_EMAC::get_instance(whd_interface_role_t role)
+{
     static WHD_EMAC emac_sta(WHD_STA_ROLE);
     static WHD_EMAC emac_ap(WHD_AP_ROLE);
     return role == WHD_AP_ROLE ? emac_ap : emac_sta;
@@ -85,10 +88,10 @@ void WHD_EMAC::power_down()
 
 bool WHD_EMAC::power_up()
 {
-	drvp = *(cybsp_get_wifi_driver());
-	whd_wifi_on(drvp, &ifp /* OUT */);
+    drvp = *(cybsp_get_wifi_driver());
+    whd_wifi_on(drvp, &ifp /* OUT */);
     powered_up = true;
-    if (link_state && emac_link_state_cb ) {
+    if (link_state && emac_link_state_cb) {
         emac_link_state_cb(link_state);
     }
     return true;
@@ -105,7 +108,7 @@ bool WHD_EMAC::get_hwaddr(uint8_t *addr) const
 
 void WHD_EMAC::set_hwaddr(const uint8_t *addr)
 {
-  /* No-op at this stage */
+    /* No-op at this stage */
 }
 
 uint8_t WHD_EMAC::get_hwaddr_size() const
@@ -136,7 +139,7 @@ bool WHD_EMAC::link_out(emac_mem_buf_t *buf)
 
     uint16_t size = memory_manager->get_total_len(buf);
 
-    whd_result_t res = whd_host_buffer_get(drvp, &buffer, WHD_NETWORK_TX, size+offset, WHD_TRUE);
+    whd_result_t res = whd_host_buffer_get(drvp, &buffer, WHD_NETWORK_TX, size + offset, WHD_TRUE);
     MBED_ASSERT(res == WHD_SUCCESS);
 
     whd_buffer_add_remove_at_front(drvp, &buffer, offset);
@@ -156,50 +159,62 @@ void WHD_EMAC::get_ifname(char *name, uint8_t size) const
 
 extern "C"
 {
-void cy_network_process_ethernet_data(whd_interface_t ifp, whd_buffer_t buffer)
-{
-	emac_mem_buf_t *mem_buf = NULL;
+    void cy_network_process_ethernet_data(whd_interface_t ifp, whd_buffer_t buffer)
+    {
+        emac_mem_buf_t *mem_buf = NULL;
 
-    WHD_EMAC &emac = WHD_EMAC::get_instance();
+        WHD_EMAC &emac = WHD_EMAC::get_instance();
 
-    if (!emac.powered_up && !emac.emac_link_input_cb) {
-        // ignore any trailing packets
+        if (!emac.powered_up && !emac.emac_link_input_cb) {
+            // ignore any trailing packets
+            whd_buffer_release(emac.drvp, buffer, WHD_NETWORK_RX);
+            return;
+        }
+
+        void *data = whd_buffer_get_current_piece_data_pointer(emac.drvp, buffer);
+        uint16_t size = whd_buffer_get_current_piece_size(emac.drvp, buffer);
+
+        if (size > 0) {
+            /* Allocate a memory buffer chain from buffer pool */
+            mem_buf = emac.memory_manager->alloc_heap(size, 0);
+            if (mem_buf != NULL) {
+                memcpy(static_cast<uint8_t *>(emac.memory_manager->get_ptr(mem_buf)), static_cast<uint8_t *>(data), size);
+                emac.emac_link_input_cb(mem_buf);
+            };
+        }
         whd_buffer_release(emac.drvp, buffer, WHD_NETWORK_RX);
-        return;
     }
 
-    void *data = whd_buffer_get_current_piece_data_pointer(emac.drvp, buffer);
-    uint16_t size = whd_buffer_get_current_piece_size(emac.drvp, buffer);
+    void whd_emac_wifi_link_state_changed(bool state_up, whd_interface_t ifp)
+    {
+        WHD_EMAC &emac = WHD_EMAC::get_instance(ifp->role);
 
-    if (size > 0) {
-        /* Allocate a memory buffer chain from buffer pool */
-        mem_buf = emac.memory_manager->alloc_heap(size, 0);
-        if (mem_buf != NULL) {
-            memcpy(static_cast<uint8_t *>(emac.memory_manager->get_ptr(mem_buf)), static_cast<uint8_t *>(data), size);
-            emac.emac_link_input_cb(mem_buf);
-        };
+        emac.link_state = state_up;
+        if (emac.emac_link_state_cb) {
+            emac.emac_link_state_cb(state_up);
+        }
     }
-    whd_buffer_release(emac.drvp, buffer, WHD_NETWORK_RX);
-}
 
-void whd_emac_wifi_link_state_changed(bool state_up, whd_interface_t ifp)
-{
-    WHD_EMAC &emac = WHD_EMAC::get_instance(ifp->role);
-
-    emac.link_state = state_up;
-    if (emac.emac_link_state_cb ) {
-        emac.emac_link_state_cb(state_up);
+    //Stubs
+    whd_result_t whd_network_deinit(void)
+    {
+        return WHD_SUCCESS;
     }
-}
-
-//Stubs
-whd_result_t whd_network_deinit           (void) { return WHD_SUCCESS; }
-whd_result_t whd_network_init             (void) { return WHD_SUCCESS; }
-void whd_wireless_link_down_handler         (void) {}
-void whd_wireless_link_renew_handler        (void) {}
-void whd_wireless_link_up_handler           (void) {}
-whd_result_t whd_network_notify_link_up   (void) { return WHD_SUCCESS; }
-whd_result_t whd_network_notify_link_down (void) { return WHD_SUCCESS; }
+    whd_result_t whd_network_init(void)
+    {
+        return WHD_SUCCESS;
+    }
+    void whd_wireless_link_down_handler(void) {}
+    void whd_wireless_link_renew_handler(void) {}
+    void whd_wireless_link_up_handler(void) {}
+    whd_result_t whd_network_notify_link_up(void)
+    {
+        return WHD_SUCCESS;
+    }
+    whd_result_t whd_network_notify_link_down(void)
+    {
+        return WHD_SUCCESS;
+    }
 } // extern "C"
 
 

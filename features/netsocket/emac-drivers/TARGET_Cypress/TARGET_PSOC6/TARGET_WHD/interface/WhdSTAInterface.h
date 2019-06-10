@@ -1,5 +1,6 @@
 /* WHD implementation of NetworkInterfaceAPI
- * Copyright (c) 2017 ARM Limited
+ * Copyright (c) 2017-2019 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +18,8 @@
 #ifndef WHD_STA_INTERFACE_H
 #define WHD_STA_INTERFACE_H
 
-#include "mbed.h"
-#include "EthernetInterface.h"
+#include "netsocket/WiFiInterface.h"
+#include "netsocket/EMACInterface.h"
 #include "netsocket/OnboardNetworkStack.h"
 #include "whd_emac.h"
 
@@ -26,15 +27,14 @@
 /** WhdSTAInterface class
  *  Implementation of the NetworkStack for the WHD
  */
-class WhdSTAInterface : public WiFiInterface, public EMACInterface
-{
+class WhdSTAInterface : public WiFiInterface, public EMACInterface {
 public:
 
     WhdSTAInterface(
-            WHD_EMAC &emac = WHD_EMAC::get_instance(),
-            OnboardNetworkStack &stack = OnboardNetworkStack::get_default_instance());
+        WHD_EMAC &emac = WHD_EMAC::get_instance(),
+        OnboardNetworkStack &stack = OnboardNetworkStack::get_default_instance());
 
-    
+
     static WhdSTAInterface *get_default_instance();
 
     /** Start the interface
@@ -80,7 +80,8 @@ public:
      *  @param channel   Channel on which the connection is to be made, or 0 for any (Default: 0)
      *  @return          Not supported, returns NSAPI_ERROR_UNSUPPORTED
      */
-    nsapi_error_t set_channel(uint8_t channel) {
+    nsapi_error_t set_channel(uint8_t channel)
+    {
         if (channel != 0) {
             return NSAPI_ERROR_UNSUPPORTED;
         }
@@ -111,7 +112,7 @@ private:
     char _ssid[33]; /* The longest possible name (defined in 802.11) +1 for the \0 */
     char _pass[64]; /* The longest allowed passphrase + 1 */
     nsapi_security_t _security;
-    WHD_EMAC& _whd_emac;
+    WHD_EMAC &_whd_emac;
 };
 
 #endif

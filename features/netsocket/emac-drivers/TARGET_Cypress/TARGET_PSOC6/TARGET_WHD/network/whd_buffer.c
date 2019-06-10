@@ -1,5 +1,6 @@
 /* mbed Microcontroller Library
- * Copyright (c) 2017 ARM Limited
+ * Copyright (c) 2017-2019 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -28,34 +30,31 @@ whd_result_t host_buffer_check_leaked(void)
     return WHD_SUCCESS;
 }
 
-whd_result_t internal_host_buffer_get(whd_buffer_t* buffer, whd_buffer_dir_t direction, unsigned short size, unsigned long timeout_ms)
+whd_result_t internal_host_buffer_get(whd_buffer_t *buffer, whd_buffer_dir_t direction, unsigned short size, unsigned long timeout_ms)
 {
     assert(core_util_are_interrupts_enabled());
-    whd_buffer_impl_t* pkt = NULL;
+    whd_buffer_impl_t *pkt = NULL;
     struct pbuf *pbuffer = NULL;
     uint16_t bufsize = sizeof(whd_buffer_impl_t) + size;
 
-    if (direction == WHD_NETWORK_RX )
-    {
-      pbuffer = pbuf_alloc(PBUF_RAW, bufsize, PBUF_RAM);
-      if (pbuffer == NULL) {
-          return WHD_BUFFER_UNAVAILABLE_PERMANENT;;
-      }
-      pkt = (whd_mbed_buffer_t)pbuffer->payload;
-      *buffer = (whd_mbed_buffer_t)pbuffer->payload;
-      pkt->parent = pbuffer;
-    }
-    else
-    {
-    	 void *p = malloc(sizeof(whd_buffer_impl_t) + size);
-    	 if (!p) {
-    	        return WHD_BUFFER_UNAVAILABLE_PERMANENT;
-    	 }
-    	 pkt = (whd_buffer_impl_t *)p;
-    	 *buffer = p;
+    if (direction == WHD_NETWORK_RX) {
+        pbuffer = pbuf_alloc(PBUF_RAW, bufsize, PBUF_RAM);
+        if (pbuffer == NULL) {
+            return WHD_BUFFER_UNAVAILABLE_PERMANENT;;
+        }
+        pkt = (whd_mbed_buffer_t)pbuffer->payload;
+        *buffer = (whd_mbed_buffer_t)pbuffer->payload;
+        pkt->parent = pbuffer;
+    } else {
+        void *p = malloc(sizeof(whd_buffer_impl_t) + size);
+        if (!p) {
+            return WHD_BUFFER_UNAVAILABLE_PERMANENT;
+        }
+        pkt = (whd_buffer_impl_t *)p;
+        *buffer = p;
 
     }
-    whd_mbed_buffer_t* mpbuffer = (whd_mbed_buffer_t*)buffer;
+    whd_mbed_buffer_t *mpbuffer = (whd_mbed_buffer_t *)buffer;
     (*mpbuffer)->ptr = &pkt[1];
 
     (*mpbuffer)->size = size;
@@ -63,27 +62,24 @@ whd_result_t internal_host_buffer_get(whd_buffer_t* buffer, whd_buffer_dir_t dir
     return WHD_SUCCESS;
 }
 
-whd_result_t host_buffer_get(/*@out@*/ whd_buffer_t * buffer, whd_buffer_dir_t direction, unsigned short size, whd_bool_t wait)
+whd_result_t host_buffer_get(/*@out@*/ whd_buffer_t *buffer, whd_buffer_dir_t direction, unsigned short size, whd_bool_t wait)
 {
     return internal_host_buffer_get(buffer, direction, size, wait);
 }
 
-void host_buffer_release(whd_buffer_t buffer, whd_buffer_dir_t direction )
+void host_buffer_release(whd_buffer_t buffer, whd_buffer_dir_t direction)
 {
     assert(buffer != NULL);
     assert(core_util_are_interrupts_enabled());
-    if ( direction != WHD_NETWORK_RX )
-    {
-    	free(buffer);
-    }
-    else
-    {
+    if (direction != WHD_NETWORK_RX) {
+        free(buffer);
+    } else {
         whd_mbed_buffer_t mbuffer = (whd_mbed_buffer_t)buffer;
-    	pbuf_free(mbuffer->parent);
+        pbuf_free(mbuffer->parent);
     }
 }
 
-uint8_t* host_buffer_get_current_piece_data_pointer(whd_buffer_t buffer )
+uint8_t *host_buffer_get_current_piece_data_pointer(whd_buffer_t buffer)
 {
     whd_mbed_buffer_t mbuffer = (whd_mbed_buffer_t)buffer;
     return &mbuffer->ptr[mbuffer->offset];
@@ -101,9 +97,9 @@ whd_buffer_t host_buffer_get_next_piece(whd_buffer_t buffer)
     return NULL;
 }
 
-whd_result_t host_buffer_add_remove_at_front(whd_buffer_t * buffer, int32_t add_remove_amount)
+whd_result_t host_buffer_add_remove_at_front(whd_buffer_t *buffer, int32_t add_remove_amount)
 {
-    whd_mbed_buffer_t* mpbuffer = (whd_mbed_buffer_t*)buffer;
+    whd_mbed_buffer_t *mpbuffer = (whd_mbed_buffer_t *)buffer;
     assert((*mpbuffer)->offset >= -add_remove_amount);
     (*mpbuffer)->offset += add_remove_amount;
     (*mpbuffer)->size -= add_remove_amount;

@@ -1,5 +1,6 @@
 /* mbed Microcontroller Library
- * Copyright (c) 2017 ARM Limited
+ * Copyright (c) 2017-2019 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef INCLUDED_WHD_BUFFER_H_
-#define INCLUDED_WHD_BUFFER_H_
 
+#ifndef WHD_BUFFER_H
+#define WHD_BUFFER_H
 
 #include <stdint.h>
 
@@ -32,8 +33,7 @@ extern "C"
  *             Structures
  ******************************************************/
 
-typedef struct
-{
+typedef struct {
     uint16_t size;
     uint16_t offset;
     uint8_t *ptr;
@@ -56,4 +56,4 @@ typedef void whd_buffer_fifo_t;
 } /* extern "C" */
 #endif
 
-#endif /* ifndef INCLUDED_WHD_BUFFER_H_ */
+#endif /* WHD_BUFFER_H */

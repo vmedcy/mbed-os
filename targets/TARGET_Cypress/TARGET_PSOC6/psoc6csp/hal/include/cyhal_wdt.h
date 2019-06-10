@@ -42,7 +42,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cy_result.h"
-#include "cyhal_implementation.h"
+#include "cyhal_hw_types.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -97,9 +97,8 @@ cy_rslt_t cyhal_wdt_init(cyhal_wdt_t *obj);
  * undefined.
  *
  * @param[inout] obj The WDT object
- * @return The status of the free request
  */
-cy_rslt_t cyhal_wdt_free(cyhal_wdt_t *obj);
+void cyhal_wdt_free(cyhal_wdt_t *obj);
 
 /**
  * Reload/Reset the watchdog counter.
@@ -127,15 +126,6 @@ cy_rslt_t cyhal_wdt_set_time(cyhal_wdt_t *obj, uint32_t time);
  */
 cy_rslt_t cyhal_wdt_set_match(cyhal_wdt_t *obj, uint32_t value);
 
-/** Set the match value
- *
- * @param[in] obj   The WDT object
- * @param[in] value The match value in ticks
- *
- * @return The status of the set_match request
- */
-cy_rslt_t cyhal_wdt_set_match(cyhal_wdt_t *obj, uint32_t value);
-
 /** Read the current tick
  *
  * If no rollover has occurred, the seconds passed since wdt_init() or wdt_set_time()
@@ -143,42 +133,31 @@ cy_rslt_t cyhal_wdt_set_match(cyhal_wdt_t *obj, uint32_t value);
  * by the frequency returned by timer_get_info.
  *
  * @param[in] obj    The WDT object
- * @param[out] count The timer's counter value in ticks
- * @return The status of the raed request
+ * @return The timer's counter value in ticks
  */
-cy_rslt_t cyhal_wdt_read(const cyhal_wdt_t *obj, uint32_t *count);
+uint32_t cyhal_wdt_read(const cyhal_wdt_t *obj);
 
 /** The WDT alarm interrupt handler registration
  *
  * @param[in] obj         The WDT object
  * @param[in] handler     The callback handler which will be invoked when the alarm fires
  * @param[in] handler_arg Generic argument that will be provided to the handler when called
- * @return The status of the register_irq request
  */
-cy_rslt_t cyhal_wdt_register_irq(cyhal_wdt_t *obj, cyhal_wdt_irq_handler handler, void *handler_arg);
+void cyhal_wdt_register_irq(cyhal_wdt_t *obj, cyhal_wdt_irq_handler handler, void *handler_arg);
 
 /** Configure WDT alarm interrupt enablement.
  *
  * @param[in] obj      The WDT object
  * @param[in] event    The WDT IRQ type
  * @param[in] enable   True to turn on interrupts, False to turn off
- * @return The status of the irq_enable request
  */
-cy_rslt_t cyhal_wdt_irq_enable(cyhal_wdt_t *obj, cyhal_wdt_irq_event_t event, bool enable);
+void cyhal_wdt_irq_enable(cyhal_wdt_t *obj, cyhal_wdt_irq_event_t event, bool enable);
 
 /** Manually trigger the WDT interrupt.
  *
  * @param[in] obj      The WDT object
- * @return The status of the irq_trigger request
  */
-cy_rslt_t cyhal_wdt_irq_trigger(cyhal_wdt_t *obj);
-
-/** Manually trigger the WDT interrupt.
- *
- * @param[in] obj      The WDT object
- * @return The status of the irq_trigger request
- */
-cy_rslt_t cyhal_wdt_irq_trigger(cyhal_wdt_t *obj);
+void cyhal_wdt_irq_trigger(cyhal_wdt_t *obj);
 
 /** \} group_hal_wdt_functions */
 

@@ -42,7 +42,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cy_result.h"
-#include "cyhal_implementation.h"
+#include "cyhal_hw_types.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -67,9 +67,8 @@ cy_rslt_t cyhal_opamp_init(cyhal_opamp_t *obj, cyhal_gpio_t vinp, cyhal_gpio_t v
 /** Release the opamp peripheral.
  *
  * @param[in,out] obj The opamp object
- * @return The status of the free request
  */
-cy_rslt_t cyhal_opamp_free(cyhal_opamp_t *obj);
+void cyhal_opamp_free(cyhal_opamp_t *obj);
 
 /** Reconfigure the opamp object
  *

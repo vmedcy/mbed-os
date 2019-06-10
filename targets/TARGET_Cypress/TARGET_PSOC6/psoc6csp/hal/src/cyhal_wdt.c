@@ -25,12 +25,12 @@
 * limitations under the License.
 *******************************************************************************/
 
-#include "cyhal_wdt.h"
-#include "cyhal_hwmgr.h"
 #include "cmsis_compiler.h"
 #include "cy_wdt.h"
 #include "cy_syslib.h"
 #include "cy_sysint.h"
+#include "cyhal_wdt.h"
+#include "cyhal_hwmgr.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -49,6 +49,7 @@ static MCWDT_STRUCT_Type * const cyhal_wdt_base[] = {
 };
 
 static const uint16_t CY_MCWDT_RESET_TIME_US = 62;
+static const uint16_t CY_MCWDT_SETMATCH_TIME_US = 93;
 
 typedef struct {
     cyhal_wdt_irq_handler handler;
@@ -85,21 +86,27 @@ cy_rslt_t cyhal_wdt_init(cyhal_wdt_t *obj)
             CY_RSLT_SUCCESS == (rslt = (cy_rslt_t)Cy_SysInt_Init(&irqCfg, &cyhal_wdt_dispatch)))
         {
             NVIC_EnableIRQ(irq);
-            static const cy_stc_mcwdt_config_t cfg = {
-            /* .c0Match = */ 0,
-            /* .c1Match = */ 0,
-            /* .c0Mode = */ CY_MCWDT_MODE_INT,
-            /* .c1Mode = */ CY_MCWDT_MODE_NONE,
-            /* .c2ToggleBit = */ 0,
-            /* .c2Mode = */ CY_MCWDT_MODE_NONE,
-            /* .c0ClearOnMatch = */ false,
-            /* .c1ClearOnMatch = */ false,
-            /* .c0c1Cascade = */ false,
-            /* .c1c2Cascade = */ false
-            };
-            if (CY_RSLT_SUCCESS == (rslt = (cy_rslt_t)Cy_MCWDT_Init(obj->base, &cfg)))
+
+            bool configured = cyhal_hwmgr_is_configured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num);
+            if (!configured)
             {
-                Cy_MCWDT_Enable(obj->base, CY_MCWDT_CTR0, CY_MCWDT_RESET_TIME_US);
+                static const cy_stc_mcwdt_config_t cfg = {
+                /* .c0Match = */ 0,
+                /* .c1Match = */ 0,
+                /* .c0Mode = */ CY_MCWDT_MODE_INT,
+                /* .c1Mode = */ CY_MCWDT_MODE_NONE,
+                /* .c2ToggleBit = */ 0,
+                /* .c2Mode = */ CY_MCWDT_MODE_NONE,
+                /* .c0ClearOnMatch = */ false,
+                /* .c1ClearOnMatch = */ false,
+                /* .c0c1Cascade = */ false,
+                /* .c1c2Cascade = */ false
+                };
+                if (CY_RSLT_SUCCESS == (rslt = (cy_rslt_t)Cy_MCWDT_Init(obj->base, &cfg)))
+                {
+                    Cy_MCWDT_Enable(obj->base, CY_MCWDT_CTR0, CY_MCWDT_RESET_TIME_US);
+                    rslt = cyhal_hwmgr_set_configured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num);
+                }
             }
         }
     }
@@ -108,10 +115,11 @@ cy_rslt_t cyhal_wdt_init(cyhal_wdt_t *obj)
     return rslt;
 }
 
-cy_rslt_t cyhal_wdt_free(cyhal_wdt_t *obj)
+void cyhal_wdt_free(cyhal_wdt_t *obj)
 {
     if (CYHAL_RSC_INVALID != obj->resource.block_num)
     {
+        cyhal_hwmgr_set_unconfigured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num);
         cyhal_wdt_handlers[obj->resource.block_num].handler = NULL;
         obj->resource.block_num = CYHAL_RSC_INVALID;
     }
@@ -120,7 +128,6 @@ cy_rslt_t cyhal_wdt_free(cyhal_wdt_t *obj)
         Cy_MCWDT_DeInit(obj->base);
         obj->base = NULL;
     }
-    return CY_RSLT_SUCCESS;
 }
 
 cy_rslt_t cyhal_wdt_reload(cyhal_wdt_t *obj)
@@ -131,8 +138,9 @@ cy_rslt_t cyhal_wdt_reload(cyhal_wdt_t *obj)
 
 cy_rslt_t cyhal_wdt_set_time(cyhal_wdt_t *obj, uint32_t time)
 {
-    Cy_MCWDT_SetMatch(obj->base, CY_MCWDT_COUNTER0, time, 0);
+    Cy_MCWDT_SetMatch(obj->base, CY_MCWDT_COUNTER0, time, CY_MCWDT_SETMATCH_TIME_US);
     Cy_MCWDT_SetClearOnMatch(obj->base, CY_MCWDT_COUNTER0, 1);
+    Cy_MCWDT_ResetCounters(obj->base, CY_MCWDT_CTR0,  CY_MCWDT_RESET_TIME_US);
     return CY_RSLT_SUCCESS;
 }
 
@@ -142,13 +150,12 @@ cy_rslt_t cyhal_wdt_set_match(cyhal_wdt_t *obj, uint32_t value)
     return CY_RSLT_SUCCESS;
 }
 
-cy_rslt_t cyhal_wdt_read(const cyhal_wdt_t *obj, uint32_t *count)
+uint32_t cyhal_wdt_read(const cyhal_wdt_t *obj)
 {
-    *count = Cy_MCWDT_GetCount(obj->base, CY_MCWDT_COUNTER0);
-    return CY_RSLT_SUCCESS;
+    return Cy_MCWDT_GetCount(obj->base, CY_MCWDT_COUNTER0);
 }
 
-cy_rslt_t cyhal_wdt_register_irq(cyhal_wdt_t *obj, cyhal_wdt_irq_handler handler, void *handler_arg)
+void cyhal_wdt_register_irq(cyhal_wdt_t *obj, cyhal_wdt_irq_handler handler, void *handler_arg)
 {
     CY_ASSERT_L2(CYHAL_RSC_INVALID != obj->resource.block_num);
     cyhal_wdt_handlers[obj->resource.block_num].handler = NULL;
@@ -158,21 +165,18 @@ cy_rslt_t cyhal_wdt_register_irq(cyhal_wdt_t *obj, cyhal_wdt_irq_handler handler
     __DSB();
     __ISB();
     cyhal_wdt_handlers[obj->resource.block_num].handler = handler;
-    return CY_RSLT_SUCCESS;
 }
 
-cy_rslt_t cyhal_wdt_irq_enable(cyhal_wdt_t *obj, cyhal_wdt_irq_event_t event, bool enable)
+void cyhal_wdt_irq_enable(cyhal_wdt_t *obj, cyhal_wdt_irq_event_t event, bool enable)
 {
     Cy_MCWDT_SetInterruptMask(obj->base, enable ? CY_MCWDT_CTR0 : 0);
-    return CY_RSLT_SUCCESS;
 }
 
-cy_rslt_t cyhal_wdt_irq_trigger(cyhal_wdt_t *obj)
+void cyhal_wdt_irq_trigger(cyhal_wdt_t *obj)
 {
     CY_ASSERT_L2(CYHAL_RSC_INVALID != obj->resource.block_num);
     IRQn_Type irq = (IRQn_Type)(srss_interrupt_mcwdt_0_IRQn + obj->resource.block_num);
     NVIC_SetPendingIRQ(irq);
-    return CY_RSLT_SUCCESS;
 }
 
 #if defined(__cplusplus)

@@ -43,7 +43,7 @@
 #include <stdbool.h>
 #include <time.h>
 #include "cy_result.h"
-#include "cyhal_implementation.h"
+#include "cyhal_hw_types.h"
 
 /** RTC not initialized */
 #define CY_RSLT_RTC_NOT_INITIALIZED CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_RTC, 0)
@@ -100,16 +100,15 @@ cy_rslt_t cyhal_rtc_init(cyhal_rtc_t *obj);
  * except for rtc_init.
  *
  * @param[in,out] obj RTC object
- * @return The status of the free request
  */
-cy_rslt_t cyhal_rtc_free(cyhal_rtc_t *obj);
+void cyhal_rtc_free(cyhal_rtc_t *obj);
 
 /** Check if the RTC has the time set and is counting
  *
  * @param[in] obj RTC object
- * @return The status of the is_enabled request
+ * @return Whether the RTC is enabled or not
  */
-cy_rslt_t cyhal_rtc_is_enabled(cyhal_rtc_t *obj);
+bool cyhal_rtc_is_enabled(cyhal_rtc_t *obj);
 
 /** Get the current time from the RTC peripheral
  *
@@ -140,18 +139,16 @@ cy_rslt_t cyhal_rtc_alarm(cyhal_rtc_t *obj, const struct tm *time);
  * @param[in] obj         The RTC object
  * @param[in] handler     The callback handler which will be invoked when the alarm fires
  * @param[in] handler_arg Generic argument that will be provided to the handler when called
- * @return The status of the register_irq request
  */
-cy_rslt_t cyhal_rtc_register_irq(cyhal_rtc_t *obj, cyhal_rtc_irq_handler handler, void *handler_arg);
+void cyhal_rtc_register_irq(cyhal_rtc_t *obj, cyhal_rtc_irq_handler handler, void *handler_arg);
 
 /** Configure RTC alarm interrupt enablement.
  *
  * @param[in] obj      The RTC object
  * @param[in] event    The RTC IRQ type
  * @param[in] enable   True to turn on interrupts, False to turn off
- * @return The status of the irq_enable request
  */
-cy_rslt_t cyhal_rtc_irq_enable(cyhal_rtc_t *obj, cyhal_rtc_irq_event_t event, bool enable);
+void cyhal_rtc_irq_enable(cyhal_rtc_t *obj, cyhal_rtc_irq_event_t event, bool enable);
 
 /** \} group_hal_rtc_functions */
 

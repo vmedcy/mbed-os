@@ -1,8 +1,8 @@
 /***************************************************************************//**
-* \file cyhal_psoc6_01_43_smt.h
+* \file cyhal_psoc6_03_49_wlcsp.h
 *
 * \brief
-* PSoC6_01 device GPIO HAL header for 43-SMT package
+* PSoC6_03 device GPIO HAL header for 49-WLCSP package
 *
 * \note
 * Generator version: 1.4.7093.26167
@@ -25,8 +25,8 @@
 * limitations under the License.
 *******************************************************************************/
 
-#ifndef _CYHAL_PSOC6_01_43_SMT_H_
-#define _CYHAL_PSOC6_01_43_SMT_H_
+#ifndef _CYHAL_PSOC6_03_49_WLCSP_H_
+#define _CYHAL_PSOC6_03_49_WLCSP_H_
 
 #include "cyhal_hw_resources.h"
 
@@ -42,16 +42,16 @@ typedef enum {
 
     P0_0 = CYHAL_GET_GPIO(CYHAL_PORT_0, 0),
     P0_1 = CYHAL_GET_GPIO(CYHAL_PORT_0, 1),
-    P0_4 = CYHAL_GET_GPIO(CYHAL_PORT_0, 4),
-    P0_5 = CYHAL_GET_GPIO(CYHAL_PORT_0, 5),
+
+    P2_0 = CYHAL_GET_GPIO(CYHAL_PORT_2, 0),
+    P2_1 = CYHAL_GET_GPIO(CYHAL_PORT_2, 1),
+    P2_2 = CYHAL_GET_GPIO(CYHAL_PORT_2, 2),
+    P2_3 = CYHAL_GET_GPIO(CYHAL_PORT_2, 3),
+    P2_4 = CYHAL_GET_GPIO(CYHAL_PORT_2, 4),
+    P2_5 = CYHAL_GET_GPIO(CYHAL_PORT_2, 5),
 
     P5_0 = CYHAL_GET_GPIO(CYHAL_PORT_5, 0),
     P5_1 = CYHAL_GET_GPIO(CYHAL_PORT_5, 1),
-    P5_2 = CYHAL_GET_GPIO(CYHAL_PORT_5, 2),
-    P5_3 = CYHAL_GET_GPIO(CYHAL_PORT_5, 3),
-    P5_4 = CYHAL_GET_GPIO(CYHAL_PORT_5, 4),
-    P5_5 = CYHAL_GET_GPIO(CYHAL_PORT_5, 5),
-    P5_6 = CYHAL_GET_GPIO(CYHAL_PORT_5, 6),
 
     P6_2 = CYHAL_GET_GPIO(CYHAL_PORT_6, 2),
     P6_3 = CYHAL_GET_GPIO(CYHAL_PORT_6, 3),
@@ -60,17 +60,16 @@ typedef enum {
     P6_6 = CYHAL_GET_GPIO(CYHAL_PORT_6, 6),
     P6_7 = CYHAL_GET_GPIO(CYHAL_PORT_6, 7),
 
+    P7_0 = CYHAL_GET_GPIO(CYHAL_PORT_7, 0),
     P7_1 = CYHAL_GET_GPIO(CYHAL_PORT_7, 1),
     P7_2 = CYHAL_GET_GPIO(CYHAL_PORT_7, 2),
-    P7_7 = CYHAL_GET_GPIO(CYHAL_PORT_7, 7),
+    P7_3 = CYHAL_GET_GPIO(CYHAL_PORT_7, 3),
+    P7_4 = CYHAL_GET_GPIO(CYHAL_PORT_7, 4),
 
     P9_0 = CYHAL_GET_GPIO(CYHAL_PORT_9, 0),
     P9_1 = CYHAL_GET_GPIO(CYHAL_PORT_9, 1),
     P9_2 = CYHAL_GET_GPIO(CYHAL_PORT_9, 2),
     P9_3 = CYHAL_GET_GPIO(CYHAL_PORT_9, 3),
-    P9_4 = CYHAL_GET_GPIO(CYHAL_PORT_9, 4),
-    P9_5 = CYHAL_GET_GPIO(CYHAL_PORT_9, 5),
-    P9_6 = CYHAL_GET_GPIO(CYHAL_PORT_9, 6),
 
     P10_0 = CYHAL_GET_GPIO(CYHAL_PORT_10, 0),
     P10_1 = CYHAL_GET_GPIO(CYHAL_PORT_10, 1),
@@ -78,10 +77,13 @@ typedef enum {
     P10_3 = CYHAL_GET_GPIO(CYHAL_PORT_10, 3),
     P10_4 = CYHAL_GET_GPIO(CYHAL_PORT_10, 4),
     P10_5 = CYHAL_GET_GPIO(CYHAL_PORT_10, 5),
-    P10_6 = CYHAL_GET_GPIO(CYHAL_PORT_10, 6),
 
-    P12_6 = CYHAL_GET_GPIO(CYHAL_PORT_12, 6),
-    P12_7 = CYHAL_GET_GPIO(CYHAL_PORT_12, 7),
+    P11_2 = CYHAL_GET_GPIO(CYHAL_PORT_11, 2),
+    P11_3 = CYHAL_GET_GPIO(CYHAL_PORT_11, 3),
+    P11_4 = CYHAL_GET_GPIO(CYHAL_PORT_11, 4),
+    P11_5 = CYHAL_GET_GPIO(CYHAL_PORT_11, 5),
+    P11_6 = CYHAL_GET_GPIO(CYHAL_PORT_11, 6),
+    P11_7 = CYHAL_GET_GPIO(CYHAL_PORT_11, 7),
 } cyhal_gpio_t;
 
 /* Connection type definition */
@@ -94,38 +96,38 @@ typedef struct
 } cyhal_resource_pin_mapping_t;
 
 /* Pin connections */
-extern const cyhal_resource_pin_mapping_t cyhal_pin_map_audioss_clk_i2s_if[1];
-extern const cyhal_resource_pin_mapping_t cyhal_pin_map_audioss_pdm_clk[1];
-extern const cyhal_resource_pin_mapping_t cyhal_pin_map_audioss_pdm_data[1];
-extern const cyhal_resource_pin_mapping_t cyhal_pin_map_audioss_rx_sck[1];
-extern const cyhal_resource_pin_mapping_t cyhal_pin_map_audioss_rx_sdi[1];
-extern const cyhal_resource_pin_mapping_t cyhal_pin_map_audioss_rx_ws[1];
-extern const cyhal_resource_pin_mapping_t cyhal_pin_map_audioss_tx_sck[1];
-extern const cyhal_resource_pin_mapping_t cyhal_pin_map_audioss_tx_sdo[1];
-extern const cyhal_resource_pin_mapping_t cyhal_pin_map_audioss_tx_ws[1];
-extern const cyhal_resource_pin_mapping_t cyhal_pin_map_pass_dsi_ctb_cmp0[1];
-extern const cyhal_resource_pin_mapping_t cyhal_pin_map_pass_dsi_ctb_cmp1[1];
-extern const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_i2c_scl[5];
+extern const cyhal_resource_pin_mapping_t cyhal_pin_map_canfd_ttcan_rx[1];
+extern const cyhal_resource_pin_mapping_t cyhal_pin_map_canfd_ttcan_tx[1];
+extern const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_i2c_scl[6];
 extern const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_i2c_sda[6];
-extern const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_clk[9];
+extern const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_clk[7];
 extern const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_miso[6];
-extern const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_mosi[5];
-extern const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_select0[8];
+extern const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_mosi[6];
+extern const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_select0[7];
 extern const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_select1[5];
 extern const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_select2[4];
-extern const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_select3[4];
+extern const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_select3[1];
 extern const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_uart_cts[6];
-extern const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_uart_rts[7];
-extern const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_uart_rx[4];
+extern const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_uart_rts[6];
+extern const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_uart_rx[5];
 extern const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_uart_tx[5];
+extern const cyhal_resource_pin_mapping_t cyhal_pin_map_sdhc_card_cmd[1];
+extern const cyhal_resource_pin_mapping_t cyhal_pin_map_sdhc_card_dat_3to0[4];
+extern const cyhal_resource_pin_mapping_t cyhal_pin_map_sdhc_clk_card[1];
+extern const cyhal_resource_pin_mapping_t cyhal_pin_map_smif_spi_clk[1];
+extern const cyhal_resource_pin_mapping_t cyhal_pin_map_smif_spi_data0[1];
+extern const cyhal_resource_pin_mapping_t cyhal_pin_map_smif_spi_data1[1];
+extern const cyhal_resource_pin_mapping_t cyhal_pin_map_smif_spi_data2[1];
+extern const cyhal_resource_pin_mapping_t cyhal_pin_map_smif_spi_data3[1];
+extern const cyhal_resource_pin_mapping_t cyhal_pin_map_smif_spi_select0[1];
 extern const cyhal_resource_pin_mapping_t cyhal_pin_map_tcpwm_line[38];
-extern const cyhal_resource_pin_mapping_t cyhal_pin_map_tcpwm_line_compl[34];
+extern const cyhal_resource_pin_mapping_t cyhal_pin_map_tcpwm_line_compl[36];
 
 #if defined(__cplusplus)
 }
 #endif /* __cplusplus */
 
-#endif /* _CYHAL_PSOC6_01_43_SMT_H_ */
+#endif /* _CYHAL_PSOC6_03_49_WLCSP_H_ */
 
 
 /* [] END OF FILE */

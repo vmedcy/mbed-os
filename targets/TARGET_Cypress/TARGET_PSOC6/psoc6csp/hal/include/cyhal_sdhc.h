@@ -42,7 +42,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cy_result.h"
-#include "cyhal_implementation.h"
+#include "cyhal_hw_types.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -161,9 +161,8 @@ cy_rslt_t cyhal_sdhc_init(cyhal_sdhc_t *obj,
  *  resource management.
  *
  * @param[in,out] obj The SDHC object
- * @return The status of the free request
  */
-cy_rslt_t cyhal_sdhc_free(cyhal_sdhc_t *obj);
+void cyhal_sdhc_free(cyhal_sdhc_t *obj);
 
 /** Configure the SDHC block.
  *
@@ -225,10 +224,9 @@ cy_rslt_t cyhal_sdhc_write_async(const cyhal_sdhc_t *obj, uint32_t address, cons
 /** Checks if the specified SDHC peripheral is in use
  *
  * @param[in]  obj  The SDHC peripheral to check
- * @param[out] busy Indication of whether the SDHC is still transmitting
- * @return The status of the is_busy request
+ * @return Indication of whether the SDHC is still transmitting
  */
-cy_rslt_t cyhal_sdhc_is_busy(const cyhal_sdhc_t *obj, bool *busy);
+bool cyhal_sdhc_is_busy(const cyhal_sdhc_t *obj);
 
 /** Abort an SDHC transfer
  *
@@ -242,18 +240,16 @@ cy_rslt_t cyhal_sdhc_abort_async(const cyhal_sdhc_t *obj);
  * @param[in] obj         The SDHC object
  * @param[in] handler     The callback handler which will be invoked when the interrupt fires
  * @param[in] handler_arg Generic argument that will be provided to the handler when called
- * @return The status of the register_irq request
  */
-cy_rslt_t cyhal_sdhc_register_irq(cyhal_sdhc_t *obj, cyhal_sdhc_irq_handler handler, void *handler_arg);
+void cyhal_sdhc_register_irq(cyhal_sdhc_t *obj, cyhal_sdhc_irq_handler handler, void *handler_arg);
 
 /** Configure SDHC interrupt enablement.
  *
  * @param[in] obj      The SDHC object
  * @param[in] event    The SDHC IRQ type
  * @param[in] enable   True to turn on interrupts, False to turn off
- * @return The status of the irq_enable request
  */
-cy_rslt_t cyhal_sdhc_irq_enable(cyhal_sdhc_t *obj, cyhal_sdhc_irq_event_t event, bool enable);
+void cyhal_sdhc_irq_enable(cyhal_sdhc_t *obj, cyhal_sdhc_irq_event_t event, bool enable);
 
 /** \} group_hal_sdhc_functions */
 

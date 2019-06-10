@@ -42,7 +42,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cy_result.h"
-#include "cyhal_implementation.h"
+#include "cyhal_hw_types.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -76,17 +76,15 @@ cy_rslt_t cyhal_adc_init(cyhal_adc_t *obj, cyhal_gpio_t pin);
 /** Uninitialize the adc peripheral and cyhal_adc_t object
  *
  * @param[in,out] obj The adc object
- * @return The status of the free request
  */
-cy_rslt_t cyhal_adc_free(cyhal_adc_t *obj);
+void cyhal_adc_free(cyhal_adc_t *obj);
 
 /** Read the value from adc pin, represented as an unsigned 16bit value
  *
  * @param[in] obj The adc object
- * @param[out] value An unsigned 16bit value representing the current input voltage
- * @return The status of the read request
+ * @return An unsigned 16bit value representing the current input voltage
  */
-cy_rslt_t cyhal_adc_read_u16(const cyhal_adc_t *obj, uint16_t *value);
+uint16_t cyhal_adc_read_u16(const cyhal_adc_t *obj);
 
 /** \} group_hal_adc_functions */
 

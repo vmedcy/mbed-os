@@ -5,7 +5,7 @@
 * Provides a high level interface for managing hardware resources. This is
 * used to track what hardware blocks are already being used so they are not over
 * allocated.
-* 
+*
 ********************************************************************************
 * \copyright
 * Copyright 2018-2019 Cypress Semiconductor Corporation
@@ -24,9 +24,10 @@
 * limitations under the License.
 *******************************************************************************/
 
+#include "cmsis_compiler.h"
+#include "cyhal_implementation.h"
 #include "cyhal_hwmgr.h"
 #include "cyhal_system.h"
-#include "cmsis_compiler.h"
 
 /*******************************************************************************
 *       Defines
@@ -46,7 +47,7 @@
 
 #ifdef CY_IP_MXTTCANFD_INSTANCES
     #define CY_BLOCK_COUNT_CAN      CY_IP_MXTTCANFD_INSTANCES
-    
+
     #if (CY_IP_MXTTCANFD_INSTANCES == 0)
         #define CY_CHANNEL_COUNT_CAN (0u)
     #elif (CY_IP_MXTTCANFD_INSTANCES == 1)
@@ -77,9 +78,15 @@
     #define CY_CHANNEL_COUNT_CAN    0
 #endif
 
+#ifdef SRSS_NUM_CLKPATH
+    #define CY_BLOCK_COUNT_CLK_PATH SRSS_NUM_CLKPATH
+#else
+    #define CY_BLOCK_COUNT_CLK_PATH 0
+#endif
+
 #define CY_BLOCK_COUNT_CLOCK    4
 #define CY_CHANNEL_COUNT_CLOCK  (PERI_DIV_8_NR + PERI_DIV_16_NR + PERI_DIV_16_5_NR + PERI_DIV_24_5_NR)
-    
+
 #if defined(CY_IP_MXCRYPTO_INSTANCES)
     #define CY_BLOCK_COUNT_CRC      CY_IP_MXCRYPTO_INSTANCES
 #elif defined(CPUSS_CRYPTO_PRESENT)
@@ -98,13 +105,13 @@
     #ifndef CPUSS_DMAC_CH_NR
         #define CPUSS_DMAC_CH_NR (0u)
     #endif
-    
+
     #define CY_BLOCK_COUNT_DMA      3
     #define CY_CHANNEL_COUNT_DMA    (CPUSS_DW0_CH_NR + CPUSS_DW1_CH_NR + CPUSS_DMAC_CH_NR)
 #endif
 
     #define CY_BLOCK_COUNT_FLASH    1
-    
+
 #ifdef IOSS_GPIO_GPIO_PORT_NR
     #define CY_BLOCK_COUNT_GPIO IOSS_GPIO_GPIO_PORT_NR
     #define CY_CHANNEL_COUNT_GPIO   (8 * IOSS_GPIO_GPIO_PORT_NR)
@@ -177,7 +184,7 @@
 
 #ifdef CY_IP_MXTCPWM_INSTANCES
     #define CY_BLOCK_COUNT_TCPWM    CY_IP_MXTCPWM_INSTANCES
-    
+
     #if (CY_IP_MXTCPWM_INSTANCES == 0)
         #define CY_CHANNEL_COUNT_TCPWM (0u)
     #elif (CY_IP_MXTCPWM_INSTANCES == 1)
@@ -225,7 +232,7 @@
     All resources have an offset and a size, offsets are stored in an array
     Subsequent resource offset equals the preceding offset + size
     Offsets are bit indexes in the arrays that track used, configured etc.
-    
+
     Channel based resources have an extra array for block offsets
 
     Note these are NOT offsets into the device's MMIO address space;
@@ -239,7 +246,9 @@
 #define CY_SIZE_BLE        CY_BLOCK_COUNT_BLE
 #define CY_OFFSET_CAN      (CY_OFFSET_BLE + CY_BLOCK_COUNT_BLE)
 #define CY_SIZE_CAN        CY_CHANNEL_COUNT_CAN
-#define CY_OFFSET_CLOCK    (CY_OFFSET_CAN + CY_SIZE_CAN)
+#define CY_OFFSET_CLK_PATH (CY_OFFSET_CAN + CY_SIZE_CAN)
+#define CY_SIZE_CLK_PATH   (CY_BLOCK_COUNT_CLK_PATH)
+#define CY_OFFSET_CLOCK    (CY_OFFSET_CLK_PATH + CY_SIZE_CLK_PATH)
 #define CY_SIZE_CLOCK      CY_CHANNEL_COUNT_CLOCK
 #define CY_OFFSET_CRC      (CY_OFFSET_CLOCK + CY_SIZE_CLOCK)
 #define CY_SIZE_CRC        CY_BLOCK_COUNT_CRC
@@ -304,7 +313,7 @@ static const uint8_t cyhal_block_offsets_dma[] =
 
 static const uint8_t cyhal_block_offsets_gpio[] =
 {
-    0, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 
+    0, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120,
 };
 
 static const uint8_t cyhal_block_offsets_can[] =
@@ -387,7 +396,7 @@ static const uint8_t cyhal_block_offsets_tcpwm[] =
 #else
     0
 #endif
-};  
+};
 
 static uint8_t cyhal_used[(CY_TOTAL_ALLOCATABLE_ITEMS + 7) / 8] = {0};
 static uint8_t cyhal_configured[(CY_TOTAL_ALLOCATABLE_ITEMS + 7) / 8] = {0};
@@ -396,11 +405,12 @@ static uint8_t cyhal_configured[(CY_TOTAL_ALLOCATABLE_ITEMS + 7) / 8] = {0};
 extern cyhal_resource_pin_mapping_t* cyhal_resource_pin_mapping;
 
 // Note: the ordering here needs to be parallel to that of cyhal_resource_t
-static const uint16_t cyhal_resource_offsets[] = 
+static const uint16_t cyhal_resource_offsets[] =
 {
     CY_OFFSET_ADC,
     CY_OFFSET_BLE,
     CY_OFFSET_CAN,
+    CY_OFFSET_CLK_PATH,
     CY_OFFSET_CLOCK,
     CY_OFFSET_CRC,
     CY_OFFSET_DAC,
@@ -422,7 +432,7 @@ static const uint16_t cyhal_resource_offsets[] =
     CY_OFFSET_WDT,
 };
 
-static const uint32_t cyhal_has_channels = 
+static const uint32_t cyhal_has_channels =
     (1 << CYHAL_RSC_CAN)   |
     (1 << CYHAL_RSC_CLOCK) |
     (1 << CYHAL_RSC_DMA)   |
@@ -565,6 +575,11 @@ static inline cy_rslt_t cyhal_clear_bit(uint8_t* used, cyhal_resource_t type, ui
 *       Hardware Manager API
 *******************************************************************************/
 
+cy_rslt_t cyhal_hwmgr_init()
+{
+    return CY_RSLT_SUCCESS;
+}
+
 cy_rslt_t cyhal_hwmgr_reserve(const cyhal_resource_inst_t* obj)
 {
     bool isSet;
@@ -580,25 +595,16 @@ cy_rslt_t cyhal_hwmgr_reserve(const cyhal_resource_inst_t* obj)
         rslt = cyhal_set_bit(cyhal_used, obj->type, obj->block_num, obj->channel_num);
     }
     cyhal_system_critical_section_exit(state);
-    
+
     return rslt;
 }
 
-cy_rslt_t cyhal_hwmgr_free(const cyhal_resource_inst_t* obj)
+void cyhal_hwmgr_free(const cyhal_resource_inst_t* obj)
 {
-    bool isUsed;
     uint32_t state = cyhal_system_critical_section_enter();
-    cy_rslt_t rslt = cyhal_is_set(cyhal_used, obj->type, obj->block_num, obj->channel_num, &isUsed);
-    if (rslt == CY_RSLT_SUCCESS && !isUsed)
-    {
-        rslt = CYHAL_HWMGR_RSLT_WARN_UNUSED; 
-    }
-    if (rslt == CY_RSLT_SUCCESS)
-    {
-        rslt = cyhal_clear_bit(cyhal_used, obj->type, obj->block_num, obj->channel_num);
-    }
+    cy_rslt_t rslt = cyhal_clear_bit(cyhal_used, obj->type, obj->block_num, obj->channel_num);
+    CY_ASSERT(CY_RSLT_SUCCESS == rslt);
     cyhal_system_critical_section_exit(state);
-    return rslt;
 }
 
 cy_rslt_t cyhal_hwmgr_allocate(cyhal_resource_t type, cyhal_resource_inst_t* obj)
@@ -654,7 +660,7 @@ cy_rslt_t cyhal_hwmgr_allocate_clock(cyhal_clock_divider_t* obj, cyhal_clock_div
 
     uint8_t block = (uint8_t)div;
     uint8_t count = counts[block];
-    
+
     cy_rslt_t rslt = CYHAL_HWMGR_RSLT_ERR_NONE_FREE;
     for (int i = 0; i < count; i++)
     {
@@ -675,10 +681,10 @@ cy_rslt_t cyhal_hwmgr_allocate_clock(cyhal_clock_divider_t* obj, cyhal_clock_div
     return rslt;
 }
 
-cy_rslt_t cyhal_hwmgr_free_clock(cyhal_clock_divider_t* obj)
+void cyhal_hwmgr_free_clock(cyhal_clock_divider_t* obj)
 {
     cyhal_resource_inst_t res = { CYHAL_RSC_CLOCK, obj->div_type, obj->div_num };
-    return cyhal_hwmgr_free(&res);
+    cyhal_hwmgr_free(&res);
 }
 
 cy_rslt_t cyhal_hwmgr_allocate_dma(cyhal_resource_inst_t* obj)
@@ -702,9 +708,11 @@ cy_rslt_t cyhal_hwmgr_set_unconfigured(cyhal_resource_t type, uint8_t block, uin
     return status;
 }
 
-cy_rslt_t cyhal_hwmgr_is_configured(cyhal_resource_t type, uint8_t block, uint8_t channel, bool* isConfigured)
+bool cyhal_hwmgr_is_configured(cyhal_resource_t type, uint8_t block, uint8_t channel)
 {
     // This doesn't modify anything, so no need for a critical section
-    cy_rslt_t status = cyhal_is_set(cyhal_configured, type, block, channel, isConfigured);
-    return status;
+    bool isConfigured = false;
+    cy_rslt_t status = cyhal_is_set(cyhal_configured, type, block, channel, &isConfigured);
+    CY_ASSERT(CY_RSLT_SUCCESS == status);
+    return isConfigured;
 }

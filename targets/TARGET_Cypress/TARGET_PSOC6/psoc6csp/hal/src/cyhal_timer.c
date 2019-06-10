@@ -2,11 +2,11 @@
 * \file cyhal_timer.c
 *
 * \brief
-* Provides a high level interface for interacting with the Cypress Timer/Counter. 
+* Provides a high level interface for interacting with the Cypress Timer/Counter.
 * This interface abstracts out the chip specific details. If any chip specific
 * functionality is necessary, or performance is critical the low level functions
 * can be used directly.
-* 
+*
 ********************************************************************************
 * \copyright
 * Copyright 2018-2019 Cypress Semiconductor Corporation
@@ -73,7 +73,7 @@ static const cyhal_internal_timer_data_t cyhal_internal_data[] = {
 };
 
 
-const cy_stc_tcpwm_counter_config_t default_config = 
+const cy_stc_tcpwm_counter_config_t default_config =
 {
     .period = 32768,
     .clockPrescaler = CY_TCPWM_COUNTER_PRESCALER_DIVBY_1,
@@ -686,7 +686,9 @@ cy_rslt_t cyhal_timer_init(cyhal_timer_t *obj, cyhal_gpio_t pin, const cyhal_clo
         {
             obj->clock_hz = cy_PeriClkFreqHz / (1 + Cy_SysClk_PeriphGetDivider(obj->clock.div_type, obj->clock.div_num));
             if (CY_SYSCLK_SUCCESS != Cy_SysClk_PeriphAssignDivider(pclk, clk->div_type, clk->div_num))
+            {
                 result = CYHAL_TIMER_RSLT_ERR_CLOCK;
+            }
         }
         else if (CY_RSLT_SUCCESS == (result = cyhal_hwmgr_allocate_clock(&(obj->clock), CY_SYSCLK_DIV_16_BIT, false)))
         {
@@ -695,41 +697,46 @@ cy_rslt_t cyhal_timer_init(cyhal_timer_t *obj, cyhal_gpio_t pin, const cyhal_clo
                 CY_SYSCLK_SUCCESS != Cy_SysClk_PeriphSetDivider(obj->clock.div_type, obj->clock.div_num, div - 1) ||
                 CY_SYSCLK_SUCCESS != Cy_SysClk_PeriphEnableDivider(obj->clock.div_type, obj->clock.div_num) ||
                 CY_SYSCLK_SUCCESS != Cy_SysClk_PeriphAssignDivider(pclk, obj->clock.div_type, obj->clock.div_num))
+            {
                 result = CYHAL_TIMER_RSLT_ERR_CLOCK;
+            }
             else
+            {
                 obj->clock_hz = cy_PeriClkFreqHz / div;
+            }
         }
-        bool configured;
-        if (CY_RSLT_SUCCESS == result &&
-            CY_RSLT_SUCCESS == (result = cyhal_hwmgr_is_configured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num, &configured)) &&
-            !configured)
+
+        bool configured = cyhal_hwmgr_is_configured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num);
+        if (CY_RSLT_SUCCESS == result && !configured)
         {
-            if (CY_TCPWM_SUCCESS == Cy_TCPWM_Counter_Init(obj->base, obj->resource.channel_num, &default_config))
+            result = Cy_TCPWM_Counter_Init(obj->base, obj->resource.channel_num, &default_config);
+            if (CY_TCPWM_SUCCESS == result)
+            {
                 result = cyhal_hwmgr_set_configured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num);
-            else
-                result = CYHAL_TIMER_RSLT_ERR_INIT;
+            }
         }
-        
+
         if (result == CY_RSLT_SUCCESS)
+        {
             Cy_TCPWM_Counter_Enable(obj->base, obj->resource.channel_num);
+        }
         else
+        {
             cyhal_timer_free(obj);
+        }
     }
 
     return result;
 }
 
-cy_rslt_t cyhal_timer_free(cyhal_timer_t *obj)
+void cyhal_timer_free(cyhal_timer_t *obj)
 {
-    cy_rslt_t rslt = CYHAL_TIMER_RSLT_ERR_BAD_ARGUMENT;
     if (NULL != obj && NULL != obj->base)
     {
-        rslt = cyhal_hwmgr_free(&obj->resource);
-        if (CY_RSLT_SUCCESS == rslt)
-            obj->base = NULL;
+        cyhal_hwmgr_free(&obj->resource);
+        cyhal_hwmgr_set_unconfigured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num);
+        obj->base = NULL;
     }
-
-    return rslt;
 }
 
 cy_rslt_t cyhal_timer_set_config(cyhal_timer_t *obj, const cyhal_timer_cfg_t *cfg)
@@ -785,7 +792,7 @@ cy_rslt_t cyhal_timer_stop(cyhal_timer_t *obj)
     return CY_RSLT_SUCCESS;
 }
 
-cy_rslt_t cyhal_timer_register_irq(cyhal_timer_t *obj, uint8_t priority, cyhal_timer_irq_handler handler, void *handler_arg)
+void cyhal_timer_register_irq(cyhal_timer_t *obj, uint8_t priority, cyhal_timer_irq_handler handler, void *handler_arg)
 {
     uint8_t index = GET_ARRAY_INDEX(obj->resource.block_num, obj->resource.channel_num);
     callbacks[index] = handler;
@@ -804,15 +811,11 @@ cy_rslt_t cyhal_timer_register_irq(cyhal_timer_t *obj, uint8_t priority, cyhal_t
     {
         NVIC_SetPriority(irqn, priority);
     }
-    
-    return CY_RSLT_SUCCESS;
 }
 
-cy_rslt_t cyhal_timer_irq_enable(cyhal_timer_t *obj, cyhal_timer_irq_event_t event, bool enable)
+void cyhal_timer_irq_enable(cyhal_timer_t *obj, cyhal_timer_irq_event_t event, bool enable)
 {
     Cy_TCPWM_SetInterruptMask(obj->base, obj->resource.channel_num, enable ? (uint32_t)event : 0);
-
-    return CY_RSLT_SUCCESS;
 }
 
 #if defined(__cplusplus)

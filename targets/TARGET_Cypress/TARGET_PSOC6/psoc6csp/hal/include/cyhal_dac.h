@@ -42,7 +42,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cy_result.h"
-#include "cyhal_implementation.h"
+#include "cyhal_hw_types.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -65,33 +65,29 @@ cy_rslt_t cyhal_dac_init(cyhal_dac_t *obj, cyhal_gpio_t pin);
 /** Release the dac object
  *
  * @param[in,out] obj The dac object
- * @return The status of the free request
  */
-cy_rslt_t cyhal_dac_free(cyhal_dac_t *obj);
+void cyhal_dac_free(cyhal_dac_t *obj);
 
 /** Read the current voltage value on the pin, as a normalized unsigned 16bit value
  *
  * @param[in]  obj        The analogin object
- * @param[out] millivolts The maximum output voltage in terms of the number of milivolts
- * @return The status of the get_max request
+ * @return The maximum output voltage in terms of the number of milivolts
  */
-cy_rslt_t cyhal_dac_get_max(cyhal_dac_t *obj, uint16_t *millivolts);
+uint16_t cyhal_dac_get_max(cyhal_dac_t *obj);
 
 /** Set the output voltage, specified as unsigned 16-bit millivolts
  *
  * @param[in] obj        The analogin object
  * @param[in] millivolts The unsigned 16-bit output voltage to be set
- * @return The status of the write request
  */
-cy_rslt_t cyhal_dac_write(const cyhal_dac_t *obj, uint16_t millivolts);
+void cyhal_dac_write(const cyhal_dac_t *obj, uint16_t millivolts);
 
 /** Read the current voltage value on the pin, as a normalized unsigned 16bit value
  *
  * @param[in]  obj        The analogin object
- * @param[out] millivolts The output voltage in terms of the number of milivolts
- * @return The status of the read request
+ * @return The output voltage in terms of the number of milivolts
  */
-cy_rslt_t cyhal_dac_read(cyhal_dac_t *obj, uint16_t *millivolts);
+uint16_t cyhal_dac_read(cyhal_dac_t *obj);
 
 /** \} group_hal_dac_functions */
 

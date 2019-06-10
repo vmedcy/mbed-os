@@ -1,8 +1,8 @@
 /***************************************************************************//**
-* \file cyhal_psoc6_03_100_tqfp.c
+* \file cyhal_psoc6_03_49_wlcsp.c
 *
 * \brief
-* PSoC6_03 device GPIO HAL header for 100-TQFP package
+* PSoC6_03 device GPIO HAL header for 49-WLCSP package
 *
 * \note
 * Generator version: 1.4.7093.26167
@@ -26,14 +26,13 @@
 *******************************************************************************/
 
 #include "cy_device_headers.h"
-
-#if defined(_GPIO_PSOC6_03_100_TQFP_H_)
 #include "cyhal_hw_types.h"
-#include "pin_packages/cyhal_psoc6_03_100_tqfp.h"
+
+#if defined(_GPIO_PSOC6_03_49_WLCSP_H_)
+#include "pin_packages/cyhal_psoc6_03_49_wlcsp.h"
 
 /* Hardware Blocks */
 static const cyhal_resource_inst_t CYHAL_CANFD_0 = { CYHAL_RSC_CANFD, 0, 0 };
-static const cyhal_resource_inst_t CYHAL_LPCOMP_0_0 = { CYHAL_RSC_LPCOMP, 0, 0 };
 static const cyhal_resource_inst_t CYHAL_SCB_0 = { CYHAL_RSC_SCB, 0, 0 };
 static const cyhal_resource_inst_t CYHAL_SCB_1 = { CYHAL_RSC_SCB, 1, 0 };
 static const cyhal_resource_inst_t CYHAL_SCB_2 = { CYHAL_RSC_SCB, 2, 0 };
@@ -48,14 +47,11 @@ static const cyhal_resource_inst_t CYHAL_TCPWM_0_1 = { CYHAL_RSC_TCPWM, 0, 1 };
 static const cyhal_resource_inst_t CYHAL_TCPWM_0_2 = { CYHAL_RSC_TCPWM, 0, 2 };
 static const cyhal_resource_inst_t CYHAL_TCPWM_0_3 = { CYHAL_RSC_TCPWM, 0, 3 };
 static const cyhal_resource_inst_t CYHAL_TCPWM_1_0 = { CYHAL_RSC_TCPWM, 1, 0 };
-static const cyhal_resource_inst_t CYHAL_TCPWM_1_1 = { CYHAL_RSC_TCPWM, 1, 1 };
-static const cyhal_resource_inst_t CYHAL_TCPWM_1_2 = { CYHAL_RSC_TCPWM, 1, 2 };
 static const cyhal_resource_inst_t CYHAL_TCPWM_1_3 = { CYHAL_RSC_TCPWM, 1, 3 };
 static const cyhal_resource_inst_t CYHAL_TCPWM_1_4 = { CYHAL_RSC_TCPWM, 1, 4 };
 static const cyhal_resource_inst_t CYHAL_TCPWM_1_5 = { CYHAL_RSC_TCPWM, 1, 5 };
 static const cyhal_resource_inst_t CYHAL_TCPWM_1_6 = { CYHAL_RSC_TCPWM, 1, 6 };
 static const cyhal_resource_inst_t CYHAL_TCPWM_1_7 = { CYHAL_RSC_TCPWM, 1, 7 };
-static const cyhal_resource_inst_t CYHAL_USB_0 = { CYHAL_RSC_USB, 0, 0 };
 
 /* Pin connections */
 /* Connections for: canfd_ttcan_rx */
@@ -68,99 +64,63 @@ const cyhal_resource_pin_mapping_t cyhal_pin_map_canfd_ttcan_tx[1] = {
     {P5_1, &CYHAL_CANFD_0, CYHAL_PIN_OUT_FUNCTION(P5_1_CANFD0_TTCAN_TX0)},
 };
 
-/* Connections for: lpcomp_dsi_comp0 */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_lpcomp_dsi_comp0[1] = {
-    {P8_2, &CYHAL_LPCOMP_0_0, CYHAL_PIN_OUT_FUNCTION(P8_2_LPCOMP_DSI_COMP0)},
-};
-
-/* Connections for: lpcomp_dsi_comp1 */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_lpcomp_dsi_comp1[1] = {
-    {P8_3, &CYHAL_LPCOMP_0_0, CYHAL_PIN_OUT_FUNCTION(P8_3_LPCOMP_DSI_COMP1)},
-};
-
 /* Connections for: scb_i2c_scl */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_i2c_scl[12] = {
-    {P0_2, &CYHAL_SCB_0, CYHAL_PIN_OD_FUNCTION(P0_2_SCB0_I2C_SCL)},
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_i2c_scl[6] = {
     {P2_0, &CYHAL_SCB_1, CYHAL_PIN_OD_FUNCTION(P2_0_SCB1_I2C_SCL)},
-    {P3_0, &CYHAL_SCB_2, CYHAL_PIN_OD_FUNCTION(P3_0_SCB2_I2C_SCL)},
     {P5_0, &CYHAL_SCB_5, CYHAL_PIN_OD_FUNCTION(P5_0_SCB5_I2C_SCL)},
-    {P6_0, &CYHAL_SCB_3, CYHAL_PIN_OD_FUNCTION(P6_0_SCB3_I2C_SCL)},
     {P6_4, &CYHAL_SCB_6, CYHAL_PIN_OD_FUNCTION(P6_4_SCB6_I2C_SCL)},
     {P7_0, &CYHAL_SCB_4, CYHAL_PIN_OD_FUNCTION(P7_0_SCB4_I2C_SCL)},
-    {P8_0, &CYHAL_SCB_4, CYHAL_PIN_OD_FUNCTION(P8_0_SCB4_I2C_SCL)},
     {P9_0, &CYHAL_SCB_2, CYHAL_PIN_OD_FUNCTION(P9_0_SCB2_I2C_SCL)},
     {P10_0, &CYHAL_SCB_1, CYHAL_PIN_OD_FUNCTION(P10_0_SCB1_I2C_SCL)},
-    {P11_0, &CYHAL_SCB_5, CYHAL_PIN_OD_FUNCTION(P11_0_SCB5_I2C_SCL)},
-    {P12_0, &CYHAL_SCB_6, CYHAL_PIN_OD_FUNCTION(P12_0_SCB6_I2C_SCL)},
 };
 
 /* Connections for: scb_i2c_sda */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_i2c_sda[12] = {
-    {P0_3, &CYHAL_SCB_0, CYHAL_PIN_OD_FUNCTION(P0_3_SCB0_I2C_SDA)},
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_i2c_sda[6] = {
     {P2_1, &CYHAL_SCB_1, CYHAL_PIN_OD_FUNCTION(P2_1_SCB1_I2C_SDA)},
-    {P3_1, &CYHAL_SCB_2, CYHAL_PIN_OD_FUNCTION(P3_1_SCB2_I2C_SDA)},
     {P5_1, &CYHAL_SCB_5, CYHAL_PIN_OD_FUNCTION(P5_1_SCB5_I2C_SDA)},
-    {P6_1, &CYHAL_SCB_3, CYHAL_PIN_OD_FUNCTION(P6_1_SCB3_I2C_SDA)},
     {P6_5, &CYHAL_SCB_6, CYHAL_PIN_OD_FUNCTION(P6_5_SCB6_I2C_SDA)},
     {P7_1, &CYHAL_SCB_4, CYHAL_PIN_OD_FUNCTION(P7_1_SCB4_I2C_SDA)},
-    {P8_1, &CYHAL_SCB_4, CYHAL_PIN_OD_FUNCTION(P8_1_SCB4_I2C_SDA)},
     {P9_1, &CYHAL_SCB_2, CYHAL_PIN_OD_FUNCTION(P9_1_SCB2_I2C_SDA)},
     {P10_1, &CYHAL_SCB_1, CYHAL_PIN_OD_FUNCTION(P10_1_SCB1_I2C_SDA)},
-    {P11_1, &CYHAL_SCB_5, CYHAL_PIN_OD_FUNCTION(P11_1_SCB5_I2C_SDA)},
-    {P12_1, &CYHAL_SCB_6, CYHAL_PIN_OD_FUNCTION(P12_1_SCB6_I2C_SDA)},
 };
 
 /* Connections for: scb_spi_clk */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_clk[9] = {
-    {P0_4, &CYHAL_SCB_0, CYHAL_PIN_OUT_FUNCTION(P0_4_SCB0_SPI_CLK)},
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_clk[7] = {
     {P2_2, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P2_2_SCB1_SPI_CLK)},
     {P6_2, &CYHAL_SCB_3, CYHAL_PIN_OUT_FUNCTION(P6_2_SCB3_SPI_CLK)},
     {P6_6, &CYHAL_SCB_6, CYHAL_PIN_OUT_FUNCTION(P6_6_SCB6_SPI_CLK)},
     {P7_2, &CYHAL_SCB_4, CYHAL_PIN_OUT_FUNCTION(P7_2_SCB4_SPI_CLK)},
-    {P8_2, &CYHAL_SCB_4, CYHAL_PIN_OUT_FUNCTION(P8_2_SCB4_SPI_CLK)},
     {P9_2, &CYHAL_SCB_2, CYHAL_PIN_OUT_FUNCTION(P9_2_SCB2_SPI_CLK)},
     {P10_2, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P10_2_SCB1_SPI_CLK)},
     {P11_2, &CYHAL_SCB_5, CYHAL_PIN_OUT_FUNCTION(P11_2_SCB5_SPI_CLK)},
 };
 
 /* Connections for: scb_spi_miso */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_miso[11] = {
-    {P0_3, &CYHAL_SCB_0, CYHAL_PIN_IN_FUNCTION(P0_3_SCB0_SPI_MISO)},
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_miso[6] = {
     {P2_1, &CYHAL_SCB_1, CYHAL_PIN_IN_FUNCTION(P2_1_SCB1_SPI_MISO)},
-    {P3_1, &CYHAL_SCB_2, CYHAL_PIN_IN_FUNCTION(P3_1_SCB2_SPI_MISO)},
     {P5_1, &CYHAL_SCB_5, CYHAL_PIN_IN_FUNCTION(P5_1_SCB5_SPI_MISO)},
-    {P6_1, &CYHAL_SCB_3, CYHAL_PIN_IN_FUNCTION(P6_1_SCB3_SPI_MISO)},
     {P6_5, &CYHAL_SCB_6, CYHAL_PIN_IN_FUNCTION(P6_5_SCB6_SPI_MISO)},
     {P7_1, &CYHAL_SCB_4, CYHAL_PIN_IN_FUNCTION(P7_1_SCB4_SPI_MISO)},
-    {P8_1, &CYHAL_SCB_4, CYHAL_PIN_IN_FUNCTION(P8_1_SCB4_SPI_MISO)},
     {P9_1, &CYHAL_SCB_2, CYHAL_PIN_IN_FUNCTION(P9_1_SCB2_SPI_MISO)},
     {P10_1, &CYHAL_SCB_1, CYHAL_PIN_IN_FUNCTION(P10_1_SCB1_SPI_MISO)},
-    {P11_1, &CYHAL_SCB_5, CYHAL_PIN_IN_FUNCTION(P11_1_SCB5_SPI_MISO)},
 };
 
 /* Connections for: scb_spi_mosi */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_mosi[11] = {
-    {P0_2, &CYHAL_SCB_0, CYHAL_PIN_OUT_FUNCTION(P0_2_SCB0_SPI_MOSI)},
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_mosi[6] = {
     {P2_0, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P2_0_SCB1_SPI_MOSI)},
-    {P3_0, &CYHAL_SCB_2, CYHAL_PIN_OUT_FUNCTION(P3_0_SCB2_SPI_MOSI)},
     {P5_0, &CYHAL_SCB_5, CYHAL_PIN_OUT_FUNCTION(P5_0_SCB5_SPI_MOSI)},
-    {P6_0, &CYHAL_SCB_3, CYHAL_PIN_OUT_FUNCTION(P6_0_SCB3_SPI_MOSI)},
     {P6_4, &CYHAL_SCB_6, CYHAL_PIN_OUT_FUNCTION(P6_4_SCB6_SPI_MOSI)},
     {P7_0, &CYHAL_SCB_4, CYHAL_PIN_OUT_FUNCTION(P7_0_SCB4_SPI_MOSI)},
-    {P8_0, &CYHAL_SCB_4, CYHAL_PIN_OUT_FUNCTION(P8_0_SCB4_SPI_MOSI)},
     {P9_0, &CYHAL_SCB_2, CYHAL_PIN_OUT_FUNCTION(P9_0_SCB2_SPI_MOSI)},
     {P10_0, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P10_0_SCB1_SPI_MOSI)},
-    {P11_0, &CYHAL_SCB_5, CYHAL_PIN_OUT_FUNCTION(P11_0_SCB5_SPI_MOSI)},
 };
 
 /* Connections for: scb_spi_select0 */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_select0[9] = {
-    {P0_5, &CYHAL_SCB_0, CYHAL_PIN_OUT_FUNCTION(P0_5_SCB0_SPI_SELECT0)},
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_select0[7] = {
     {P2_3, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P2_3_SCB1_SPI_SELECT0)},
     {P6_3, &CYHAL_SCB_3, CYHAL_PIN_OUT_FUNCTION(P6_3_SCB3_SPI_SELECT0)},
     {P6_7, &CYHAL_SCB_6, CYHAL_PIN_OUT_FUNCTION(P6_7_SCB6_SPI_SELECT0)},
     {P7_3, &CYHAL_SCB_4, CYHAL_PIN_OUT_FUNCTION(P7_3_SCB4_SPI_SELECT0)},
-    {P8_3, &CYHAL_SCB_4, CYHAL_PIN_OUT_FUNCTION(P8_3_SCB4_SPI_SELECT0)},
     {P9_3, &CYHAL_SCB_2, CYHAL_PIN_OUT_FUNCTION(P9_3_SCB2_SPI_SELECT0)},
     {P10_3, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P10_3_SCB1_SPI_SELECT0)},
     {P11_3, &CYHAL_SCB_5, CYHAL_PIN_OUT_FUNCTION(P11_3_SCB5_SPI_SELECT0)},
@@ -176,72 +136,54 @@ const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_select1[5] = {
 };
 
 /* Connections for: scb_spi_select2 */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_select2[5] = {
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_select2[4] = {
     {P0_1, &CYHAL_SCB_0, CYHAL_PIN_OUT_FUNCTION(P0_1_SCB0_SPI_SELECT2)},
     {P2_5, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P2_5_SCB1_SPI_SELECT2)},
-    {P7_5, &CYHAL_SCB_4, CYHAL_PIN_OUT_FUNCTION(P7_5_SCB4_SPI_SELECT2)},
     {P10_5, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P10_5_SCB1_SPI_SELECT2)},
     {P11_5, &CYHAL_SCB_5, CYHAL_PIN_OUT_FUNCTION(P11_5_SCB5_SPI_SELECT2)},
 };
 
 /* Connections for: scb_spi_select3 */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_select3[4] = {
-    {P2_6, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P2_6_SCB1_SPI_SELECT3)},
-    {P7_6, &CYHAL_SCB_4, CYHAL_PIN_OUT_FUNCTION(P7_6_SCB4_SPI_SELECT3)},
-    {P10_6, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P10_6_SCB1_SPI_SELECT3)},
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_select3[1] = {
     {P11_6, &CYHAL_SCB_5, CYHAL_PIN_OUT_FUNCTION(P11_6_SCB5_SPI_SELECT3)},
 };
 
 /* Connections for: scb_uart_cts */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_uart_cts[8] = {
-    {P0_5, &CYHAL_SCB_0, CYHAL_PIN_IN_FUNCTION(P0_5_SCB0_UART_CTS)},
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_uart_cts[6] = {
     {P2_3, &CYHAL_SCB_1, CYHAL_PIN_IN_FUNCTION(P2_3_SCB1_UART_CTS)},
     {P6_3, &CYHAL_SCB_3, CYHAL_PIN_IN_FUNCTION(P6_3_SCB3_UART_CTS)},
     {P7_3, &CYHAL_SCB_4, CYHAL_PIN_IN_FUNCTION(P7_3_SCB4_UART_CTS)},
-    {P8_3, &CYHAL_SCB_4, CYHAL_PIN_IN_FUNCTION(P8_3_SCB4_UART_CTS)},
     {P9_3, &CYHAL_SCB_2, CYHAL_PIN_IN_FUNCTION(P9_3_SCB2_UART_CTS)},
     {P10_3, &CYHAL_SCB_1, CYHAL_PIN_IN_FUNCTION(P10_3_SCB1_UART_CTS)},
     {P11_3, &CYHAL_SCB_5, CYHAL_PIN_IN_FUNCTION(P11_3_SCB5_UART_CTS)},
 };
 
 /* Connections for: scb_uart_rts */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_uart_rts[8] = {
-    {P0_4, &CYHAL_SCB_0, CYHAL_PIN_OUT_FUNCTION(P0_4_SCB0_UART_RTS)},
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_uart_rts[6] = {
     {P2_2, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P2_2_SCB1_UART_RTS)},
     {P6_2, &CYHAL_SCB_3, CYHAL_PIN_OUT_FUNCTION(P6_2_SCB3_UART_RTS)},
     {P7_2, &CYHAL_SCB_4, CYHAL_PIN_OUT_FUNCTION(P7_2_SCB4_UART_RTS)},
-    {P8_2, &CYHAL_SCB_4, CYHAL_PIN_OUT_FUNCTION(P8_2_SCB4_UART_RTS)},
     {P9_2, &CYHAL_SCB_2, CYHAL_PIN_OUT_FUNCTION(P9_2_SCB2_UART_RTS)},
     {P10_2, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P10_2_SCB1_UART_RTS)},
     {P11_2, &CYHAL_SCB_5, CYHAL_PIN_OUT_FUNCTION(P11_2_SCB5_UART_RTS)},
 };
 
 /* Connections for: scb_uart_rx */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_uart_rx[10] = {
-    {P0_2, &CYHAL_SCB_0, CYHAL_PIN_IN_FUNCTION(P0_2_SCB0_UART_RX)},
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_uart_rx[5] = {
     {P2_0, &CYHAL_SCB_1, CYHAL_PIN_IN_FUNCTION(P2_0_SCB1_UART_RX)},
-    {P3_0, &CYHAL_SCB_2, CYHAL_PIN_IN_FUNCTION(P3_0_SCB2_UART_RX)},
     {P5_0, &CYHAL_SCB_5, CYHAL_PIN_IN_FUNCTION(P5_0_SCB5_UART_RX)},
-    {P6_0, &CYHAL_SCB_3, CYHAL_PIN_IN_FUNCTION(P6_0_SCB3_UART_RX)},
     {P7_0, &CYHAL_SCB_4, CYHAL_PIN_IN_FUNCTION(P7_0_SCB4_UART_RX)},
-    {P8_0, &CYHAL_SCB_4, CYHAL_PIN_IN_FUNCTION(P8_0_SCB4_UART_RX)},
     {P9_0, &CYHAL_SCB_2, CYHAL_PIN_IN_FUNCTION(P9_0_SCB2_UART_RX)},
     {P10_0, &CYHAL_SCB_1, CYHAL_PIN_IN_FUNCTION(P10_0_SCB1_UART_RX)},
-    {P11_0, &CYHAL_SCB_5, CYHAL_PIN_IN_FUNCTION(P11_0_SCB5_UART_RX)},
 };
 
 /* Connections for: scb_uart_tx */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_uart_tx[10] = {
-    {P0_3, &CYHAL_SCB_0, CYHAL_PIN_OUT_FUNCTION(P0_3_SCB0_UART_TX)},
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_uart_tx[5] = {
     {P2_1, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P2_1_SCB1_UART_TX)},
-    {P3_1, &CYHAL_SCB_2, CYHAL_PIN_OUT_FUNCTION(P3_1_SCB2_UART_TX)},
     {P5_1, &CYHAL_SCB_5, CYHAL_PIN_OUT_FUNCTION(P5_1_SCB5_UART_TX)},
-    {P6_1, &CYHAL_SCB_3, CYHAL_PIN_OUT_FUNCTION(P6_1_SCB3_UART_TX)},
     {P7_1, &CYHAL_SCB_4, CYHAL_PIN_OUT_FUNCTION(P7_1_SCB4_UART_TX)},
-    {P8_1, &CYHAL_SCB_4, CYHAL_PIN_OUT_FUNCTION(P8_1_SCB4_UART_TX)},
     {P9_1, &CYHAL_SCB_2, CYHAL_PIN_OUT_FUNCTION(P9_1_SCB2_UART_TX)},
     {P10_1, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P10_1_SCB1_UART_TX)},
-    {P11_1, &CYHAL_SCB_5, CYHAL_PIN_OUT_FUNCTION(P11_1_SCB5_UART_TX)},
 };
 
 /* Connections for: sdhc_card_cmd */
@@ -257,29 +199,9 @@ const cyhal_resource_pin_mapping_t cyhal_pin_map_sdhc_card_dat_3to0[4] = {
     {P2_3, &CYHAL_SDHC_0, CYHAL_PIN_OUT_BUF_FUNCTION(P2_3_SDHC0_CARD_DAT_3TO03)},
 };
 
-/* Connections for: sdhc_card_detect_n */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_sdhc_card_detect_n[1] = {
-    {P2_6, &CYHAL_SDHC_0, CYHAL_PIN_IN_FUNCTION(P2_6_SDHC0_CARD_DETECT_N)},
-};
-
-/* Connections for: sdhc_card_if_pwr_en */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_sdhc_card_if_pwr_en[1] = {
-    {P3_1, &CYHAL_SDHC_0, CYHAL_PIN_OUT_FUNCTION(P3_1_SDHC0_CARD_IF_PWR_EN)},
-};
-
-/* Connections for: sdhc_card_mech_write_prot */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_sdhc_card_mech_write_prot[1] = {
-    {P2_7, &CYHAL_SDHC_0, CYHAL_PIN_IN_FUNCTION(P2_7_SDHC0_CARD_MECH_WRITE_PROT)},
-};
-
 /* Connections for: sdhc_clk_card */
 const cyhal_resource_pin_mapping_t cyhal_pin_map_sdhc_clk_card[1] = {
     {P2_5, &CYHAL_SDHC_0, CYHAL_PIN_OUT_BUF_FUNCTION(P2_5_SDHC0_CLK_CARD)},
-};
-
-/* Connections for: sdhc_io_volt_sel */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_sdhc_io_volt_sel[1] = {
-    {P3_0, &CYHAL_SDHC_0, CYHAL_PIN_OUT_FUNCTION(P3_0_SDHC0_IO_VOLT_SEL)},
 };
 
 /* Connections for: smif_spi_clk */
@@ -312,40 +234,18 @@ const cyhal_resource_pin_mapping_t cyhal_pin_map_smif_spi_select0[1] = {
     {P11_2, &CYHAL_SMIF_0, CYHAL_PIN_OUT_FUNCTION(P11_2_SMIF_SPI_SELECT0)},
 };
 
-/* Connections for: smif_spi_select1 */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_smif_spi_select1[1] = {
-    {P11_1, &CYHAL_SMIF_0, CYHAL_PIN_OUT_FUNCTION(P11_1_SMIF_SPI_SELECT1)},
-};
-
-/* Connections for: smif_spi_select2 */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_smif_spi_select2[1] = {
-    {P11_0, &CYHAL_SMIF_0, CYHAL_PIN_OUT_FUNCTION(P11_0_SMIF_SPI_SELECT2)},
-};
-
 /* Connections for: tcpwm_line */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_tcpwm_line[64] = {
+const cyhal_resource_pin_mapping_t cyhal_pin_map_tcpwm_line[38] = {
     {P0_0, &CYHAL_TCPWM_0_0, CYHAL_PIN_OUT_FUNCTION(P0_0_TCPWM0_LINE0)},
     {P0_0, &CYHAL_TCPWM_1_0, CYHAL_PIN_OUT_FUNCTION(P0_0_TCPWM1_LINE0)},
-    {P0_2, &CYHAL_TCPWM_0_1, CYHAL_PIN_OUT_FUNCTION(P0_2_TCPWM0_LINE1)},
-    {P0_2, &CYHAL_TCPWM_1_1, CYHAL_PIN_OUT_FUNCTION(P0_2_TCPWM1_LINE1)},
-    {P0_4, &CYHAL_TCPWM_0_2, CYHAL_PIN_OUT_FUNCTION(P0_4_TCPWM0_LINE2)},
-    {P0_4, &CYHAL_TCPWM_1_2, CYHAL_PIN_OUT_FUNCTION(P0_4_TCPWM1_LINE2)},
     {P2_0, &CYHAL_TCPWM_0_3, CYHAL_PIN_OUT_FUNCTION(P2_0_TCPWM0_LINE3)},
     {P2_0, &CYHAL_TCPWM_1_3, CYHAL_PIN_OUT_FUNCTION(P2_0_TCPWM1_LINE3)},
     {P2_2, &CYHAL_TCPWM_0_0, CYHAL_PIN_OUT_FUNCTION(P2_2_TCPWM0_LINE0)},
     {P2_2, &CYHAL_TCPWM_1_4, CYHAL_PIN_OUT_FUNCTION(P2_2_TCPWM1_LINE4)},
     {P2_4, &CYHAL_TCPWM_0_1, CYHAL_PIN_OUT_FUNCTION(P2_4_TCPWM0_LINE1)},
     {P2_4, &CYHAL_TCPWM_1_5, CYHAL_PIN_OUT_FUNCTION(P2_4_TCPWM1_LINE5)},
-    {P2_6, &CYHAL_TCPWM_0_2, CYHAL_PIN_OUT_FUNCTION(P2_6_TCPWM0_LINE2)},
-    {P2_6, &CYHAL_TCPWM_1_6, CYHAL_PIN_OUT_FUNCTION(P2_6_TCPWM1_LINE6)},
-    {P3_0, &CYHAL_TCPWM_0_3, CYHAL_PIN_OUT_FUNCTION(P3_0_TCPWM0_LINE3)},
-    {P3_0, &CYHAL_TCPWM_1_7, CYHAL_PIN_OUT_FUNCTION(P3_0_TCPWM1_LINE7)},
     {P5_0, &CYHAL_TCPWM_0_0, CYHAL_PIN_OUT_FUNCTION(P5_0_TCPWM0_LINE0)},
     {P5_0, &CYHAL_TCPWM_1_0, CYHAL_PIN_OUT_FUNCTION(P5_0_TCPWM1_LINE0)},
-    {P5_6, &CYHAL_TCPWM_0_1, CYHAL_PIN_OUT_FUNCTION(P5_6_TCPWM0_LINE1)},
-    {P5_6, &CYHAL_TCPWM_1_1, CYHAL_PIN_OUT_FUNCTION(P5_6_TCPWM1_LINE1)},
-    {P6_0, &CYHAL_TCPWM_0_2, CYHAL_PIN_OUT_FUNCTION(P6_0_TCPWM0_LINE2)},
-    {P6_0, &CYHAL_TCPWM_1_2, CYHAL_PIN_OUT_FUNCTION(P6_0_TCPWM1_LINE2)},
     {P6_2, &CYHAL_TCPWM_0_3, CYHAL_PIN_OUT_FUNCTION(P6_2_TCPWM0_LINE3)},
     {P6_2, &CYHAL_TCPWM_1_3, CYHAL_PIN_OUT_FUNCTION(P6_2_TCPWM1_LINE3)},
     {P6_4, &CYHAL_TCPWM_0_0, CYHAL_PIN_OUT_FUNCTION(P6_4_TCPWM0_LINE0)},
@@ -358,12 +258,6 @@ const cyhal_resource_pin_mapping_t cyhal_pin_map_tcpwm_line[64] = {
     {P7_2, &CYHAL_TCPWM_1_7, CYHAL_PIN_OUT_FUNCTION(P7_2_TCPWM1_LINE7)},
     {P7_4, &CYHAL_TCPWM_0_0, CYHAL_PIN_OUT_FUNCTION(P7_4_TCPWM0_LINE0)},
     {P7_4, &CYHAL_TCPWM_1_0, CYHAL_PIN_OUT_FUNCTION(P7_4_TCPWM1_LINE0)},
-    {P7_6, &CYHAL_TCPWM_0_1, CYHAL_PIN_OUT_FUNCTION(P7_6_TCPWM0_LINE1)},
-    {P7_6, &CYHAL_TCPWM_1_1, CYHAL_PIN_OUT_FUNCTION(P7_6_TCPWM1_LINE1)},
-    {P8_0, &CYHAL_TCPWM_0_2, CYHAL_PIN_OUT_FUNCTION(P8_0_TCPWM0_LINE2)},
-    {P8_0, &CYHAL_TCPWM_1_2, CYHAL_PIN_OUT_FUNCTION(P8_0_TCPWM1_LINE2)},
-    {P8_2, &CYHAL_TCPWM_0_3, CYHAL_PIN_OUT_FUNCTION(P8_2_TCPWM0_LINE3)},
-    {P8_2, &CYHAL_TCPWM_1_3, CYHAL_PIN_OUT_FUNCTION(P8_2_TCPWM1_LINE3)},
     {P9_0, &CYHAL_TCPWM_0_0, CYHAL_PIN_OUT_FUNCTION(P9_0_TCPWM0_LINE0)},
     {P9_0, &CYHAL_TCPWM_1_4, CYHAL_PIN_OUT_FUNCTION(P9_0_TCPWM1_LINE4)},
     {P9_2, &CYHAL_TCPWM_0_1, CYHAL_PIN_OUT_FUNCTION(P9_2_TCPWM0_LINE1)},
@@ -374,46 +268,26 @@ const cyhal_resource_pin_mapping_t cyhal_pin_map_tcpwm_line[64] = {
     {P10_2, &CYHAL_TCPWM_1_7, CYHAL_PIN_OUT_FUNCTION(P10_2_TCPWM1_LINE7)},
     {P10_4, &CYHAL_TCPWM_0_0, CYHAL_PIN_OUT_FUNCTION(P10_4_TCPWM0_LINE0)},
     {P10_4, &CYHAL_TCPWM_1_0, CYHAL_PIN_OUT_FUNCTION(P10_4_TCPWM1_LINE0)},
-    {P10_6, &CYHAL_TCPWM_0_1, CYHAL_PIN_OUT_FUNCTION(P10_6_TCPWM0_LINE1)},
-    {P10_6, &CYHAL_TCPWM_1_1, CYHAL_PIN_OUT_FUNCTION(P10_6_TCPWM1_LINE1)},
-    {P11_0, &CYHAL_TCPWM_0_2, CYHAL_PIN_OUT_FUNCTION(P11_0_TCPWM0_LINE2)},
-    {P11_0, &CYHAL_TCPWM_1_2, CYHAL_PIN_OUT_FUNCTION(P11_0_TCPWM1_LINE2)},
     {P11_2, &CYHAL_TCPWM_0_3, CYHAL_PIN_OUT_FUNCTION(P11_2_TCPWM0_LINE3)},
     {P11_2, &CYHAL_TCPWM_1_3, CYHAL_PIN_OUT_FUNCTION(P11_2_TCPWM1_LINE3)},
     {P11_4, &CYHAL_TCPWM_0_0, CYHAL_PIN_OUT_FUNCTION(P11_4_TCPWM0_LINE0)},
     {P11_4, &CYHAL_TCPWM_1_4, CYHAL_PIN_OUT_FUNCTION(P11_4_TCPWM1_LINE4)},
     {P11_6, &CYHAL_TCPWM_0_1, CYHAL_PIN_OUT_FUNCTION(P11_6_TCPWM0_LINE1)},
     {P11_6, &CYHAL_TCPWM_1_5, CYHAL_PIN_OUT_FUNCTION(P11_6_TCPWM1_LINE5)},
-    {P12_0, &CYHAL_TCPWM_0_2, CYHAL_PIN_OUT_FUNCTION(P12_0_TCPWM0_LINE2)},
-    {P12_0, &CYHAL_TCPWM_1_6, CYHAL_PIN_OUT_FUNCTION(P12_0_TCPWM1_LINE6)},
-    {P12_6, &CYHAL_TCPWM_0_3, CYHAL_PIN_OUT_FUNCTION(P12_6_TCPWM0_LINE3)},
-    {P12_6, &CYHAL_TCPWM_1_7, CYHAL_PIN_OUT_FUNCTION(P12_6_TCPWM1_LINE7)},
 };
 
 /* Connections for: tcpwm_line_compl */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_tcpwm_line_compl[64] = {
+const cyhal_resource_pin_mapping_t cyhal_pin_map_tcpwm_line_compl[36] = {
     {P0_1, &CYHAL_TCPWM_0_0, CYHAL_PIN_OUT_FUNCTION(P0_1_TCPWM0_LINE_COMPL0)},
     {P0_1, &CYHAL_TCPWM_1_0, CYHAL_PIN_OUT_FUNCTION(P0_1_TCPWM1_LINE_COMPL0)},
-    {P0_3, &CYHAL_TCPWM_0_1, CYHAL_PIN_OUT_FUNCTION(P0_3_TCPWM0_LINE_COMPL1)},
-    {P0_3, &CYHAL_TCPWM_1_1, CYHAL_PIN_OUT_FUNCTION(P0_3_TCPWM1_LINE_COMPL1)},
-    {P0_5, &CYHAL_TCPWM_0_2, CYHAL_PIN_OUT_FUNCTION(P0_5_TCPWM0_LINE_COMPL2)},
-    {P0_5, &CYHAL_TCPWM_1_2, CYHAL_PIN_OUT_FUNCTION(P0_5_TCPWM1_LINE_COMPL2)},
     {P2_1, &CYHAL_TCPWM_0_3, CYHAL_PIN_OUT_FUNCTION(P2_1_TCPWM0_LINE_COMPL3)},
     {P2_1, &CYHAL_TCPWM_1_3, CYHAL_PIN_OUT_FUNCTION(P2_1_TCPWM1_LINE_COMPL3)},
     {P2_3, &CYHAL_TCPWM_0_0, CYHAL_PIN_OUT_FUNCTION(P2_3_TCPWM0_LINE_COMPL0)},
     {P2_3, &CYHAL_TCPWM_1_4, CYHAL_PIN_OUT_FUNCTION(P2_3_TCPWM1_LINE_COMPL4)},
     {P2_5, &CYHAL_TCPWM_0_1, CYHAL_PIN_OUT_FUNCTION(P2_5_TCPWM0_LINE_COMPL1)},
     {P2_5, &CYHAL_TCPWM_1_5, CYHAL_PIN_OUT_FUNCTION(P2_5_TCPWM1_LINE_COMPL5)},
-    {P2_7, &CYHAL_TCPWM_0_2, CYHAL_PIN_OUT_FUNCTION(P2_7_TCPWM0_LINE_COMPL2)},
-    {P2_7, &CYHAL_TCPWM_1_6, CYHAL_PIN_OUT_FUNCTION(P2_7_TCPWM1_LINE_COMPL6)},
-    {P3_1, &CYHAL_TCPWM_0_3, CYHAL_PIN_OUT_FUNCTION(P3_1_TCPWM0_LINE_COMPL3)},
-    {P3_1, &CYHAL_TCPWM_1_7, CYHAL_PIN_OUT_FUNCTION(P3_1_TCPWM1_LINE_COMPL7)},
     {P5_1, &CYHAL_TCPWM_0_0, CYHAL_PIN_OUT_FUNCTION(P5_1_TCPWM0_LINE_COMPL0)},
     {P5_1, &CYHAL_TCPWM_1_0, CYHAL_PIN_OUT_FUNCTION(P5_1_TCPWM1_LINE_COMPL0)},
-    {P5_7, &CYHAL_TCPWM_0_1, CYHAL_PIN_OUT_FUNCTION(P5_7_TCPWM0_LINE_COMPL1)},
-    {P5_7, &CYHAL_TCPWM_1_1, CYHAL_PIN_OUT_FUNCTION(P5_7_TCPWM1_LINE_COMPL1)},
-    {P6_1, &CYHAL_TCPWM_0_2, CYHAL_PIN_OUT_FUNCTION(P6_1_TCPWM0_LINE_COMPL2)},
-    {P6_1, &CYHAL_TCPWM_1_2, CYHAL_PIN_OUT_FUNCTION(P6_1_TCPWM1_LINE_COMPL2)},
     {P6_3, &CYHAL_TCPWM_0_3, CYHAL_PIN_OUT_FUNCTION(P6_3_TCPWM0_LINE_COMPL3)},
     {P6_3, &CYHAL_TCPWM_1_3, CYHAL_PIN_OUT_FUNCTION(P6_3_TCPWM1_LINE_COMPL3)},
     {P6_5, &CYHAL_TCPWM_0_0, CYHAL_PIN_OUT_FUNCTION(P6_5_TCPWM0_LINE_COMPL0)},
@@ -424,14 +298,6 @@ const cyhal_resource_pin_mapping_t cyhal_pin_map_tcpwm_line_compl[64] = {
     {P7_1, &CYHAL_TCPWM_1_6, CYHAL_PIN_OUT_FUNCTION(P7_1_TCPWM1_LINE_COMPL6)},
     {P7_3, &CYHAL_TCPWM_0_3, CYHAL_PIN_OUT_FUNCTION(P7_3_TCPWM0_LINE_COMPL3)},
     {P7_3, &CYHAL_TCPWM_1_7, CYHAL_PIN_OUT_FUNCTION(P7_3_TCPWM1_LINE_COMPL7)},
-    {P7_5, &CYHAL_TCPWM_0_0, CYHAL_PIN_OUT_FUNCTION(P7_5_TCPWM0_LINE_COMPL0)},
-    {P7_5, &CYHAL_TCPWM_1_0, CYHAL_PIN_OUT_FUNCTION(P7_5_TCPWM1_LINE_COMPL0)},
-    {P7_7, &CYHAL_TCPWM_0_1, CYHAL_PIN_OUT_FUNCTION(P7_7_TCPWM0_LINE_COMPL1)},
-    {P7_7, &CYHAL_TCPWM_1_1, CYHAL_PIN_OUT_FUNCTION(P7_7_TCPWM1_LINE_COMPL1)},
-    {P8_1, &CYHAL_TCPWM_0_2, CYHAL_PIN_OUT_FUNCTION(P8_1_TCPWM0_LINE_COMPL2)},
-    {P8_1, &CYHAL_TCPWM_1_2, CYHAL_PIN_OUT_FUNCTION(P8_1_TCPWM1_LINE_COMPL2)},
-    {P8_3, &CYHAL_TCPWM_0_3, CYHAL_PIN_OUT_FUNCTION(P8_3_TCPWM0_LINE_COMPL3)},
-    {P8_3, &CYHAL_TCPWM_1_3, CYHAL_PIN_OUT_FUNCTION(P8_3_TCPWM1_LINE_COMPL3)},
     {P9_1, &CYHAL_TCPWM_0_0, CYHAL_PIN_OUT_FUNCTION(P9_1_TCPWM0_LINE_COMPL0)},
     {P9_1, &CYHAL_TCPWM_1_4, CYHAL_PIN_OUT_FUNCTION(P9_1_TCPWM1_LINE_COMPL4)},
     {P9_3, &CYHAL_TCPWM_0_1, CYHAL_PIN_OUT_FUNCTION(P9_3_TCPWM0_LINE_COMPL1)},
@@ -442,30 +308,12 @@ const cyhal_resource_pin_mapping_t cyhal_pin_map_tcpwm_line_compl[64] = {
     {P10_3, &CYHAL_TCPWM_1_7, CYHAL_PIN_OUT_FUNCTION(P10_3_TCPWM1_LINE_COMPL7)},
     {P10_5, &CYHAL_TCPWM_0_0, CYHAL_PIN_OUT_FUNCTION(P10_5_TCPWM0_LINE_COMPL0)},
     {P10_5, &CYHAL_TCPWM_1_0, CYHAL_PIN_OUT_FUNCTION(P10_5_TCPWM1_LINE_COMPL0)},
-    {P10_7, &CYHAL_TCPWM_0_1, CYHAL_PIN_OUT_FUNCTION(P10_7_TCPWM0_LINE_COMPL1)},
-    {P10_7, &CYHAL_TCPWM_1_1, CYHAL_PIN_OUT_FUNCTION(P10_7_TCPWM1_LINE_COMPL1)},
-    {P11_1, &CYHAL_TCPWM_0_2, CYHAL_PIN_OUT_FUNCTION(P11_1_TCPWM0_LINE_COMPL2)},
-    {P11_1, &CYHAL_TCPWM_1_2, CYHAL_PIN_OUT_FUNCTION(P11_1_TCPWM1_LINE_COMPL2)},
     {P11_3, &CYHAL_TCPWM_0_3, CYHAL_PIN_OUT_FUNCTION(P11_3_TCPWM0_LINE_COMPL3)},
     {P11_3, &CYHAL_TCPWM_1_3, CYHAL_PIN_OUT_FUNCTION(P11_3_TCPWM1_LINE_COMPL3)},
     {P11_5, &CYHAL_TCPWM_0_0, CYHAL_PIN_OUT_FUNCTION(P11_5_TCPWM0_LINE_COMPL0)},
     {P11_5, &CYHAL_TCPWM_1_4, CYHAL_PIN_OUT_FUNCTION(P11_5_TCPWM1_LINE_COMPL4)},
     {P11_7, &CYHAL_TCPWM_0_1, CYHAL_PIN_OUT_FUNCTION(P11_7_TCPWM0_LINE_COMPL1)},
     {P11_7, &CYHAL_TCPWM_1_5, CYHAL_PIN_OUT_FUNCTION(P11_7_TCPWM1_LINE_COMPL5)},
-    {P12_1, &CYHAL_TCPWM_0_2, CYHAL_PIN_OUT_FUNCTION(P12_1_TCPWM0_LINE_COMPL2)},
-    {P12_1, &CYHAL_TCPWM_1_6, CYHAL_PIN_OUT_FUNCTION(P12_1_TCPWM1_LINE_COMPL6)},
-    {P12_7, &CYHAL_TCPWM_0_3, CYHAL_PIN_OUT_FUNCTION(P12_7_TCPWM0_LINE_COMPL3)},
-    {P12_7, &CYHAL_TCPWM_1_7, CYHAL_PIN_OUT_FUNCTION(P12_7_TCPWM1_LINE_COMPL7)},
-};
-
-/* Connections for: usb_usb_dm_pad */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_usb_usb_dm_pad[1] = {
-    {USBDM, &CYHAL_USB_0, CYHAL_PIN_AUX_FUNCTION(USBDM_USB_USB_DM_PAD)},
-};
-
-/* Connections for: usb_usb_dp_pad */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_usb_usb_dp_pad[1] = {
-    {USBDP, &CYHAL_USB_0, CYHAL_PIN_AUX_FUNCTION(USBDP_USB_USB_DP_PAD)},
 };
 
 #endif

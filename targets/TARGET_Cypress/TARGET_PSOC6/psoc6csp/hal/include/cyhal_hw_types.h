@@ -121,11 +121,6 @@ typedef struct {
 typedef struct {
 #ifdef CY_IP_M4CPUSS
     cyhal_resource_inst_t       resource;
-    uint32_t                    flashBaseAddr;
-    uint32_t                    flashSize;
-    uint32_t                    sectorSize;
-    uint32_t                    pageSize;
-    uint8_t                     eraseVal;
 #else
     void *empty;
 #endif /* CY_IP_M4CPUSS */
@@ -139,6 +134,7 @@ typedef struct {
     cyhal_gpio_t                        pin_sda;
     cyhal_gpio_t                        pin_scl;
     cyhal_clock_divider_t               clock;
+    bool                                is_shared_clock;
     cy_stc_scb_i2c_context_t            context;
     cy_stc_scb_i2c_master_xfer_config_t rx_config;
     cy_stc_scb_i2c_master_xfer_config_t tx_config;
@@ -201,7 +197,7 @@ typedef struct {
 typedef struct {
 #ifdef CY_IP_MXSMIF
     SMIF_Type*                  base;
-    cyhal_resource_inst_t       resource;   
+    cyhal_resource_inst_t       resource;
     cyhal_gpio_t                pin_io0;
     cyhal_gpio_t                pin_io1;
     cyhal_gpio_t                pin_io2;
@@ -299,10 +295,10 @@ typedef struct {
     cyhal_dma_t                 dma0Ch1;
     cyhal_dma_t                 dma1Ch1;
     cyhal_dma_t                 dma1Ch3;
-    
+
     uint32_t                    frequencyhal_hz;
     uint16_t                    block_size;
-    
+
     stc_sdio_irq_cb_t*          pfuCb;
     uint32_t                    irq_cause;
 #else
@@ -335,6 +331,29 @@ typedef struct {
 #endif
 } cyhal_spi_t;
 
+/** Callbacks for Sleep and Deepsleep APIs */
+#define cyhal_system_call_back_t cy_stc_syspm_callback_t
+
+/** Divider for HFCLK. Support values { 1, 2, 4, 8 } */
+typedef enum
+{
+    CYHAL_SYSTEM_CM4_DIVIDER_1 = 1,
+    CYHAL_SYSTEM_CM4_DIVIDER_2 = 2,
+    CYHAL_SYSTEM_CM4_DIVIDER_4 = 4,
+    CYHAL_SYSTEM_CM4_DIVIDER_8 = 8,
+} cyhal_system_cm4_divider_t;
+
+/** Enum for clock type to configure. HFCLKs are configured using different APIs and does not using this enum */
+typedef enum cyhal_system_clock
+{
+    CYHAL_SYSTEM_CLOCK_CM4,
+    CYHAL_SYSTEM_CLOCK_CM0,
+    CYHAL_SYSTEM_CLOCK_PERI,
+} cyhal_system_clock_t;
+
+/** Divider for CM4, CM0 and Peri clock. Supports values between [1, 256] */
+typedef uint16_t cyhal_system_divider_t;
+
 /** Timer object */
 typedef struct {
 #ifdef CY_IP_MXTCPWM
@@ -360,6 +379,7 @@ typedef struct {
     cyhal_gpio_t                pin_tx;
     cyhal_gpio_t                pin_cts;
     cyhal_gpio_t                pin_rts;
+    bool                        is_user_clock;
     cyhal_clock_divider_t       clock;
     cy_stc_scb_uart_context_t   context;
     uint32_t                    irq_cause;
@@ -387,11 +407,13 @@ typedef struct {
 typedef struct {
 #ifdef CY_IP_MXUSBFS
     USBFS_Type*                     base;
-    cy_stc_usbfs_dev_drv_context_t* context;
+    cy_stc_usbfs_dev_drv_context_t  context;
     cyhal_resource_inst_t           resource;
     cyhal_gpio_t                    pin_dp;
     cyhal_gpio_t                    pin_dm;
-    /* TODO: complete definition during implementation */
+    cyhal_clock_divider_t           clock;
+    uint8_t *rd_data[CY_USBFS_DEV_DRV_NUM_EPS_MAX];
+    uint32_t rd_size[CY_USBFS_DEV_DRV_NUM_EPS_MAX];
 #else
     void *empty;
 #endif

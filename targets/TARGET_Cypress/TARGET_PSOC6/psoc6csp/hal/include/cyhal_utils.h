@@ -3,7 +3,7 @@
 *
 * \brief
 * Provides utility functions for working with the PSoC 6 HAL implementation.
-* 
+*
 ********************************************************************************
 * \copyright
 * Copyright 2018-2019 Cypress Semiconductor Corporation
@@ -37,6 +37,7 @@
 #pragma once
 
 #include "cyhal_hw_types.h"
+#include "cy_utils.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -86,6 +87,12 @@ static inline cyhal_resource_inst_t cyhal_utils_get_gpio_resource(cyhal_gpio_t p
  * @return The entry for the specified pin if it exists, or null if it doesn't.
  */
 const cyhal_resource_pin_mapping_t *cyhal_utils_get_resource(cyhal_gpio_t pin, const cyhal_resource_pin_mapping_t* mappings, size_t count);
+
+/** Disconnects any routing for the pin from the interconnect driver and then free's the pin from the hwmgr.
+ *
+ * @param[in] pin       The pin to disconnect and free
+ */
+void cyhal_utils_disconnect_and_free(cyhal_gpio_t pin);
 
 /** \} group_hal_utils_functions */
 

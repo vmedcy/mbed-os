@@ -42,7 +42,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cy_result.h"
-#include "cyhal_implementation.h"
+#include "cyhal_hw_types.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -98,9 +98,8 @@ cy_rslt_t cyhal_pdm_pcm_init(cyhal_pdm_pcm_t *obj, cyhal_gpio_t in, cyhal_gpio_t
  *
  * Return the peripheral, pins and clock owned by the PDM/PCM object to their reset state
  * @param[in,out] obj The PDM/PCM object to deinitialize
- * @return The status of the free request
  */
-cy_rslt_t cyhal_pdm_pcm_free(cyhal_pdm_pcm_t *obj);
+void cyhal_pdm_pcm_free(cyhal_pdm_pcm_t *obj);
 
 /** Updates the configuration of the PDM/PCM object
  *
@@ -138,10 +137,9 @@ cy_rslt_t cyhal_pdm_pcm_read_async(cyhal_pdm_pcm_t *obj, void *data, size_t leng
 /** Checks if the specified PDM/PCM peripheral is in use
  *
  * @param[in] obj  The PDM/PCM peripheral to check
- * @param[in] busy Indication of whether the PDM/PCM is still transmitting
- * @return The status of the is_busy request
+ * @return Indication of whether the PDM/PCM is still transmitting
  */
-cy_rslt_t cyhal_pdm_pcm_is_busy(cyhal_pdm_pcm_t *obj, bool *busy);
+bool cyhal_pdm_pcm_is_busy(cyhal_pdm_pcm_t *obj);
 
 /** Abort an PDM/PCM transfer
  *
@@ -155,18 +153,16 @@ cy_rslt_t cyhal_pdm_pcm_abort_async(cyhal_pdm_pcm_t *obj);
  * @param[in] obj         The PDM/PCM object
  * @param[in] handler     The callback handler which will be invoked when the interrupt fires
  * @param[in] handler_arg Generic argument that will be provided to the handler when called
- * @return The status of the register_irq request
  */
-cy_rslt_t cyhal_pdm_pcm_register_irq(cyhal_pdm_pcm_t *obj, cyhal_i2c_irq_handler handler, void *handler_arg);
+void cyhal_pdm_pcm_register_irq(cyhal_pdm_pcm_t *obj, cyhal_i2c_irq_handler handler, void *handler_arg);
 
 /** Configure PDM/PCM interrupt enablement.
  *
  * @param[in] obj      The PDM/PCM object
  * @param[in] event    The PDM/PCM IRQ type
  * @param[in] enable   True to turn on interrupts, False to turn off
- * @return The status of the irq_enable request
  */
-cy_rslt_t cyhal_pdm_pcm_irq_enable(cyhal_pdm_pcm_t *obj, cyhal_pdm_pcm_irq_event_t event, bool enable);
+void cyhal_pdm_pcm_irq_enable(cyhal_pdm_pcm_t *obj, cyhal_pdm_pcm_irq_event_t event, bool enable);
 
 /** \} group_hal_pdmpcm_functions */
 

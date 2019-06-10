@@ -42,7 +42,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cy_result.h"
-#include "cyhal_implementation.h"
+#include "cyhal_hw_types.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -110,9 +110,8 @@ cy_rslt_t cyhal_dma_init(cyhal_dma_t *obj, uint8_t priority, cyhal_dma_direction
 /** Release the DMA object
  *
  * @param[in,out] obj The DMA object
- * @return The status of the free request
  */
-cy_rslt_t cyhal_dma_free(cyhal_dma_t *obj);
+void cyhal_dma_free(cyhal_dma_t *obj);
 
 /** Setup a DMA descriptor for specified resource
  *
@@ -134,28 +133,25 @@ cy_rslt_t cyhal_dma_start_transfer(cyhal_dma_t *obj);
  *
  * To check whether DMA channel is busy with a job or not
  * @param[in] obj    The DMA object
- * @param[out] busy  Is the DMA object being used
- * @return The status of the busy request
+ * @return Is the DMA object being used
  */
-cy_rslt_t cyhal_dma_busy(cyhal_dma_t *obj, bool *busy);
+bool cyhal_dma_busy(cyhal_dma_t *obj);
 
 /** The DMA interrupt handler registration
  *
  * @param[in] obj         The DMA object
  * @param[in] handler     The callback handler which will be invoked when the interrupt fires
  * @param[in] handler_arg Generic argument that will be provided to the handler when called
- * @return The status of the register_irq request
  */
-cy_rslt_t cyhal_dma_register_irq(cyhal_dma_t *obj, cyhal_dma_irq_handler handler, void *handler_arg);
+void cyhal_dma_register_irq(cyhal_dma_t *obj, cyhal_dma_irq_handler handler, void *handler_arg);
 
 /** Configure DMA interrupt enablement.
  *
  * @param[in] obj      The DMA object
  * @param[in] event    The DMA IRQ type
  * @param[in] enable   True to turn on interrupts, False to turn off
- * @return The status of the irq_enable request
  */
-cy_rslt_t cyhal_dma_irq_enable(cyhal_dma_t *obj, cyhal_dma_irq_event_t event, bool enable);
+void cyhal_dma_irq_enable(cyhal_dma_t *obj, cyhal_dma_irq_event_t event, bool enable);
 
 /** \} group_hal_dma_functions */
 

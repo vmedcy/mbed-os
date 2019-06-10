@@ -77,26 +77,24 @@ cy_rslt_t cybsp_led_init(cybsp_led_t which);
 /**
  * \brief Toggle the specified LED
  * \param which The specific LED number to enable, see BSP header file for available LEDs
- * \returns CY_RSLT_SUCCESS if the LED was toggled
  */
-cy_rslt_t cybsp_led_toggle(cybsp_led_t which);
+void cybsp_led_toggle(cybsp_led_t which);
 
 /**
  * \brief Sets the state of the LED.
  * \param which The specific LED number to set state, see BSP header file for available LEDs
  * \param on Whether the LED should be turned on (true) or off (false)
- * \returns CY_RSLT_SUCCESS if the LED state was updated
  */
-cy_rslt_t cybsp_led_set_state(cybsp_led_t which, bool on);
+void cybsp_led_set_state(cybsp_led_t which, bool on);
 
 /**
  * \brief Turns the LED on.
  * \param which The specific LED number to set state, see BSP header file for available LEDs
  * \returns CY_RSLT_SUCCESS if the LED was turned on
  */
-static inline cy_rslt_t cybsp_led_on(cybsp_led_t which)
+static inline void cybsp_led_on(cybsp_led_t which)
 {
-    return cybsp_led_set_state(which, CYBSP_LED_STATE_ON);
+    cybsp_led_set_state(which, CYBSP_LED_STATE_ON);
 }
 
 /**
@@ -104,9 +102,9 @@ static inline cy_rslt_t cybsp_led_on(cybsp_led_t which)
  * \param which The specific LED number to set state, see BSP header file for available LEDs
  * \returns CY_RSLT_SUCCESS if the LED was turned off
  */
-static inline cy_rslt_t cybsp_led_off(cybsp_led_t which)
+static inline void cybsp_led_off(cybsp_led_t which)
 {
-    return cybsp_led_set_state(which, CYBSP_LED_STATE_OFF);
+    cybsp_led_set_state(which, CYBSP_LED_STATE_OFF);
 }
 
 /**
@@ -119,19 +117,17 @@ cy_rslt_t cybsp_btn_init(cybsp_btn_t which);
 /**
  * \brief Sets the state of the button.
  * \param which The specific button number to get state from, see BSP header file for available buttones
- * \param state State of the button
- * \returns CY_RSLT_SUCCESS if the button information was retrieved successfully
+ * \returns State of the button
  */
-cy_rslt_t cybsp_btn_get_state(cybsp_btn_t which, bool* state);
+bool cybsp_btn_get_state(cybsp_btn_t which);
 
 /**
  * \brief Sets the interrupt to trigger when the button state is changed.
  * \param which The specific button number to get state from, see BSP header file for available buttones
  * \param type The type sets level vs edge and active high vs active low
  * \param callback The function pointer to call when the button state changes
- * \returns CY_RSLT_SUCCESS if the button information was retrieved successfully
  */
-cy_rslt_t cybsp_btn_set_interrupt(cybsp_btn_t which, cyhal_gpio_irq_event_t type, void (*callback)(void));
+void cybsp_btn_set_interrupt(cybsp_btn_t which, cyhal_gpio_irq_event_t type, void (*callback)(void));
 
 
 /** \} group_abstraction_board_functions */

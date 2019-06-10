@@ -42,8 +42,9 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "cyhal_hwmgr.h"
 #include "cy_result.h"
-#include "cyhal_implementation.h"
+#include "cyhal_hw_types.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -53,6 +54,19 @@ extern "C" {
 * \addtogroup group_hal_system_macros
 * \{
 */
+
+/**
+ * An error occurred in System module
+ */
+#define CYHAL_SYSTEM_RSLT_ERROR (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_SYSTEM , 0))
+/**
+ * An error occurred in System module
+ */
+#define CYHAL_SYSTEM_RSLT_INVALID_CLK_DIVIDER (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_SYSTEM , 1))
+/**
+ * An error occurred in System module
+ */
+#define CYHAL_SYSTEM_RSLT_UNABLE_TO_SET_CLK_FREQ (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_SYSTEM , 2))
 
 /** \} group_hal_system_macros */
 
@@ -64,7 +78,7 @@ extern "C" {
 
 /** Enter a critical section
  *
- * Disables interrupts and returns a value indicating whether the interrupts were previously 
+ * Disables interrupts and returns a value indicating whether the interrupts were previously
  * enabled.
  *
  * @return Returns the state before entering the critical section. This value must be provided
@@ -83,6 +97,7 @@ uint32_t cyhal_system_critical_section_enter(void);
 void cyhal_system_critical_section_exit(uint32_t oldState);
 
 /** Send the device to sleep
+ * 
  *
  * The processor is setup ready for sleep, and sent to sleep using __WFI(). In this mode, the
  * system clock to the core is stopped until a reset or an interrupt occurs.
@@ -109,47 +124,31 @@ cy_rslt_t cyhal_system_deepsleep(void);
  * @param[in] handler The handler to notify on power transitions
  * @return The status of the register_callback request
  */
-cy_rslt_t cyhal_system_register_callback(cy_stc_syspm_callback_t *handler);
+cy_rslt_t cyhal_system_register_callback(cyhal_system_call_back_t *handler);
 
 /** Removes the specified handler from the power manager so no future notification are made.
  *
  * @param[in] handler The handler to remove from receiving notifications
  * @return The status of the unregister_callback request
  */
-cy_rslt_t cyhal_system_unregister_callback(cy_stc_syspm_callback_t const *handler);
+cy_rslt_t cyhal_system_unregister_callback(cyhal_system_call_back_t const *handler);
 
 /** Sets the specified clock's frequency and enables it.
  *  This will turn on any additional clocks needed to drive this.
  *
- * @param[in]  clock        The high frequency clock to configure
+ * @param[in]  clock        ID of clock to configure
  * @param[in]  frequencyhal_hz The frequency to run the clock at
  * @return The status of the clock_frequency request
  */
 cy_rslt_t cyhal_system_clock_frequency(uint8_t clock, uint32_t frequencyhal_hz);
 
-/** Divides the clock driving the CM4 from what system clock 0 is
- *  running at
- *
- * @param[in]  divider The amount to divide the system clock by
- * @return The status of the cm4_divider request
+/** Divides the clock frequency by the divider
+ * 
+ * @param[in] clock   The clock to configure divider value for
+ * @param[in] divider The divider value to divide the frequency by
+ * @return The status of setting the divider
  */
-cy_rslt_t cyhal_system_cm4_divider(uint8_t divider);
-
-/** Divides the clock driving the peripherals from what system
- *  clock 0 is running at
- *
- * @param[in]  divider The amount to divide the system clock by
- * @return The status of the peri_divider request
- */
-cy_rslt_t cyhal_system_peri_divider(uint8_t divider);
-
-/** Divides the clock driving the CM0 from what peri clock is
- *  running at
- *
- * @param[in]  divider The amount to divide the peri clock by
- * @return The status of the cm0_divider request
- */
-cy_rslt_t cyhal_system_cm0_divider(uint8_t divider);
+cy_rslt_t cyhal_system_clock_divider(cyhal_system_clock_t clock, cyhal_system_divider_t divider);
 
 /** \} group_hal_system_functions */
 

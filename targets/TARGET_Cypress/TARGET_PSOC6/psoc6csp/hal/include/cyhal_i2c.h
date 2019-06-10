@@ -42,7 +42,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cy_result.h"
-#include "cyhal_implementation.h"
+#include "cyhal_hw_types.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -55,6 +55,8 @@ extern "C" {
 
 /** The requested resource type is invalid */
 #define CYHAL_I2C_RSLT_ERR_INVALID_PIN (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_I2C, 0))
+/** Can not reach desired data rate */
+#define CYHAL_I2C_RSLT_ERR_CAN_NOT_REACH_DR (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_I2C, 0))
 
 /** \} group_hal_i2c_macros */
 
@@ -125,9 +127,8 @@ cy_rslt_t cyhal_i2c_init(cyhal_i2c_t *obj, cyhal_gpio_t sda, cyhal_gpio_t scl, c
 /** Deinitialize the i2c object
  *
  * @param[in,out] obj The i2c object
- * @return The status of the free request
  */
-cy_rslt_t cyhal_i2c_free(cyhal_i2c_t *obj);
+void cyhal_i2c_free(cyhal_i2c_t *obj);
 
 /** Configure the I2C block
  *
@@ -238,18 +239,16 @@ cy_rslt_t cyhal_i2c_abort_async(cyhal_i2c_t *obj);
  * @param[in] obj         The I2C object
  * @param[in] handler     The callback handler which will be invoked when the interrupt fires
  * @param[in] handler_arg Generic argument that will be provided to the handler when called
- * @return The status of the register_irq request
  */
-cy_rslt_t cyhal_i2c_register_irq(cyhal_i2c_t *obj, cyhal_i2c_irq_handler handler, void *handler_arg);
+void cyhal_i2c_register_irq(cyhal_i2c_t *obj, cyhal_i2c_irq_handler handler, void *handler_arg);
 
 /** Configure I2C interrupt enablement.
  *
  * @param[in] obj      The I2C object
  * @param[in] event    The I2C IRQ type
  * @param[in] enable   True to turn on interrupts, False to turn off
- * @return The status of the irq_enable request
  */
-cy_rslt_t cyhal_i2c_irq_enable(cyhal_i2c_t *obj, cyhal_i2c_irq_event_t event, bool enable);
+void cyhal_i2c_irq_enable(cyhal_i2c_t *obj, cyhal_i2c_irq_event_t event, bool enable);
 
 /** \} group_hal_i2c_functions */
 

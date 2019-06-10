@@ -25,8 +25,7 @@
 * limitations under the License.
 *******************************************************************************/
 
-#include "cyhal_rtc.h"
-#include "cyhal_hwmgr.h"
+#include "cyhal_implementation.h"
 #include "cy_rtc.h"
 
 #if defined(__cplusplus)
@@ -80,21 +79,16 @@ cy_rslt_t cyhal_rtc_init(cyhal_rtc_t *obj)
     cy_rslt_t rslt = CY_RSLT_SUCCESS;
     if (cyhal_rtc_initialized == CY_RTC_STATE_UNINITIALIZED)
     {
-        cy_stc_rtc_config_t dateTime;
-        Cy_RTC_GetDateAndTime(&dateTime);
-        if (0 == dateTime.dayOfWeek || 0 == dateTime.date || 0 == dateTime.month)
+        if (Cy_RTC_IsExternalResetOccurred())
         {
-            // Date is not valid; reset to default time
-            dateTime.sec = 0;
-            dateTime.min = 0;
-            dateTime.hour = 0;
-            dateTime.amPm = CY_RTC_AM;
-            dateTime.hrFormat = CY_RTC_24_HOURS;
-            dateTime.dayOfWeek = CY_RTC_THURSDAY;
-            dateTime.date = 1;
-            dateTime.month = 1;
-            dateTime.year = 70;
-            Cy_RTC_SetDateAndTime(&dateTime);
+            // Reset to default time
+            static const cy_stc_rtc_config_t defaultTime = {
+                .dayOfWeek = CY_RTC_THURSDAY,
+                .date = 1,
+                .month = 1,
+                .year = 70
+            };
+            Cy_RTC_SetDateAndTime(&defaultTime);
         }
         else
         {
@@ -103,7 +97,7 @@ cy_rslt_t cyhal_rtc_init(cyhal_rtc_t *obj)
         }
         Cy_RTC_ClearInterrupt(CY_RTC_INTR_CENTURY);
         Cy_RTC_SetInterruptMask(CY_RTC_INTR_CENTURY);
-        static const cy_stc_sysint_t irqCfg = {srss_interrupt_backup_IRQn, CY_RTC_DEFAULT_PRIORITY};
+        static const cy_stc_sysint_t irqCfg = {.intrSrc = srss_interrupt_backup_IRQn, .intrPriority = CY_RTC_DEFAULT_PRIORITY};
         Cy_SysInt_Init(&irqCfg, &cyhal_rtc_internal_handler);
         NVIC_EnableIRQ(srss_interrupt_backup_IRQn);
         Cy_SysPm_RegisterCallback(&cyhal_rtc_pm_cb);
@@ -112,15 +106,14 @@ cy_rslt_t cyhal_rtc_init(cyhal_rtc_t *obj)
     return rslt;
 }
 
-cy_rslt_t cyhal_rtc_free(cyhal_rtc_t *obj)
+void cyhal_rtc_free(cyhal_rtc_t *obj)
 {
     Cy_RTC_SetInterruptMask(CY_RTC_INTR_CENTURY);
-    return CY_RSLT_SUCCESS;
 }
 
-cy_rslt_t cyhal_rtc_is_enabled(cyhal_rtc_t *obj)
+bool cyhal_rtc_is_enabled(cyhal_rtc_t *obj)
 {
-    return cyhal_rtc_initialized == CY_RTC_STATE_TIME_SET ? CY_RSLT_SUCCESS : CY_RSLT_RTC_NOT_INITIALIZED;
+    return (cyhal_rtc_initialized == CY_RTC_STATE_TIME_SET);
 }
 
 cy_rslt_t cyhal_rtc_read(cyhal_rtc_t *obj, struct tm *time)
@@ -128,8 +121,10 @@ cy_rslt_t cyhal_rtc_read(cyhal_rtc_t *obj, struct tm *time)
     // The number of days that precede each month of the year, not including Fdb 29
     static const uint16_t CUMULATIVE_DAYS[] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
     cy_stc_rtc_config_t dateTime;
+    uint32_t savedIntrStatus = cyhal_system_critical_section_enter();
     Cy_RTC_GetDateAndTime(&dateTime);
     int year = dateTime.year + cyhal_rtc_century;
+    cyhal_system_critical_section_exit(savedIntrStatus);
     time->tm_sec = dateTime.sec;
     time->tm_min = dateTime.min;
     time->tm_hour = dateTime.hour;
@@ -156,10 +151,19 @@ cy_rslt_t cyhal_rtc_write(cyhal_rtc_t *obj, const struct tm *time)
     .month = time->tm_mon + 1,
     .year = year2digit
     };
-    NVIC_DisableIRQ(srss_interrupt_backup_IRQn);
-    cy_rslt_t rslt = (cy_rslt_t)Cy_RTC_SetDateAndTime(&newtime);
-    cyhal_rtc_century = time->tm_year - year2digit + CY_TM_YEAR_BASE;
-    NVIC_EnableIRQ(srss_interrupt_backup_IRQn);
+    cy_rslt_t rslt;
+    uint32_t retry = 0;
+    static const uint32_t MAX_RETRY = 10, RETRY_DELAY_MS = 1;
+    do {
+        if (retry != 0)
+            Cy_SysLib_Delay(RETRY_DELAY_MS);
+        uint32_t savedIntrStatus = cyhal_system_critical_section_enter();
+        rslt = (cy_rslt_t)Cy_RTC_SetDateAndTime(&newtime);
+        if (rslt == CY_RSLT_SUCCESS)
+            cyhal_rtc_century = time->tm_year - year2digit + CY_TM_YEAR_BASE;
+        cyhal_system_critical_section_exit(savedIntrStatus);
+        ++retry;
+    } while (rslt == CY_RTC_INVALID_STATE && retry < MAX_RETRY);
     while (CY_RTC_BUSY == Cy_RTC_GetSyncStatus()) { }
     if (rslt == CY_RSLT_SUCCESS)
         cyhal_rtc_initialized = CY_RTC_STATE_TIME_SET;
@@ -187,20 +191,18 @@ cy_rslt_t cyhal_rtc_alarm(cyhal_rtc_t *obj, const struct tm *time)
     return (cy_rslt_t)Cy_RTC_SetAlarmDateAndTime(&alarm, CY_RTC_ALARM_1);
 }
 
-cy_rslt_t cyhal_rtc_register_irq(cyhal_rtc_t *obj, cyhal_rtc_irq_handler handler, void *handler_arg)
+void cyhal_rtc_register_irq(cyhal_rtc_t *obj, cyhal_rtc_irq_handler handler, void *handler_arg)
 {
-    NVIC_DisableIRQ(srss_interrupt_backup_IRQn);
+    uint32_t savedIntrStatus = cyhal_system_critical_section_enter();
     cyhal_rtc_handler_arg = handler_arg;
     cyhal_rtc_user_handler = handler;
-    NVIC_EnableIRQ(srss_interrupt_backup_IRQn);
-    return CY_RSLT_SUCCESS;
+    cyhal_system_critical_section_exit(savedIntrStatus);
 }
 
-cy_rslt_t cyhal_rtc_irq_enable(cyhal_rtc_t *obj, cyhal_rtc_irq_event_t event, bool enable)
+void cyhal_rtc_irq_enable(cyhal_rtc_t *obj, cyhal_rtc_irq_event_t event, bool enable)
 {
-    Cy_RTC_ClearInterrupt(~Cy_RTC_GetInterruptMask());
+    Cy_RTC_ClearInterrupt(CY_RTC_INTR_ALARM1 | CY_RTC_INTR_ALARM2);
     Cy_RTC_SetInterruptMask((enable ? CY_RTC_INTR_ALARM1 : 0) | CY_RTC_INTR_CENTURY);
-    return CY_RSLT_SUCCESS;
 }
 
 #if defined(__cplusplus)

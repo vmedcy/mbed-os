@@ -41,7 +41,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cy_result.h"
-#include "cyhal_implementation.h"
+#include "cyhal_hw_types.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -115,9 +115,8 @@ cy_rslt_t cyhal_comp_init(cyhal_comp_t *obj, cyhal_gpio_t vinp, cyhal_gpio_t vin
 /** Release the comparator peripheral.
  *
  * @param[in,out] obj The comparator object
- * @return The status of the free request
  */
-cy_rslt_t cyhal_comp_free(cyhal_comp_t *obj);
+void cyhal_comp_free(cyhal_comp_t *obj);
 
 /** Reconfigure the comparator object
  *
@@ -130,28 +129,25 @@ cy_rslt_t cyhal_comp_configure(cyhal_comp_t *obj, const cyhal_comp_config_t cfg)
 /** Gets the result of the comparator object
  *
  * @param[in]  obj    The comparator object
- * @param[out] output The comparator output state
- * @return The value of the comparator output request
+ * @return The comparator output state
  */
-cy_rslt_t cyhal_comp_output(cyhal_comp_t *obj, bool *output);
+bool cyhal_comp_output(cyhal_comp_t *obj);
 
 /** Register/clear an interrupt handler for the comparator toggle IRQ event
  *
  * @param[in] obj         The comparator object
  * @param[in] handler     The function to call when the specified event happens
  * @param[in] handler_arg Generic argument that will be provided to the handler when called
- * @return The status of the register_irq request
  */
-cy_rslt_t cyhal_comp_register_irq(cyhal_comp_t *obj, cyhal_comp_irq_handler handler, void *handler_arg);
+void cyhal_comp_register_irq(cyhal_comp_t *obj, cyhal_comp_irq_handler handler, void *handler_arg);
 
 /** Enable or Disable the comparator IRQ
  *
  * @param[in] obj    The comparator object
  * @param[in] event  The comparator IRQ event
  * @param[in] enable True to turn on interrupts, False to turn off
- * @return The status of the irq_enable request
  */
-cy_rslt_t cyhal_cyhal_comp_irq_enable(cyhal_comp_t *obj, cyhal_comp_irq_event_t event, bool enable);
+void cyhal_cyhal_comp_irq_enable(cyhal_comp_t *obj, cyhal_comp_irq_event_t event, bool enable);
 
 /** \} group_hal_comp_functions */
 

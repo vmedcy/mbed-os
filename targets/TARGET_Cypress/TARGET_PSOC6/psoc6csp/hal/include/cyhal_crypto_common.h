@@ -2,9 +2,9 @@
 * \file cyhal_crypto_common.h
 *
 * Description:
-* This file provides common defines and addresses required by drivers using the 
+* This file provides common defines and addresses required by drivers using the
 * Crypto block.
-* 
+*
 ********************************************************************************
 * \copyright
 * Copyright 2018-2019 Cypress Semiconductor Corporation
@@ -27,6 +27,8 @@
 
 #include "cy_device.h"
 #include "cy_pdl.h"
+#include "cy_result.h"
+#include "cyhal_hw_types.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -47,7 +49,7 @@ extern CRYPTO_Type* cyhal_CRYPTO_BASE_ADDRESSES[CYHAL_CRYPTO_INST_COUNT];
 /** Reserve the Crypto block and enable it.
  *
  * @param[out]  base Base address to the Crypto block.
- * @param[out]  obj resource inst for the function (eg. CRC, TRNG) in the Crypto block. 
+ * @param[out]  obj resource inst for the function (eg. CRC, TRNG) in the Crypto block.
  * @return The status of the reserve request.
  */
 cy_rslt_t cyhal_crypto_reserve(CRYPTO_Type** base, cyhal_resource_inst_t *resource);
@@ -55,11 +57,9 @@ cy_rslt_t cyhal_crypto_reserve(CRYPTO_Type** base, cyhal_resource_inst_t *resour
 /** Free the Crypto block and disable it.
  *
  * @param[in]  base Base address to the Crypto block.
- * @param[in]  obj resource inst for the funtion in Crypto block. 
-
- * @return The status of the free request.
+ * @param[in]  obj resource inst for the funtion in Crypto block.
  */
-cy_rslt_t cyhal_crypto_free(CRYPTO_Type* base, const cyhal_resource_inst_t *resource);
+void cyhal_crypto_free(CRYPTO_Type* base, const cyhal_resource_inst_t *resource);
 
 #if defined(__cplusplus)
 }

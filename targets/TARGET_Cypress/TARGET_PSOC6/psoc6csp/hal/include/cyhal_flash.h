@@ -43,7 +43,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cy_result.h"
-#include "cyhal_implementation.h"
+#include "cyhal_hw_types.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -96,18 +96,16 @@ cy_rslt_t cyhal_flash_init(cyhal_flash_t *obj);
 /** Uninitialize the flash peripheral and the flash_t object
  *
  * @param[out] obj The flash object.
- * @return The status of the init request
  */
-cy_rslt_t cyhal_flash_free(cyhal_flash_t *obj);
+void cyhal_flash_free(cyhal_flash_t *obj);
 
-/** Gets key flash charactoristics including the start address size, 
+/** Gets key flash charactoristics including the start address size,
  * and erase values
  *
  * @param[in]  obj  The flash object.
  * @param[out] info The flash configuration info.
- * @return The status of the get_info request.
  */
-cy_rslt_t cyhal_flash_get_info(const cyhal_flash_t *obj, cyhal_flash_info_t *info);
+void cyhal_flash_get_info(const cyhal_flash_t *obj, cyhal_flash_info_t *info);
 
 /** Read data starting at defined address
  *
@@ -202,10 +200,9 @@ cy_rslt_t cyhal_flash_start_program(cyhal_flash_t *obj, uint32_t address, const 
 /** Reports a successful operation result, reason of failure or busy status
  *
  * @param[in]  obj      The Flash object being operated on
- * @param[out] complete Whether the flash operation is complete
- * @return The status of the is_operation_complete request
+ * @return Whether the flash operation is complete
  */
-cy_rslt_t cyhal_flash_is_operation_complete(cyhal_flash_t *obj, bool *complete);
+bool cyhal_flash_is_operation_complete(cyhal_flash_t *obj);
 
 /** \} group_hal_flash_functions */
 

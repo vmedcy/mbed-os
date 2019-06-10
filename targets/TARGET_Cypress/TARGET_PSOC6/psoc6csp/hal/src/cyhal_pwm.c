@@ -4,7 +4,7 @@
 * \brief
 * Provides a high level interface for interacting with the Cypress PWM. This is
 * a wrapper around the lower level PDL API.
-* 
+*
 ********************************************************************************
 * \copyright
 * Copyright 2018-2019 Cypress Semiconductor Corporation
@@ -27,6 +27,7 @@
 #include "cyhal_pwm.h"
 #include "cyhal_gpio.h"
 #include "cyhal_interconnect.h"
+#include "cyhal_utils.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -66,7 +67,7 @@ cy_rslt_t cyhal_pwm_init(cyhal_pwm_t *obj, cyhal_gpio_t pin, const cyhal_clock_d
         map = CY_UTILS_GET_RESOURCE(pin, cyhal_pin_map_tcpwm_line_compl);
     if (NULL == map)
         return CYHAL_PWM_RSLT_BAD_ARGUMENT;
-    
+
     cyhal_resource_inst_t pwm_inst = *map->inst;
     if (CY_RSLT_SUCCESS != (result = cyhal_hwmgr_reserve(&pwm_inst)))
         return result;
@@ -99,10 +100,9 @@ cy_rslt_t cyhal_pwm_init(cyhal_pwm_t *obj, cyhal_gpio_t pin, const cyhal_clock_d
                     obj->clock_hz = cy_PeriClkFreqHz / div;
                 }
             }
-            bool configured;
+
             if (CY_RSLT_SUCCESS == result &&
-                CY_RSLT_SUCCESS == (result = cyhal_hwmgr_is_configured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num, &configured)) &&
-                !configured)
+                !cyhal_hwmgr_is_configured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num))
             {
                 static const cy_stc_tcpwm_pwm_config_t config =
                 {
@@ -132,68 +132,53 @@ cy_rslt_t cyhal_pwm_init(cyhal_pwm_t *obj, cyhal_gpio_t pin, const cyhal_clock_d
                 /* .countInputMode    = */ CY_TCPWM_INPUT_LEVEL,
                 /* .countInput        = */ CY_TCPWM_INPUT_1
                 };
-                if (CY_TCPWM_SUCCESS == Cy_TCPWM_PWM_Init(obj->base, obj->resource.channel_num, &config))
+                result = Cy_TCPWM_PWM_Init(obj->base, obj->resource.channel_num, &config);
+                if (CY_TCPWM_SUCCESS == result)
+                {
                     result = cyhal_hwmgr_set_configured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num);
-                else
-                    result = CYHAL_PWM_RSLT_FAILED_INIT;
+                }
             }
         }
     }
     if (result == CY_RSLT_SUCCESS)
+    {
         Cy_TCPWM_PWM_Enable(obj->base, obj->resource.channel_num);
+    }
     else
+    {
         cyhal_pwm_free(obj);
+    }
+
     return result;
 }
 
-cy_rslt_t cyhal_pwm_free(cyhal_pwm_t *obj)
+void cyhal_pwm_free(cyhal_pwm_t *obj)
 {
-    cy_rslt_t result, ret = CY_RSLT_SUCCESS;
-    if (NULL == obj)
-        return CYHAL_PWM_RSLT_BAD_ARGUMENT;
-    if (obj->pin != CYHAL_NC_PIN_VALUE)
+    CY_ASSERT(NULL != obj);
+
+    if (CYHAL_NC_PIN_VALUE != obj->pin)
     {
-        ret = cyhal_gpio_free(obj->pin);
-        if (ret == CY_RSLT_SUCCESS)
-            obj->pin = CYHAL_NC_PIN_VALUE_GPIO_VALUE;
+        cyhal_gpio_free(obj->pin);
+        obj->pin = CYHAL_NC_PIN_VALUE;
     }
 
     if (NULL != obj->base)
     {
         Cy_TCPWM_PWM_Disable(obj->base, obj->resource.channel_num);
-        result = cyhal_hwmgr_set_unconfigured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num);
-        if (ret == CY_RSLT_SUCCESS)
-            ret = result;
+        cyhal_hwmgr_set_unconfigured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num);
 
-        result = cyhal_hwmgr_free(&(obj->resource));
-        if (result == CY_RSLT_SUCCESS)
-        {
-            obj->base = NULL;
-            obj->resource.type = CYHAL_RSC_INVALID;
-        }
-
-        if (ret == CY_RSLT_SUCCESS)
-            ret = result;
+        cyhal_hwmgr_free(&(obj->resource));
+        obj->base = NULL;
+        obj->resource.type = CYHAL_RSC_INVALID;
     }
 
     if (obj->dedicated_clock)
     {
-        if (CY_SYSCLK_SUCCESS != Cy_SysClk_PeriphDisableDivider(obj->clock.div_type, obj->clock.div_num) &&
-            ret == CY_RSLT_SUCCESS)
-        {
-            ret = CYHAL_PWM_RSLT_FAILED_CLOCK;
-        }
-        else
-        {
-            result = cyhal_hwmgr_free_clock(&(obj->clock));
-            if (result == CY_RSLT_SUCCESS)
-                obj->dedicated_clock = false;
-
-            if (ret == CY_RSLT_SUCCESS)
-                ret = result;
-        }
+        cy_en_sysclk_status_t rslt = Cy_SysClk_PeriphDisableDivider(obj->clock.div_type, obj->clock.div_num);
+        CY_ASSERT(CY_SYSCLK_SUCCESS == rslt);
+        cyhal_hwmgr_free_clock(&(obj->clock));
+        obj->dedicated_clock = false;
     }
-    return ret;
 }
 
 static cy_rslt_t cyhal_pwm_set_period_and_compare(cyhal_pwm_t *obj, uint32_t period, uint32_t compare)

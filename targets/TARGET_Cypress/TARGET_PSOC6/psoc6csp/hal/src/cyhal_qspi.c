@@ -2,9 +2,9 @@
 * \file cyhal_qspi.c
 *
 * Description:
-* Provides a high level interface for interacting with the Cypress QSPI (SMIF). 
+* Provides a high level interface for interacting with the Cypress QSPI (SMIF).
 * This is a wrapper around the lower level PDL API.
-* 
+*
 ********************************************************************************
 * \copyright
 * Copyright 2018-2019 Cypress Semiconductor Corporation
@@ -23,9 +23,11 @@
 * limitations under the License.
 *******************************************************************************/
 
-#include "cyhal_qspi.h"
 #include "cy_smif.h"
+#include "cyhal_utils.h"
+#include "cyhal_qspi.h"
 #include "cyhal_hwmgr.h"
+#include "cyhal_gpio.h"
 #include "cyhal_interconnect.h"
 
 #if defined(__cplusplus)
@@ -46,12 +48,12 @@ static const cy_stc_smif_config_t default_qspi_config =
 {
     .mode = (uint32_t)CY_SMIF_NORMAL,
     .deselectDelay = QSPI_DESELECT_DELAY,
-    .rxClockSel = (uint32_t)CY_SMIF_SEL_INTERNAL_CLK,
+    .rxClockSel = (uint32_t)CY_SMIF_SEL_INV_INTERNAL_CLK,
     .blockEvent = (uint32_t)CY_SMIF_BUS_ERROR,
 };
 
 /* List of available QSPI instances */
-SMIF_Type * smif_base_addresses[CY_IP_MXSMIF_INSTANCES] =
+SMIF_Type *smif_base_addresses[CY_IP_MXSMIF_INSTANCES] =
 {
 #ifdef SMIF0
     SMIF0,
@@ -149,17 +151,15 @@ static void (*cyhal_smif_intr_dispatcher_table[CY_IP_MXSMIF_INSTANCES])() =
 /* Check if pin valid as resource and reserve it */
 static cy_rslt_t check_pin_and_reserve(cyhal_gpio_t pin)
 {
-    cy_rslt_t result;
     cyhal_resource_inst_t pin_rsc = cyhal_utils_get_gpio_resource(pin);
-    result = cyhal_hwmgr_reserve(&pin_rsc);
-    return result;
+    return cyhal_hwmgr_reserve(&pin_rsc);
 }
 
 /* Checks what pins are provided by user and calls check_pin_and_reserve for each */
 static cy_rslt_t make_pin_reservations(cyhal_qspi_t *obj)
 {
     cy_rslt_t result;
-        
+
     /* reserve the SCLK pin */
     result = check_pin_and_reserve(obj->pin_sclk);
 
@@ -206,81 +206,64 @@ static cy_rslt_t make_pin_reservations(cyhal_qspi_t *obj)
     /* reserve the obj->pin_io7 pin */
     if ((NC != obj->pin_io7) && (CY_RSLT_SUCCESS == result))
     {
-        result = check_pin_and_reserve(obj->pin_io7);        
-    }
-    return result;
-}
-
-/* Disconnect (interconnect) pin and free it (hwmgr) as resource */
-static cy_rslt_t free_pin(cyhal_gpio_t pin)
-{
-    cyhal_resource_inst_t rsc;
-    cy_rslt_t result = cyhal_disconnect_pin(pin);
-    if (CY_RSLT_SUCCESS == result)
-    {
-        rsc = cyhal_utils_get_gpio_resource(pin);
-        result = cyhal_hwmgr_free(&rsc);
+        result = check_pin_and_reserve(obj->pin_io7);
     }
     return result;
 }
 
 /* Free all QSPI pins */
-static cy_rslt_t free_pin_connections(cyhal_qspi_t *obj)
+static void free_pin_connections(cyhal_qspi_t *obj)
 {
-    cy_rslt_t result = CY_RSLT_SUCCESS;
-    cy_rslt_t ret_result = CY_RSLT_SUCCESS;
-
-    if (NC != obj->pin_sclk)
+    if (CYHAL_NC_PIN_VALUE != obj->pin_sclk)
     {
-        result = free_pin(obj->pin_sclk);
-        ret_result = CY_RSLT_SUCCESS == result ? ret_result : result;
+        cyhal_utils_disconnect_and_free(obj->pin_sclk);
+        obj->pin_sclk = CYHAL_NC_PIN_VALUE;
     }
-    if (NC != obj->pin_ssel)
+    if (CYHAL_NC_PIN_VALUE != obj->pin_ssel)
     {
-        result = free_pin(obj->pin_ssel);
-        ret_result = CY_RSLT_SUCCESS == result ? ret_result : result;
+        cyhal_utils_disconnect_and_free(obj->pin_ssel);
+        obj->pin_ssel = CYHAL_NC_PIN_VALUE;
     }
-    if (NC != obj->pin_io0)
+    if (CYHAL_NC_PIN_VALUE != obj->pin_io0)
     {
-        result = free_pin(obj->pin_io0);
-        ret_result = CY_RSLT_SUCCESS == result ? ret_result : result;
+        cyhal_utils_disconnect_and_free(obj->pin_io0);
+        obj->pin_io0 = CYHAL_NC_PIN_VALUE;
     }
-    if (NC != obj->pin_io1)
+    if (CYHAL_NC_PIN_VALUE != obj->pin_io1)
     {
-        result = free_pin(obj->pin_io1);
-        ret_result = CY_RSLT_SUCCESS == result ? ret_result : result;
+        cyhal_utils_disconnect_and_free(obj->pin_io1);
+        obj->pin_io1 = CYHAL_NC_PIN_VALUE;
     }
-    if (NC != obj->pin_io2)
+    if (CYHAL_NC_PIN_VALUE != obj->pin_io2)
     {
-        result = free_pin(obj->pin_io2);
-        ret_result = CY_RSLT_SUCCESS == result ? ret_result : result;
+        cyhal_utils_disconnect_and_free(obj->pin_io2);
+        obj->pin_io2 = CYHAL_NC_PIN_VALUE;
     }
-    if (NC != obj->pin_io3)
+    if (CYHAL_NC_PIN_VALUE != obj->pin_io3)
     {
-        result = free_pin(obj->pin_io3);
-        ret_result = CY_RSLT_SUCCESS == result ? ret_result : result;
+        cyhal_utils_disconnect_and_free(obj->pin_io3);
+        obj->pin_io3 = CYHAL_NC_PIN_VALUE;
     }
-    if (NC != obj->pin_io4)
+    if (CYHAL_NC_PIN_VALUE != obj->pin_io4)
     {
-        result = free_pin(obj->pin_io4);
-        ret_result = CY_RSLT_SUCCESS == result ? ret_result : result;
+        cyhal_utils_disconnect_and_free(obj->pin_io4);
+        obj->pin_io4 = CYHAL_NC_PIN_VALUE;
     }
-    if (NC != obj->pin_io5)
+    if (CYHAL_NC_PIN_VALUE != obj->pin_io5)
     {
-        result = free_pin(obj->pin_io5);
-        ret_result = CY_RSLT_SUCCESS == result ? ret_result : result;
+        cyhal_utils_disconnect_and_free(obj->pin_io5);
+        obj->pin_io5 = CYHAL_NC_PIN_VALUE;
     }
-    if (NC != obj->pin_io6)
+    if (CYHAL_NC_PIN_VALUE != obj->pin_io6)
     {
-        result = free_pin(obj->pin_io6);
-        ret_result = CY_RSLT_SUCCESS == result ? ret_result : result;
+        cyhal_utils_disconnect_and_free(obj->pin_io6);
+        obj->pin_io6 = CYHAL_NC_PIN_VALUE;
     }
-    if (NC != obj->pin_io7)
+    if (CYHAL_NC_PIN_VALUE != obj->pin_io7)
     {
-        result = free_pin(obj->pin_io7);
-        ret_result = CY_RSLT_SUCCESS == result ? ret_result : result;
+        cyhal_utils_disconnect_and_free(obj->pin_io7);
+        obj->pin_io7 = CYHAL_NC_PIN_VALUE;
     }
-    return ret_result;
 }
 
 /*******************************************************************************
@@ -297,19 +280,15 @@ static cy_en_smif_txfr_width_t get_cyhal_bus_width(cyhal_qspi_bus_width_t bus_wi
         case CYHAL_QSPI_CFG_BUS_SINGLE:
             cyhal_bus_width = CY_SMIF_WIDTH_SINGLE;
             break;
-
         case CYHAL_QSPI_CFG_BUS_DUAL:
             cyhal_bus_width = CY_SMIF_WIDTH_DUAL;
             break;
-
         case CYHAL_QSPI_CFG_BUS_QUAD:
             cyhal_bus_width = CY_SMIF_WIDTH_QUAD;
             break;
-
         case CYHAL_QSPI_CFG_BUS_OCTAL:
             cyhal_bus_width = CY_SMIF_WIDTH_OCTAL;
             break;
-
         default:
             cyhal_bus_width = CY_SMIF_WIDTH_SINGLE;
     }
@@ -352,19 +331,15 @@ static uint32_t get_size(cyhal_qspi_size_t hal_size)
         case CYHAL_QSPI_CFG_SIZE_8:
             size = 1;
             break;
-
         case CYHAL_QSPI_CFG_SIZE_16:
             size = 2;
             break;
-
         case CYHAL_QSPI_CFG_SIZE_24:
             size = 3;
             break;
-
         case CYHAL_QSPI_CFG_SIZE_32:
             size = 4;
             break;
-
         default:
             size = 0;
     }
@@ -388,15 +363,15 @@ static cy_rslt_t qspi_command_transfer(cyhal_qspi_t *obj, const cyhal_qspi_comma
 
     convert_to_cyhal_cmd_config(command, &cyhal_cmd_config);
 
-    /*  Does not support different bus_width for address and alt. 
-     * bus_width is selected based on what (address or alt) is enabled. 
+    /*  Does not support different bus_width for address and alt.
+     * bus_width is selected based on what (address or alt) is enabled.
      * If both are enabled, bus_width of alt is selected
      * It is either possible to support 1 byte alt with different bus_width
      * by sending the alt byte as command as done in Cy_SMIF_Memslot_CmdRead()
      * in cyhal_smif_memslot.c or support multiple bytes of alt with same bus_width
-     * as address by passing the alt bytes as cmd_param to Cy_SMIF_TransmitCommand(). 
+     * as address by passing the alt bytes as cmd_param to Cy_SMIF_TransmitCommand().
      * Second approach is implemented here. This restriction is because of the way
-     * PDL API is implemented. 
+     * PDL API is implemented.
      */
 
     if (!command->address.disabled && !command->alt.disabled)
@@ -433,7 +408,7 @@ static cy_rslt_t qspi_command_transfer(cyhal_qspi_t *obj, const cyhal_qspi_comma
 }
 
 /* Checks, that user provided all needed pins and returns max bus width */
-static cy_rslt_t check_user_pins(cyhal_qspi_t * obj, cyhal_qspi_bus_width_t * max_width)
+static cy_rslt_t check_user_pins(cyhal_qspi_t *obj, cyhal_qspi_bus_width_t *max_width)
 {
     cy_rslt_t result = CY_RSLT_SUCCESS;
     /* Single mode */
@@ -506,10 +481,10 @@ static cy_rslt_t check_user_pins(cyhal_qspi_t * obj, cyhal_qspi_bus_width_t * ma
 }
 
 /* Based on ssel pin chosen, determines SMIF slave select parameter and pin mapping */
-static const cyhal_resource_pin_mapping_t * get_slaveselect(cyhal_gpio_t ssel, cy_en_smif_slave_select_t *slave_select)
+static const cyhal_resource_pin_mapping_t *get_slaveselect(cyhal_gpio_t ssel, cy_en_smif_slave_select_t *slave_select)
 {
     bool pin_found = false;
-    const cyhal_resource_pin_mapping_t * pin_mapping = CY_UTILS_GET_RESOURCE(ssel, cyhal_pin_map_smif_spi_select0);
+    const cyhal_resource_pin_mapping_t *pin_mapping = CY_UTILS_GET_RESOURCE(ssel, cyhal_pin_map_smif_spi_select0);
     if (NULL != pin_mapping)
     {
         pin_found = true;
@@ -540,17 +515,17 @@ static const cyhal_resource_pin_mapping_t * get_slaveselect(cyhal_gpio_t ssel, c
         {
             pin_found = true;
             *slave_select = CY_SMIF_SLAVE_SELECT_3;
-        }  
+        }
     }
 
     return pin_mapping;
 }
 
 /* Based on data pins chosen, determines SMIF data select parameter */
-static const cyhal_resource_pin_mapping_t * get_dataselect(cyhal_gpio_t io0, cy_en_smif_data_select_t *data_select)
+static const cyhal_resource_pin_mapping_t *get_dataselect(cyhal_gpio_t io0, cy_en_smif_data_select_t *data_select)
 {
     bool pin_found = false;
-    const cyhal_resource_pin_mapping_t * pin_mapping = CY_UTILS_GET_RESOURCE(io0, cyhal_pin_map_smif_spi_data0);
+    const cyhal_resource_pin_mapping_t *pin_mapping = CY_UTILS_GET_RESOURCE(io0, cyhal_pin_map_smif_spi_data0);
     if (NULL != pin_mapping)
     {
         pin_found = true;
@@ -586,51 +561,6 @@ static const cyhal_resource_pin_mapping_t * get_dataselect(cyhal_gpio_t io0, cy_
     return pin_mapping;
 }
 
-/* Check if obj->base instance is instance of QSPI */
-static bool check_instance_is_correct(cyhal_qspi_t *obj)
-{
-    bool instance_correct = false;
-    uint32_t i;
-
-    for (i=0;i<CY_IP_MXSMIF_INSTANCES;i++)
-    {
-        if (obj->base == smif_base_addresses[i])
-        {
-            instance_correct = true;
-            break;
-        }
-    }
-
-    return instance_correct;
-}
-
-/* Free all allocated resources */
-static cy_rslt_t free_resources(cyhal_qspi_t *obj)
-{
-    cy_rslt_t result;
-    cy_rslt_t ret_result = CY_RSLT_SUCCESS;
-
-    if (check_instance_is_correct(obj))
-    {
-        Cy_SMIF_DeInit(obj->base);
-    }
-    else
-    {
-        ret_result = CYHAL_QSPI_RSLT_ERR_INSTANCE;
-    }
-
-    if (CYHAL_RSC_INVALID != obj->resource.type)
-    {
-        result = cyhal_hwmgr_free(&(obj->resource));
-        ret_result = CY_RSLT_SUCCESS == result ? ret_result : result;
-    }
-
-    result = free_pin_connections(obj);
-    ret_result = (CY_RSLT_SUCCESS == result) ? ret_result : result;
-
-    return ret_result;
-}
-
 /*******************************************************************************
 *       Functions
 *******************************************************************************/
@@ -642,6 +572,8 @@ cy_rslt_t cyhal_qspi_init(
 {
     /* mode (CPOL and CPHA) is not supported in PSoC 6 */
     (void)mode;
+    memset(obj, 0, sizeof(cyhal_qspi_t));
+    obj->resource.type = CYHAL_RSC_INVALID;
 
     cy_en_smif_slave_select_t slave_select = CY_SMIF_SLAVE_SELECT_0;
     cy_en_smif_data_select_t data_select = CY_SMIF_DATA_SEL0;
@@ -658,7 +590,7 @@ cy_rslt_t cyhal_qspi_init(
     obj->pin_io6 = io6;
     obj->pin_io7 = io7;
 
-    cy_rslt_t result = check_user_pins(obj, &max_width);  
+    cy_rslt_t result = check_user_pins(obj, &max_width);
 
     const cyhal_resource_pin_mapping_t *ssel_map = NULL;
     const cyhal_resource_pin_mapping_t *io0_map = NULL;
@@ -669,7 +601,7 @@ cy_rslt_t cyhal_qspi_init(
     const cyhal_resource_pin_mapping_t *io5_map = NULL;
     const cyhal_resource_pin_mapping_t *io6_map = NULL;
     const cyhal_resource_pin_mapping_t *io7_map = NULL;
-    const cyhal_resource_pin_mapping_t *sclk_map = CY_UTILS_GET_RESOURCE(sclk, cyhal_pin_map_smif_spi_clk);    
+    const cyhal_resource_pin_mapping_t *sclk_map = CY_UTILS_GET_RESOURCE(sclk, cyhal_pin_map_smif_spi_clk);
 
     if (NULL == sclk_map)
     {
@@ -686,7 +618,7 @@ cy_rslt_t cyhal_qspi_init(
         {
             obj->slave_select = slave_select;
         }
-        
+
     }
     if (CY_RSLT_SUCCESS == result)
     {
@@ -699,7 +631,7 @@ cy_rslt_t cyhal_qspi_init(
         {
             obj->data_select = data_select;
         }
-        
+
     }
     if (CY_RSLT_SUCCESS == result)
     {
@@ -731,7 +663,7 @@ cy_rslt_t cyhal_qspi_init(
                     io7_map = CY_UTILS_GET_RESOURCE(obj->pin_io7, cyhal_pin_map_smif_spi_data7);
                     if ((NULL == io4_map) || (NULL == io5_map) || (NULL == io6_map) || (NULL == io7_map))
                     {
-                        result = CYHAL_QSPI_RSLT_ERR_PIN;    
+                        result = CYHAL_QSPI_RSLT_ERR_PIN;
                     }
                 }
                 break;
@@ -753,7 +685,7 @@ cy_rslt_t cyhal_qspi_init(
                     io1_map = CY_UTILS_GET_RESOURCE(obj->pin_io1, cyhal_pin_map_smif_spi_data5);
                     if (NULL == io1_map)
                     {
-                        result = CYHAL_QSPI_RSLT_ERR_PIN;    
+                        result = CYHAL_QSPI_RSLT_ERR_PIN;
                     }
                 }
                 if (max_width >= CYHAL_QSPI_CFG_BUS_QUAD)
@@ -762,7 +694,7 @@ cy_rslt_t cyhal_qspi_init(
                     io3_map = CY_UTILS_GET_RESOURCE(obj->pin_io3, cyhal_pin_map_smif_spi_data7);
                     if ((NULL == io2_map) || (NULL == io3_map))
                     {
-                        result = CYHAL_QSPI_RSLT_ERR_PIN;    
+                        result = CYHAL_QSPI_RSLT_ERR_PIN;
                     }
                 }
                 break;
@@ -805,7 +737,7 @@ cy_rslt_t cyhal_qspi_init(
         }
     }
     /* Pins io2 and io3 are only available in CY_SMIF_DATA_SEL0 and CY_SMIF_DATA_SEL2 modes */
-    if ((CY_RSLT_SUCCESS == result) && ((data_select == CY_SMIF_DATA_SEL0) || (data_select == CY_SMIF_DATA_SEL2)) 
+    if ((CY_RSLT_SUCCESS == result) && ((data_select == CY_SMIF_DATA_SEL0) || (data_select == CY_SMIF_DATA_SEL2))
         && (max_width >= CYHAL_QSPI_CFG_BUS_QUAD))
     {
         if ((sclk_map->inst->block_num != io2_map->inst->block_num) ||
@@ -837,6 +769,11 @@ cy_rslt_t cyhal_qspi_init(
 
     if (CY_RSLT_SUCCESS == result)
     {
+        result = cyhal_hwmgr_reserve(&(obj->resource));
+    }
+
+    if (CY_RSLT_SUCCESS == result)
+    {
         result = cyhal_connect_pin(sclk_map);
         if (CY_RSLT_SUCCESS == result)
         {
@@ -850,7 +787,7 @@ cy_rslt_t cyhal_qspi_init(
         {
             result = cyhal_connect_pin(io1_map);
         }
-    }        
+    }
     if ((CY_RSLT_SUCCESS == result) && ((data_select == CY_SMIF_DATA_SEL0) || (data_select == CY_SMIF_DATA_SEL2)) &&
         (max_width >= CYHAL_QSPI_CFG_BUS_QUAD))
     {
@@ -859,7 +796,7 @@ cy_rslt_t cyhal_qspi_init(
         {
             result = cyhal_connect_pin(io3_map);
         }
-    } 
+    }
     if ((CY_RSLT_SUCCESS == result) && (data_select == CY_SMIF_DATA_SEL0) && (max_width >= CYHAL_QSPI_CFG_BUS_OCTAL))
     {
         result = cyhal_connect_pin(io4_map);
@@ -882,25 +819,14 @@ cy_rslt_t cyhal_qspi_init(
         result = cyhal_qspi_frequency(obj, hz);
     }
 
-    bool configured = false;
-    if (CY_RSLT_SUCCESS == result)
-    {
-        result = cyhal_hwmgr_is_configured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num,
-            &configured);
-    }
-
+    bool configured = cyhal_hwmgr_is_configured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num);
     if ((CY_RSLT_SUCCESS == result) && !configured)
     {
         result = (cy_rslt_t)Cy_SMIF_Init(obj->base, &default_qspi_config, TIMEOUT_10_MS, &obj->context);
 
         Cy_SMIF_SetDataSelect(obj->base, slave_select, data_select);
         Cy_SMIF_Enable(obj->base, &obj->context);
-        cyhal_hwmgr_set_configured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num);
-    }
-
-    if (CY_RSLT_SUCCESS == result)
-    {
-        result = cyhal_hwmgr_reserve(&(obj->resource));
+        result = cyhal_hwmgr_set_configured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num);
     }
 
     if (CY_RSLT_SUCCESS == result)
@@ -918,29 +844,25 @@ cy_rslt_t cyhal_qspi_init(
 
     if (CY_RSLT_SUCCESS != result)
     {
-        free_resources(obj);
+        cyhal_qspi_free(obj);
     }
 
     return result;
 }
 
-cy_rslt_t cyhal_qspi_free(cyhal_qspi_t *obj)
+void cyhal_qspi_free(cyhal_qspi_t *obj)
 {
-    cy_rslt_t result;
-    cy_rslt_t ret_result;
-
-    if (NULL != obj)
+    if (CYHAL_RSC_INVALID != obj->resource.type)
     {
-        ret_result = free_resources(obj);
-        result = cyhal_hwmgr_set_unconfigured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num);
-        ret_result = (CY_RSLT_SUCCESS == result) ? ret_result : result;
-    }
-    else
-    {
-        ret_result = CYHAL_QSPI_RSLT_ERR_INSTANCE;
+        if (obj->base != NULL)
+        {
+            Cy_SMIF_DeInit(obj->base);
+        }
+        cyhal_hwmgr_set_unconfigured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num);
+        cyhal_hwmgr_free(&(obj->resource));
     }
 
-    return ret_result;
+    free_pin_connections(obj);
 }
 
 cy_rslt_t cyhal_qspi_frequency(cyhal_qspi_t *obj, uint32_t hz)
@@ -967,9 +889,9 @@ cy_rslt_t cyhal_qspi_read(cyhal_qspi_t *obj, const cyhal_qspi_command_t *command
         /* Address is passed outside command during a read of more than 65536 bytes. Since that
          * read has to be split into multiple chunks, the address value needs to be incremented
          * after every chunk has been read. This requires either modifying the address stored in
-         * 'command' passed to read() which is not possible since command is a const pointer or 
+         * 'command' passed to read() which is not possible since command is a const pointer or
          * to create a copy of the command object. Instead of copying the object, the address is
-         * passed separately. 
+         * passed separately.
          */
         status = qspi_command_transfer(obj, command, addr, false);
 
@@ -1041,7 +963,7 @@ cy_rslt_t cyhal_qspi_write(cyhal_qspi_t *obj, const cyhal_qspi_command_t *comman
             status = (cy_rslt_t)Cy_SMIF_SendDummyCycles(obj->base, command->dummy_count);
         }
 
-        if (CY_SMIF_SUCCESS == status)
+        if ((CY_SMIF_SUCCESS == status) && (*length > 0))
         {
             status = (cy_rslt_t)Cy_SMIF_TransmitDataBlocking(obj->base, (uint8_t *)data, *length,
                                                       get_cyhal_bus_width(command->data.bus_width), &obj->context);
@@ -1063,7 +985,7 @@ cy_rslt_t cyhal_qspi_write_async(cyhal_qspi_t *obj, const cyhal_qspi_command_t *
             status = (cy_rslt_t)Cy_SMIF_SendDummyCycles(obj->base, command->dummy_count);
         }
 
-        if (CY_SMIF_SUCCESS == status)
+        if ((CY_SMIF_SUCCESS == status) && (*length > 0))
         {
             cy_smif_event_cb_t callback_dispatcher_ptr;
             if (obj->irq_cause & CYHAL_QSPI_IRQ_TRANSMIT_DONE)
@@ -1076,7 +998,6 @@ cy_rslt_t cyhal_qspi_write_async(cyhal_qspi_t *obj, const cyhal_qspi_command_t *
             }
             status = (cy_rslt_t)Cy_SMIF_TransmitData(obj->base, (uint8_t *)data, *length, 
                 get_cyhal_bus_width(command->data.bus_width), callback_dispatcher_ptr, &obj->context);
-
         }
     }
     return status;
@@ -1111,15 +1032,14 @@ cy_rslt_t cyhal_qspi_transfer(
     return status;
 }
 
-cy_rslt_t cyhal_qspi_register_irq(cyhal_qspi_t *obj, cyhal_qspi_irq_handler_t handler, void *handler_arg)
+void cyhal_qspi_register_irq(cyhal_qspi_t *obj, cyhal_qspi_irq_handler_t handler, void *handler_arg)
 {
     uint8_t idx = obj->resource.block_num;
     irq_data_stc[idx].handler = handler;
     irq_data_stc[idx].irq_arg = handler_arg;
-    return CY_RSLT_SUCCESS;
 }
 
-cy_rslt_t cyhal_qspi_irq_enable(cyhal_qspi_t *obj, cyhal_qspi_irq_event_t event, bool enable)
+void cyhal_qspi_irq_enable(cyhal_qspi_t *obj, cyhal_qspi_irq_event_t event, bool enable)
 {
     if (enable)
     {
@@ -1129,7 +1049,6 @@ cy_rslt_t cyhal_qspi_irq_enable(cyhal_qspi_t *obj, cyhal_qspi_irq_event_t event,
     {
         obj->irq_cause &= ~event;
     }
-    return CY_RSLT_SUCCESS;
 }
 
 #if defined(__cplusplus)

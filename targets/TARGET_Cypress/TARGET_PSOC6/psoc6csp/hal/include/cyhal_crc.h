@@ -42,7 +42,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cy_result.h"
-#include "cyhal_implementation.h"
+#include "cyhal_hw_types.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -99,9 +99,8 @@ cy_rslt_t cyhal_crc_init(cyhal_crc_t *obj);
 /** Release the CRC generator.
  *
  * @param[in,out] obj The CRC generator object
- * @return            The status of the free request
  */
-cy_rslt_t cyhal_crc_free(cyhal_crc_t *obj);
+void cyhal_crc_free(cyhal_crc_t *obj);
 
 /** Initializes a CRC calculation.
  *
@@ -109,9 +108,9 @@ cy_rslt_t cyhal_crc_free(cyhal_crc_t *obj);
  * @param[in] algorithm     The CRC algorithm to use for computations
  * @return The status of the compute request
  */
-__STATIC_INLINE cy_rslt_t cyhal_crc_start(cyhal_crc_t *obj, const crc_algorithm_t *algorithm);
+cy_rslt_t cyhal_crc_start(cyhal_crc_t *obj, const crc_algorithm_t *algorithm);
 
-/** Computes the CRC for the given data. This function can be called multiple times to 
+/** Computes the CRC for the given data. This function can be called multiple times to
  * provide addtional data. This CRC generator will compute the CRC for including all data
  * that was provided during previous calls.
  *
@@ -120,16 +119,16 @@ __STATIC_INLINE cy_rslt_t cyhal_crc_start(cyhal_crc_t *obj, const crc_algorithm_
  * @param[in] length The number of bytes of data to process
  * @return The status of the compute request
  */
-__STATIC_INLINE cy_rslt_t cyhal_crc_compute(const cyhal_crc_t *obj, const uint8_t *data, size_t length);
+cy_rslt_t cyhal_crc_compute(const cyhal_crc_t *obj, const uint8_t *data, size_t length);
 
-/** Provides final result for a CRC calculation. This will compute the CRC for all data that 
+/** Provides final result for a CRC calculation. This will compute the CRC for all data that
  * was provided when during the diffrent calls to cyhal_crc_compute.
  *
  * @param[in]  obj The CRC generator object
  * @param[out] crc The computed CRC
  * @return The status of the compute request
  */
-__STATIC_INLINE cy_rslt_t cyhal_crc_finish(const cyhal_crc_t *obj, uint32_t *crc);
+cy_rslt_t cyhal_crc_finish(const cyhal_crc_t *obj, uint32_t *crc);
 
 /** \} group_hal_crc_functions */
 

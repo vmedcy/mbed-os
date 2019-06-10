@@ -22,7 +22,10 @@
 * limitations under the License.
 *******************************************************************************/
 
+#include "cy_result.h"
 #include "cyhal_utils.h"
+#include "cyhal_hwmgr.h"
+#include "cyhal_interconnect.h"
 
 const cyhal_resource_pin_mapping_t *cyhal_utils_get_resource(cyhal_gpio_t pin, const cyhal_resource_pin_mapping_t* mappings, size_t count)
 {
@@ -34,4 +37,12 @@ const cyhal_resource_pin_mapping_t *cyhal_utils_get_resource(cyhal_gpio_t pin, c
         }
     }
     return NULL;
+}
+
+void cyhal_utils_disconnect_and_free(cyhal_gpio_t pin)
+{
+    cy_rslt_t rslt = cyhal_disconnect_pin(pin);
+    CY_ASSERT(CY_RSLT_SUCCESS == rslt);
+    cyhal_resource_inst_t rsc = cyhal_utils_get_gpio_resource(pin);
+    cyhal_hwmgr_free(&rsc);
 }

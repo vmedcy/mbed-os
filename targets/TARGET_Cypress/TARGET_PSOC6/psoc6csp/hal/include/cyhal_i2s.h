@@ -42,7 +42,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cy_result.h"
-#include "cyhal_implementation.h"
+#include "cyhal_hw_types.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -95,9 +95,8 @@ cy_rslt_t cyhal_i2s_init(cyhal_i2s_t *obj, cyhal_gpio_t tx_sck, cyhal_gpio_t tx_
 /** Deinitialize the i2s object
  *
  * @param[in,out] obj The i2s object
- * @return The status of the free request
  */
-cy_rslt_t cyhal_i2s_free(cyhal_i2s_t *obj);
+void cyhal_i2s_free(cyhal_i2s_t *obj);
 
 /** Configure the I2S frequency
  *
@@ -121,7 +120,7 @@ cy_rslt_t cyhal_i2s_mode(cyhal_i2s_t *obj, int is_slave);
  * @param[in,out] length in - Number of bytes to read, out - number of bytes read
  * @return The status of the read request
  */
-cy_rslt_t cyhal_i2s_read(cyhal_i2s_t *obj, char *data, int *length);
+cy_rslt_t cyhal_i2s_read(cyhal_i2s_t *obj, uint8_t *data, size_t *length);
 
 /** Blocking sending data
  *
@@ -131,7 +130,7 @@ cy_rslt_t cyhal_i2s_read(cyhal_i2s_t *obj, char *data, int *length);
  * @param[in] stop    Stop to be generated after the transfer is done
  * @return The status of the write request
  */
-cy_rslt_t cyhal_i2s_write(cyhal_i2s_t *obj, const char *data, int length, int stop);
+cy_rslt_t cyhal_i2s_write(cyhal_i2s_t *obj, const uint8_t *data, size_t length, bool stop);
 
 /** Start I2S asynchronous transfer
  *
@@ -157,18 +156,16 @@ cy_rslt_t cyhal_i2s_abort_async(cyhal_i2s_t *obj);
  * @param[in] obj         The I2S object
  * @param[in] handler     The callback handler which will be invoked when the interrupt fires
  * @param[in] handler_arg Generic argument that will be provided to the handler when called
- * @return The status of the register_irq request
  */
-cy_rslt_t cyhal_i2s_register_irq(cyhal_i2s_t *obj, cyhal_i2s_irq_handler handler, void *handler_arg);
+void cyhal_i2s_register_irq(cyhal_i2s_t *obj, cyhal_i2s_irq_handler handler, void *handler_arg);
 
 /** Configure I2S interrupt. This function is used for word-approach
  *
  * @param[in] obj      The I2S object
  * @param[in] event    The I2S IRQ type
  * @param[in] enable   True to turn on interrupts, False to turn off
- * @return The status of the irq_enable request
  */
-cy_rslt_t cyhal_i2s_irq_enable(cyhal_i2s_t *obj, cyhal_i2s_irq_t event, bool enable);
+void cyhal_i2s_irq_enable(cyhal_i2s_t *obj, cyhal_i2s_irq_t event, bool enable);
 
 /** \} group_hal_i2s_functions */
 

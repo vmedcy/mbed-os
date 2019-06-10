@@ -34,17 +34,21 @@ extern "C" {
 #define CYHAL_GARO31_INITSTATE          (0x04c11db7UL)
 #define CYHAL_FIRO31_INITSTATE          (0x04c11db7UL)
 
-#define MAX_TRNG_BIT_SIZE         (32UL)
+#define MAX_TRNG_BIT_SIZE               (32UL)
 
-__STATIC_INLINE cy_rslt_t cyhal_trng_generate(const cyhal_trng_t *obj, uint32_t *value)
+static inline uint32_t cyhal_trng_generate_internal(const cyhal_trng_t *obj)
 {
-    if(NULL == obj || NULL == value)
-        return CYHAL_TRNG_RSLT_ERR_BAD_ARGUMENT;
-
-    cy_en_crypto_status_t status = Cy_Crypto_Core_Trng(obj->base, CYHAL_GARO31_INITSTATE, CYHAL_FIRO31_INITSTATE, MAX_TRNG_BIT_SIZE, value);
-
-    return (CY_CRYPTO_SUCCESS == status) ? CY_RSLT_SUCCESS : CYHAL_TRNG_RSLT_ERR_HW;
+    CY_ASSERT(NULL != obj);
+    uint32_t value;
+    cy_en_crypto_status_t status = Cy_Crypto_Core_Trng(
+        obj->base, CYHAL_GARO31_INITSTATE, CYHAL_FIRO31_INITSTATE, MAX_TRNG_BIT_SIZE, &value);
+    (void)status;
+    CY_ASSERT(CY_CRYPTO_SUCCESS == status);
+    return value;
 }
+
+#define cyhal_trng_generate(obj) cyhal_trng_generate_internal(obj)
+
 
 #if defined(__cplusplus)
 }

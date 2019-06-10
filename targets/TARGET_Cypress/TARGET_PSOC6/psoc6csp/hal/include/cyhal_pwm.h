@@ -42,7 +42,7 @@
 #include <stdint.h>
 #include "cy_result.h"
 #include "cyhal_hwmgr.h"
-#include "cyhal_implementation.h"
+#include "cyhal_hw_types.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -80,9 +80,8 @@ cy_rslt_t cyhal_pwm_init(cyhal_pwm_t *obj, cyhal_gpio_t pin, const cyhal_clock_d
 /** Deinitialize the PWM object
  *
  * @param[in,out] obj The PWM object
- * @return The status of the free request
  */
-cy_rslt_t cyhal_pwm_free(cyhal_pwm_t *obj);
+void cyhal_pwm_free(cyhal_pwm_t *obj);
 
 /** Set the number of microseconds for the PWM period & pulse width
  *

@@ -42,7 +42,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cy_result.h"
-#include "cyhal_implementation.h"
+#include "cyhal_hw_types.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -80,12 +80,12 @@ extern "C" {
 #define CYHAL_SDIO_RSLT_ERR_CLOCK             CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, \
                                                              CYHAL_RSLT_MODULE_SDIO, \
                                                              CYHAL_SDIO_CLOCK_ERROR)
-                                                             
+
 /** Semaphore not initiated error define */
 #define CYHAL_SDIO_RSLT_ERR_SEMA_NOT_INITED   CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, \
                                                              CYHAL_RSLT_MODULE_SDIO, \
                                                              CYHAL_SDIO_SEMA_NOT_INITED)
-                                                             
+
 /** Error define based on SDIO lower function return value */
 #define CYHAL_SDIO_RSLT_ERR_FUNC_RET(retVal)  CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, \
                                                              CYHAL_RSLT_MODULE_SDIO, (retVal))
@@ -181,9 +181,8 @@ cy_rslt_t cyhal_sdio_init(cyhal_sdio_t *obj, cyhal_gpio_t cmd, cyhal_gpio_t clk,
  *  resource management.
  *
  * @param[in,out] obj The SDIO object
- * @return The status of the free request
  */
-cy_rslt_t cyhal_sdio_free(cyhal_sdio_t *obj);
+void cyhal_sdio_free(cyhal_sdio_t *obj);
 
 /** Configure the SDIO block.
  *
@@ -230,10 +229,9 @@ cy_rslt_t cyhal_sdio_transfer_async(cyhal_sdio_t *obj, cyhal_transfer_t directio
 /** Checks if the specified SDIO is in use
  *
  * @param[in]  obj  The SDIO peripheral to check
- * @param[out] busy Indication of whether the SDIO is still transmitting
- * @return The status of the is_busy request
+ * @return Indication of whether the SDIO is still transmitting
  */
-cy_rslt_t cyhal_sdio_is_busy(const cyhal_sdio_t *obj, bool *busy);
+bool cyhal_sdio_is_busy(const cyhal_sdio_t *obj);
 
 /** Abort an SDIO transfer
  *
@@ -247,18 +245,16 @@ cy_rslt_t cyhal_sdio_abort_async(const cyhal_sdio_t *obj);
  * @param[in] obj         The SDIO object
  * @param[in] handler     The callback handler which will be invoked when the interrupt fires
  * @param[in] handler_arg Generic argument that will be provided to the handler when called
- * @return The status of the register_irq request
  */
-cy_rslt_t cyhal_sdio_register_irq(cyhal_sdio_t *obj, cyhal_sdio_irq_handler handler, void *handler_arg);
+void cyhal_sdio_register_irq(cyhal_sdio_t *obj, cyhal_sdio_irq_handler handler, void *handler_arg);
 
 /** Configure sdio interrupt.
  *
  * @param[in] obj      The SDIO object
  * @param[in] event    The sdio IRQ type
  * @param[in] enable   Set to non-zero to enable events, or zero to disable them
- * @return The status of the irq_enable request
  */
-cy_rslt_t cyhal_sdio_irq_enable(cyhal_sdio_t *obj, cyhal_sdio_irq_event_t event, bool enable);
+void cyhal_sdio_irq_enable(cyhal_sdio_t *obj, cyhal_sdio_irq_event_t event, bool enable);
 
 /** \} group_hal_sdio_functions */
 

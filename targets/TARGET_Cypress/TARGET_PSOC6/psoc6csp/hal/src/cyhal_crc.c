@@ -4,7 +4,7 @@
 * Description:
 * Provides a high level interface for interacting with the Cypress CRC. This is
 * a wrapper around the lower level PDL API.
-* 
+*
 ********************************************************************************
 * \copyright
 * Copyright 2018-2019 Cypress Semiconductor Corporation
@@ -23,35 +23,30 @@
 * limitations under the License.
 *******************************************************************************/
 
-#include "cyhal_hwmgr.h"
+#include "cy_crypto_core_crc.h"
 #include "cyhal_crypto_common.h"
 #include "cyhal_crc_impl.h"
-#include "cy_crypto_core_crc.h"
+#include "cyhal_hwmgr.h"
 
 /*******************************************************************************
 *       Functions
 *******************************************************************************/
 cy_rslt_t cyhal_crc_init(cyhal_crc_t *obj)
 {
-    if(NULL == obj)
+    if (NULL == obj)
         return CYHAL_CRC_RSLT_ERR_BAD_ARGUMENT;
-    
+
     memset(obj, 0, sizeof(cyhal_crc_t));
     obj->resource.type = CYHAL_RSC_CRC;
     return cyhal_crypto_reserve(&(obj->base), &(obj->resource));
 }
 
-cy_rslt_t cyhal_crc_free(cyhal_crc_t *obj)
+void cyhal_crc_free(cyhal_crc_t *obj)
 {
-    if(NULL == obj)
-        return CYHAL_CRC_RSLT_ERR_BAD_ARGUMENT;
-
-    cy_rslt_t result = CY_RSLT_SUCCESS; 
+    CY_ASSERT(NULL != obj || obj->resource.type != CYHAL_RSC_CRC);
     if (obj->resource.type != CYHAL_RSC_INVALID)
     {
-        result = cyhal_crypto_free(obj->base, &(obj->resource));
-        if(result == CY_RSLT_SUCCESS)
-            memset(obj, 0, sizeof(cyhal_crc_t));
+        cyhal_crypto_free(obj->base, &(obj->resource));
+        obj->resource.type = CYHAL_RSC_INVALID;
     }
-    return result;
 }

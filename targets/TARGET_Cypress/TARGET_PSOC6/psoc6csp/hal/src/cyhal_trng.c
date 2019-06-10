@@ -4,7 +4,7 @@
 * Description:
 * Provides a high level interface for interacting with the Cypress TRNG. This is
 * a wrapper around the lower level PDL API.
-* 
+*
 ********************************************************************************
 * \copyright
 * Copyright 2018-2019 Cypress Semiconductor Corporation
@@ -41,17 +41,8 @@ cy_rslt_t cyhal_trng_init(cyhal_trng_t *obj)
     return cyhal_crypto_reserve(&(obj->base), &(obj->resource));
 }
 
-cy_rslt_t cyhal_trng_free(cyhal_trng_t *obj)
+void cyhal_trng_free(cyhal_trng_t *obj)
 {
-    if(NULL == obj)
-        return CYHAL_TRNG_RSLT_ERR_BAD_ARGUMENT;
-
-    cy_rslt_t result = CY_RSLT_SUCCESS; 
-    if (obj->resource.type != CYHAL_RSC_INVALID)
-    {
-        result = cyhal_crypto_free(obj->base, &(obj->resource));
-        if(result == CY_RSLT_SUCCESS)
-            memset(obj, 0, sizeof(cyhal_trng_t));
-    }
-    return result;
+    cyhal_crypto_free(obj->base, &(obj->resource));
+    obj->resource.type = CYHAL_RSC_INVALID;
 }

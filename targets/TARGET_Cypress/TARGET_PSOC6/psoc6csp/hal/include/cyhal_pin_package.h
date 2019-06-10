@@ -49,22 +49,22 @@ extern "C" {
 
 /** Port names */
 typedef enum {
-    CY_PORT_0  = 0x0,
-    CY_PORT_1  = 0x1,
-    CY_PORT_2  = 0x2,
-    CY_PORT_3  = 0x3,
-    CY_PORT_4  = 0x4,
-    CY_PORT_5  = 0x5,
-    CY_PORT_6  = 0x6,
-    CY_PORT_7  = 0x7,
-    CY_PORT_8  = 0x8,
-    CY_PORT_9  = 0x9,
-    CY_PORT_10 = 0xA,
-    CY_PORT_11 = 0xB,
-    CY_PORT_12 = 0xC,
-    CY_PORT_13 = 0xD,
-    CY_PORT_14 = 0xE,
-    CY_PORT_15 = 0xF,
+    CYHAL_PORT_0  = 0x0,
+    CYHAL_PORT_1  = 0x1,
+    CYHAL_PORT_2  = 0x2,
+    CYHAL_PORT_3  = 0x3,
+    CYHAL_PORT_4  = 0x4,
+    CYHAL_PORT_5  = 0x5,
+    CYHAL_PORT_6  = 0x6,
+    CYHAL_PORT_7  = 0x7,
+    CYHAL_PORT_8  = 0x8,
+    CYHAL_PORT_9  = 0x9,
+    CYHAL_PORT_10 = 0xA,
+    CYHAL_PORT_11 = 0xB,
+    CYHAL_PORT_12 = 0xC,
+    CYHAL_PORT_13 = 0xD,
+    CYHAL_PORT_14 = 0xE,
+    CYHAL_PORT_15 = 0xF,
 } cyhal_port_t;
 
 /** \} group_hal_pin_package_enums */
@@ -87,12 +87,13 @@ typedef uint16_t cyhal_gpio_cfg_t; // 8bit hsiom, 8bit mode
 #define CY_GPIO_CFG_GET_MODE(x)  ((uint8_t)((x) & 0xFF))
 #define CY_GPIO_CFG_GET_HSIOM(x) ((en_hsiom_sel_t)(((x) >> 8) & 0xFF))
 
-#define CY_PIN_OUT_FUNCTION(hsiom)           CY_GPIO_CFG_CREATE(hsiom, CY_GPIO_DM_STRONG_IN_OFF)
-#define CY_PIN_OUT_BUF_FUNCTION(hsiom)       CY_GPIO_CFG_CREATE(hsiom, CY_GPIO_DM_STRONG)
-#define CY_PIN_OD_FUNCTION(hsiom)            CY_GPIO_CFG_CREATE(hsiom, CY_GPIO_DM_OD_DRIVESLOW_IN_OFF)
-#define CY_PIN_IN_FUNCTION(hsiom)            CY_GPIO_CFG_CREATE(hsiom, CY_GPIO_DM_HIGHZ)
-#define CY_PIN_PULLUP_FUNCTION(hsiom)        CY_GPIO_CFG_CREATE(hsiom, CY_GPIO_DM_PULLUP)
-#define CY_PIN_ANALOG_FUNCTION(hsiom)        CY_GPIO_CFG_CREATE(HSIOM_SEL_GPIO, CY_GPIO_DM_ANALOG)
+#define CYHAL_PIN_OUT_FUNCTION(hsiom)           CY_GPIO_CFG_CREATE(hsiom, CY_GPIO_DM_STRONG_IN_OFF)
+#define CYHAL_PIN_OUT_BUF_FUNCTION(hsiom)       CY_GPIO_CFG_CREATE(hsiom, CY_GPIO_DM_STRONG)
+#define CYHAL_PIN_OD_FUNCTION(hsiom)            CY_GPIO_CFG_CREATE(hsiom, CY_GPIO_DM_OD_DRIVESLOW_IN_OFF)
+#define CYHAL_PIN_IN_FUNCTION(hsiom)            CY_GPIO_CFG_CREATE(hsiom, CY_GPIO_DM_HIGHZ)
+#define CYHAL_PIN_PULLUP_FUNCTION(hsiom)        CY_GPIO_CFG_CREATE(hsiom, CY_GPIO_DM_PULLUP)
+#define CYHAL_PIN_ANALOG_FUNCTION(hsiom)        CY_GPIO_CFG_CREATE(HSIOM_SEL_GPIO, CY_GPIO_DM_ANALOG)
+#define CYHAL_PIN_AUX_FUNCTION(hsiom)           CY_GPIO_CFG_CREATE(HSIOM_SEL_GPIO, CY_GPIO_DM_ANALOG)
 
 /** \endcond */
 
@@ -126,8 +127,8 @@ typedef uint16_t cyhal_gpio_cfg_t; // 8bit hsiom, 8bit mode
 #include "pin_packages/cyhal_psoc6_02_68_qfn.h"
 #elif defined(_GPIO_PSOC6_03_100_TQFP_H_)
 #include "pin_packages/cyhal_psoc6_03_100_tqfp.h"
-#elif defined(_GPIO_PSOC6_03_50_WLCSP_H_)
-#include "pin_packages/cyhal_psoc6_03_50_wlcsp.h"
+#elif defined(_GPIO_PSOC6_03_49_WLCSP_H_)
+#include "pin_packages/cyhal_psoc6_03_49_wlcsp.h"
 #elif defined(_GPIO_PSOC6_03_68_QFN_H_)
 #include "pin_packages/cyhal_psoc6_03_68_qfn.h"
 #else

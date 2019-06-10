@@ -42,7 +42,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cy_result.h"
-#include "cyhal_implementation.h"
+#include "cyhal_hw_types.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -139,9 +139,8 @@ cy_rslt_t cyhal_spi_init(cyhal_spi_t *obj, cyhal_gpio_t mosi, cyhal_gpio_t miso,
  *
  * Return the peripheral, pins and clock owned by the SPI object to their reset state
  * @param[in,out] obj The SPI object to deinitialize
- * @return The status of the free request
  */
-cy_rslt_t cyhal_spi_free(cyhal_spi_t *obj);
+void cyhal_spi_free(cyhal_spi_t *obj);
 
 /** Set the SPI baud rate
  *
@@ -200,10 +199,9 @@ cy_rslt_t cyhal_spi_transfer_async(cyhal_spi_t *obj, const uint8_t *tx, size_t t
 /** Checks if the specified SPI peripheral is in use
  *
  * @param[in] obj  The SPI peripheral to check
- * @param[in] busy Indication of whether the SPI is still transmitting
- * @return The status of the is_busy request
+ * @return Indication of whether the SPI is still transmitting
  */
-cy_rslt_t cyhal_spi_is_busy(cyhal_spi_t *obj, bool *busy);
+bool cyhal_spi_is_busy(cyhal_spi_t *obj);
 
 /** Abort an SPI transfer
  *
@@ -217,18 +215,16 @@ cy_rslt_t cyhal_spi_abort_async(cyhal_spi_t *obj);
  * @param[in] obj         The SPI object
  * @param[in] handler     The callback handler which will be invoked when the interrupt fires
  * @param[in] handler_arg Generic argument that will be provided to the handler when called
- * @return The status of the register_irq request
  */
-cy_rslt_t cyhal_spi_register_irq(cyhal_spi_t *obj, cyhal_spi_irq_handler_t handler, void *handler_arg);
+void cyhal_spi_register_irq(cyhal_spi_t *obj, cyhal_spi_irq_handler_t handler, void *handler_arg);
 
 /** Configure SPI interrupt. This function is used for word-approach
  *
  * @param[in] obj      The SPI object
  * @param[in] event    The SPI IRQ type
  * @param[in] enable   True to turn on interrupts, False to turn off
- * @return The status of the irq_enable request
  */
-cy_rslt_t cyhal_spi_irq_enable(cyhal_spi_t *obj, cyhal_spi_irq_event_t event, bool enable);
+void cyhal_spi_irq_enable(cyhal_spi_t *obj, cyhal_spi_irq_event_t event, bool enable);
 
 /** \} group_hal_spi_functions */
 

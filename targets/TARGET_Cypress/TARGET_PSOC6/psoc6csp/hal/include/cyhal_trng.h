@@ -42,8 +42,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cy_result.h"
-#include "cyhal_hwmgr.h"
-#include "cyhal_implementation.h"
+#include "cyhal_hw_types.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -51,7 +50,7 @@ extern "C" {
 
 /** Arguments passed the function are not valid. */
 #define CYHAL_TRNG_RSLT_ERR_BAD_ARGUMENT (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_TRNG, 0))
-/** Hardware error in the crypto block. This will only occur if the Ring oscillators in the TRNG generator are explicitly 
+/** Hardware error in the crypto block. This will only occur if the Ring oscillators in the TRNG generator are explicitly
  *  disabled during TRNG generation.
  */
 #define CYHAL_TRNG_RSLT_ERR_HW (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_TRNG, 1))
@@ -71,17 +70,15 @@ cy_rslt_t cyhal_trng_init(cyhal_trng_t *obj);
 /** Release the random number generator.
  *
  * @param[in,out] obj The random number generator object
- * @return The status of the free request
  */
-cy_rslt_t cyhal_trng_free(cyhal_trng_t *obj);
+void cyhal_trng_free(cyhal_trng_t *obj);
 
 /** Generate a random number.
  *
  * @param[in]  obj   The random number generator object
- * @param[out] value The random number generated
- * @return The status of the generate request
+ * @return The random number generated
  */
-__STATIC_INLINE cy_rslt_t cyhal_trng_generate(const cyhal_trng_t *obj, uint32_t *value);
+uint32_t cyhal_trng_generate(const cyhal_trng_t *obj);
 
 /** \} group_hal_trng_functions */
 

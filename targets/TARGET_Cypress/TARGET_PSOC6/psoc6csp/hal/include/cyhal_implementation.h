@@ -6,7 +6,7 @@
 * This includes references to implementation specific header files and any
 * supporting data types. This file should not be used directly. It should only
 * be referenced by HAL drivers to pull in the implementation specific code.
-* 
+*
 ********************************************************************************
 * \copyright
 * Copyright 2018-2019 Cypress Semiconductor Corporation
@@ -35,8 +35,11 @@
 #pragma once
 
 #include "cy_pdl.h"
+#include "cyhal.h"
 #include "cyhal_hw_types.h"
+#include "cyhal_crc_impl.h"
 #include "cyhal_gpio_impl.h"
 #include "cyhal_scb_common.h"
 #include "cyhal_utils.h"
 #include "cyhal_system_impl.h"
+#include "cyhal_trng_impl.h"

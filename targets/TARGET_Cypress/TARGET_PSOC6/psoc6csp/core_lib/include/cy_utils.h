@@ -45,21 +45,27 @@ extern "C" {
 /** Simple macro to supress the unused parameter warning by casting to void. */
 #define CY_UNUSED_PARAMETER(x) ( (void)(x) )
 
+static inline uint32_t CY_HALT()
+{
+    __asm("    bkpt    1");
+    return 0;
+}
+
+#ifdef CY_ASSERT
+#undef CY_ASSERT
+#endif /* ifdef(CY_ASSERT) */
+
 /** Utility macro when neither NDEBUG or CY_NO_ASSERT is not declared to check a condition and, if false, trigger a breakpoint */
 #if defined(NDEBUG) || defined(CY_NO_ASSERT)
-    #define CY_ASSERT(x)    do  \
-                            {   \
-                            } while(0)
+    #define CY_ASSERT(x)    CY_UNUSED_PARAMETER(x)
 #else
-    #define CY_ASSERT(x)    do  \
-                            {   \
-                                if(!(x)) \
-                                { \
-                                    __asm("    bkpt    1"); \
-                                } \
+    #define CY_ASSERT(x)    do {                \
+                                if(!(x))        \
+                                {               \
+                                    CY_HALT();  \
+                                }               \
                             } while(0)
 #endif  /* defined(NDEBUG) */
-
 
 /** \} group_utils_macros */
 

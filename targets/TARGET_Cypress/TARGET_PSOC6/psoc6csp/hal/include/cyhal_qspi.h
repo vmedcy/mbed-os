@@ -42,8 +42,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cy_result.h"
-#include "cyhal_implementation.h"
-#include "cyhal_hwmgr.h"
+#include "cyhal_hw_types.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -167,9 +166,8 @@ cy_rslt_t cyhal_qspi_init(
  *  that was associated with the object
  *
  * @param[in,out] obj QSPI object
- * @return The status of the free request
  */
-cy_rslt_t cyhal_qspi_free(cyhal_qspi_t *obj);
+void cyhal_qspi_free(cyhal_qspi_t *obj);
 
 /** Set the QSPI baud rate
  *
@@ -241,18 +239,16 @@ cy_rslt_t cyhal_qspi_transfer(
  * @param[in] obj         The QSPI object
  * @param[in] handler     The callback handler which will be invoked when the interrupt fires
  * @param[in] handler_arg Generic argument that will be provided to the handler when called
- * @return The status of the register_irq request
  */
-cy_rslt_t cyhal_qspi_register_irq(cyhal_qspi_t *obj, cyhal_qspi_irq_handler_t handler, void *handler_arg);
+void cyhal_qspi_register_irq(cyhal_qspi_t *obj, cyhal_qspi_irq_handler_t handler, void *handler_arg);
 
 /** Configure QSPI interrupt enablement.
  *
  * @param[in] obj      The QSPI object
  * @param[in] event    The QSPI IRQ type
  * @param[in] enable   True to turn on interrupts, False to turn off
- * @return The status of the irq_enable request
  */
-cy_rslt_t cyhal_qspi_irq_enable(cyhal_qspi_t *obj, cyhal_qspi_irq_event_t event, bool enable);
+void cyhal_qspi_irq_enable(cyhal_qspi_t *obj, cyhal_qspi_irq_event_t event, bool enable);
 
 /** \} group_hal_qspi_functions */
 

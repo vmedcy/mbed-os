@@ -4,11 +4,13 @@
 * Description:
 * Top-level HAL header file that includes all available HAL header files. This
 * will pull in all of the specific HAL files needed. Not all of these may be
-* supported in the target device. The target device must provide a 
-* cyhal_implementation.h file that is in the include path for this to depend
-* on. The cyhal_implementation.h file must provide definitions for each of
-* the resource types consumed by the HAL driver functions.
-* 
+* supported in the target device. The target device must provide a
+* cyhal_hw_types.h file that is in the include path for the hal headers to
+* depend on. The cyhal_hw_types.h file must provide definitions for each of
+* the resource types consumed by the HAL driver functions. Additionally, the
+* implementation may define a cyhal_implementation.h file that provides any
+* custom includes. This file is optional per implementation.
+*
 ********************************************************************************
 * \copyright
 * Copyright 2018-2019 Cypress Semiconductor Corporation
@@ -45,7 +47,6 @@
 #include "cyhal_dma.h"
 #include "cyhal_flash.h"
 #include "cyhal_gpio.h"
-#include "cyhal_gpio_impl.h"
 #include "cyhal_hwmgr.h"
 #include "cyhal_i2c.h"
 #include "cyhal_i2s.h"
@@ -61,10 +62,8 @@
 #include "cyhal_system.h"
 #include "cyhal_timer.h"
 #include "cyhal_trng.h"
-#include "cyhal_trng_impl.h"
 #include "cyhal_uart.h"
 #include "cyhal_wdt.h"
-
 
 /** \} group_hal */
 

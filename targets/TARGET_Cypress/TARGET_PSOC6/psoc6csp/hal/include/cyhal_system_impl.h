@@ -27,6 +27,12 @@
 
 #pragma once
 
-#define cyhal_system_critical_section_enter     Cy_SysLib_EnterCriticalSection
+#include "cyhal_system.h"
+
+#define cyhal_system_critical_section_enter()     Cy_SysLib_EnterCriticalSection()
 
 #define cyhal_system_critical_section_exit(x)   Cy_SysLib_ExitCriticalSection(x)
+
+#define cyhal_system_sleep()                    Cy_SysPm_CpuEnterSleep(CY_SYSPM_WAIT_FOR_INTERRUPT)
+
+#define cyhal_system_deepsleep()                Cy_SysPm_CpuEnterDeepSleep(CY_SYSPM_WAIT_FOR_INTERRUPT)

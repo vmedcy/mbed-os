@@ -28,10 +28,12 @@
 #if defined(CY8C6247BZI_D54) /* Cypress ticket: BSP-525 */
 
 #include <stdlib.h>
+#include "SDIO_HOST_cfg.h"
+#include "cyhal_utils.h"
 #include "cyhal_sdio.h"
 #include "cyhal_gpio.h"
 #include "cyhal_interconnect.h"
-#include "SDIO_HOST_cfg.h"
+#include "cyhal_implementation.h"
 
 /* Not connected pin define */
 #define SDIO_PINS_NC    ((cyhal_gpio_t) CYHAL_NC_PIN_VALUE)
@@ -50,10 +52,13 @@
 /* The 1 byte transition mode define */
 #define CY_HAL_SDIO_1B        (1u)
 
+/* Delay after command is done */
+#define OPERATION_CMPLT_DELAY_US   (30u)
+
 /*******************************************************************************
 *       (Internal) Configuration structures for SDIO pins
 *******************************************************************************/
-const cy_stc_gpio_pin_config_t pin_cmd_config = 
+const cy_stc_gpio_pin_config_t pin_cmd_config =
 {
     .outVal = 1,
     .driveMode = CY_GPIO_DM_STRONG,
@@ -70,7 +75,7 @@ const cy_stc_gpio_pin_config_t pin_cmd_config =
     .vohSel = 0UL,
 };
 
-const cy_stc_gpio_pin_config_t pin_data_config = 
+const cy_stc_gpio_pin_config_t pin_data_config =
 {
     .outVal = 1,
     .driveMode = CY_GPIO_DM_STRONG,
@@ -87,7 +92,7 @@ const cy_stc_gpio_pin_config_t pin_data_config =
     .vohSel = 0UL,
 };
 
-const cy_stc_gpio_pin_config_t pin_clk_config = 
+const cy_stc_gpio_pin_config_t pin_clk_config =
 {
     .outVal = 1,
     .driveMode = CY_GPIO_DM_STRONG_IN_OFF,
@@ -115,7 +120,7 @@ static void *cyhal_sdio_callback_args = NULL;
 *******************************************************************************/
 static void cyhal_sdio_interrupts_dispatcher_IRQHandler(void)
 {
-    if (cyhal_sdio_callback != NULL)
+    if ((cyhal_sdio_callback != NULL) && (cyhal_sdio_config_struct->irq_cause != 0U))
     {
         (void)(cyhal_sdio_callback)(cyhal_sdio_callback_args, (cyhal_sdio_irq_event_t) cyhal_sdio_config_struct->irq_cause);
     }
@@ -125,196 +130,72 @@ static void cyhal_sdio_interrupts_dispatcher_IRQHandler(void)
 /*******************************************************************************
 *       Internal functions
 *******************************************************************************/
-static cy_rslt_t cyhal_free_pins(cyhal_sdio_t *obj);
+static void cyhal_free_pins(cyhal_sdio_t *obj);
 
-static cy_rslt_t cyhal_free_pins(cyhal_sdio_t *obj)
+static void cyhal_free_pins(cyhal_sdio_t *obj)
 {
-    cy_rslt_t retVal = CY_RSLT_SUCCESS;
-
-    if (obj->pin_clk != SDIO_PINS_NC)
-    {
-        retVal = cyhal_disconnect_pin(obj->pin_clk);
-        if (retVal == CY_RSLT_SUCCESS)
-        {
-            cyhal_resource_inst_t rsc = cyhal_utils_get_gpio_resource(obj->pin_clk);
-            retVal = cyhal_hwmgr_free(&rsc);
-        }
-    }
-    
-    if ((retVal == CY_RSLT_SUCCESS) && (obj->pin_cmd != SDIO_PINS_NC))
-    {
-        retVal = cyhal_disconnect_pin(obj->pin_cmd);
-        if (retVal == CY_RSLT_SUCCESS)
-        {
-            cyhal_resource_inst_t rsc = cyhal_utils_get_gpio_resource(obj->pin_cmd);
-            retVal = cyhal_hwmgr_free(&rsc);
-        }
-    }
-
-    if ((retVal == CY_RSLT_SUCCESS) && (obj->pin_data0 != SDIO_PINS_NC))
-    {
-        retVal = cyhal_disconnect_pin(obj->pin_data0);
-        if (retVal == CY_RSLT_SUCCESS)
-        {
-            cyhal_resource_inst_t rsc = cyhal_utils_get_gpio_resource(obj->pin_data0);
-            retVal = cyhal_hwmgr_free(&rsc);
-        }
-    }
-    
-    if ((retVal == CY_RSLT_SUCCESS) && (obj->pin_data1 != SDIO_PINS_NC))
-    {
-        retVal = cyhal_disconnect_pin(obj->pin_data1);
-        if (retVal == CY_RSLT_SUCCESS)
-        {
-            cyhal_resource_inst_t rsc = cyhal_utils_get_gpio_resource(obj->pin_data1);
-            retVal = cyhal_hwmgr_free(&rsc);
-        }
-    }
-    
-    if ((retVal == CY_RSLT_SUCCESS) && (obj->pin_data2 != SDIO_PINS_NC))
-    {
-        retVal = cyhal_disconnect_pin(obj->pin_data2);
-        if (retVal == CY_RSLT_SUCCESS)
-        {
-            cyhal_resource_inst_t rsc = cyhal_utils_get_gpio_resource(obj->pin_data2);
-            retVal = cyhal_hwmgr_free(&rsc);
-        }
-    }
-    
-    if ((retVal == CY_RSLT_SUCCESS) && (obj->pin_data3 != SDIO_PINS_NC))
-    {
-        retVal = cyhal_disconnect_pin(obj->pin_data3);
-        if (retVal == CY_RSLT_SUCCESS)
-        {
-            cyhal_resource_inst_t rsc = cyhal_utils_get_gpio_resource(obj->pin_data3);
-            retVal = cyhal_hwmgr_free(&rsc);
-        }
-    }
-
-    return retVal;
+    cyhal_gpio_free(obj->pin_clk);
+    obj->pin_clk = SDIO_PINS_NC;
+    cyhal_gpio_free(obj->pin_cmd);
+    obj->pin_cmd = SDIO_PINS_NC;
+    cyhal_gpio_free(obj->pin_data0);
+    obj->pin_data0 = SDIO_PINS_NC;
+    cyhal_gpio_free(obj->pin_data1);
+    obj->pin_data1 = SDIO_PINS_NC;
+    cyhal_gpio_free(obj->pin_data2);
+    obj->pin_data2 = SDIO_PINS_NC;
+    cyhal_gpio_free(obj->pin_data3);
+    obj->pin_data3 = SDIO_PINS_NC;
 }
 
-static cy_rslt_t cyhal_free_clocks(cyhal_sdio_t *obj)
+static void cyhal_free_clocks(cyhal_sdio_t *obj)
 {
-    cy_rslt_t retVal = CY_RSLT_SUCCESS;
-
-    if (obj->clock.div_num != CY_HAL_SDIO_CLK_DIV_NC)
-    {
-        /* Free clock divider resource*/
-        cyhal_resource_inst_t udbClkRsc;
-        
-        udbClkRsc.type = CYHAL_RSC_CLOCK;
-        udbClkRsc.block_num = obj->clock.div_num;
-        udbClkRsc.channel_num = 0;
-        
-        retVal = cyhal_hwmgr_set_unconfigured(udbClkRsc.type, udbClkRsc.block_num, udbClkRsc.channel_num);
-        
-        if (retVal == CY_RSLT_SUCCESS)
-        {
-            retVal = cyhal_hwmgr_free(&udbClkRsc);
-        }
-    }
-
-    return retVal;
+    cyhal_resource_inst_t udbClkRsc;
+    udbClkRsc.type = CYHAL_RSC_CLOCK;
+    udbClkRsc.block_num = obj->clock.div_num;
+    udbClkRsc.channel_num = 0;
+    cyhal_hwmgr_free(&udbClkRsc);
 }
 
-
-static cy_rslt_t cyhal_free_dmas(cyhal_sdio_t *obj)
+static void cyhal_free_dmas(cyhal_sdio_t *obj)
 {
-    cy_rslt_t retVal = CY_RSLT_SUCCESS;
-
-    /* Free clock divider resource*/
     cyhal_resource_inst_t dmaRsc;
-
-    /* Release DMA0 CH0 */
     dmaRsc.type = CYHAL_RSC_DMA;
+
     dmaRsc.block_num = 0;
     dmaRsc.channel_num = 0;
+    cyhal_hwmgr_free(&dmaRsc);
 
-    if (obj->dma0Ch0.resource.type != CYHAL_RSC_INVALID)
-    {
-        retVal = cyhal_hwmgr_set_unconfigured(dmaRsc.type, dmaRsc.block_num, dmaRsc.channel_num);
-    }
-
-    if ((retVal == CY_RSLT_SUCCESS) && (obj->dma0Ch0.resource.type != CYHAL_RSC_INVALID))
-    {
-        retVal = cyhal_hwmgr_free(&dmaRsc);
-    }
-
-    /* Release DMA0 CH1 */
     dmaRsc.block_num = 0;
     dmaRsc.channel_num = 1;
+    cyhal_hwmgr_free(&dmaRsc);
 
-    if ((retVal == CY_RSLT_SUCCESS) && (obj->dma0Ch1.resource.type != CYHAL_RSC_INVALID))
-    {
-        retVal = cyhal_hwmgr_set_unconfigured(dmaRsc.type, dmaRsc.block_num, dmaRsc.channel_num);
-    
-        if (retVal == CY_RSLT_SUCCESS)
-        {
-            retVal = cyhal_hwmgr_free(&dmaRsc);
-        }
-    }
-    
-    /* Release DMA1 CH1 */
     dmaRsc.block_num = 1;
     dmaRsc.channel_num = 1;
+    cyhal_hwmgr_free(&dmaRsc);
 
-    if ((retVal == CY_RSLT_SUCCESS) && (obj->dma1Ch1.resource.type != CYHAL_RSC_INVALID))
-    {
-        retVal = cyhal_hwmgr_set_unconfigured(dmaRsc.type, dmaRsc.block_num, dmaRsc.channel_num);
-    
-        if (retVal == CY_RSLT_SUCCESS)
-        {
-            retVal = cyhal_hwmgr_free(&dmaRsc);
-        }
-    }
-    
-    /* Release DMA1 CH1 */
     dmaRsc.block_num = 1;
     dmaRsc.channel_num = 3;
-
-    if ((retVal == CY_RSLT_SUCCESS) && (obj->dma1Ch3.resource.type != CYHAL_RSC_INVALID))
-    {
-        retVal = cyhal_hwmgr_set_unconfigured(dmaRsc.type, dmaRsc.block_num, dmaRsc.channel_num);
-    
-        if (retVal == CY_RSLT_SUCCESS)
-        {
-            retVal = cyhal_hwmgr_free(&dmaRsc);
-        }
-    }
-    return retVal;
+    cyhal_hwmgr_free(&dmaRsc);
 }
 
-
-/** Initialize the SDIO peripheral
- *
- * @param[out] obj               The SDIO object
- * @param[out] clk               The pin connected to the clk signal
- * @param[in]  cmd               The pin connected to the command signal
- * @param[in]  data0             The pin connected to the data0 signal
- * @param[in]  data1             The pin connected to the data1 signal
- * @param[in]  data2             The pin connected to the data2 signal
- * @param[in]  data3             The pin connected to the data3 signal
- * @return The status of the init request
- */
 cy_rslt_t cyhal_sdio_init(cyhal_sdio_t *obj, cyhal_gpio_t cmd, cyhal_gpio_t clk, cyhal_gpio_t data0, cyhal_gpio_t data1, cyhal_gpio_t data2, cyhal_gpio_t data3)
 {
-    bool isConfigured = false;
     cy_rslt_t retVal = CY_RSLT_SUCCESS;
 
-    if(NULL == obj)
+    if (NULL == obj)
     {
         return CYHAL_SDIO_RSLT_ERR_BAD_PARAM;
     }
-    
+
     memset(obj, 0, sizeof(cyhal_sdio_t));
-    
+
     /* If something go wrong, any resource not marked as invalid will be freed.
-    *  Explicitly marked not allocated resources as invalid to prevent freeing 
+    *  Explicitly marked not allocated resources as invalid to prevent freeing
     *  them.
-    * 
-    *  Before we reserve UDB SDIO need to reserve clock divider, then 
-    *  DMAs and pins. If all these resources are reserved only then reserve UDB 
+    *
+    *  Before we reserve UDB at all we need try to reserve clock divider, then
+    *  DMAs and pins. If all these resources are reserved only then reserve UDB
     *  SDIO.
     */
     obj->resource.type = CYHAL_RSC_INVALID;
@@ -336,35 +217,20 @@ cy_rslt_t cyhal_sdio_init(cyhal_sdio_t *obj, cyhal_gpio_t cmd, cyhal_gpio_t clk,
     retVal = cyhal_hwmgr_reserve(&udbClkRsc);
     if (retVal == CY_RSLT_SUCCESS)
     {
-        /* Check is the clock divider 0 configured */
-        retVal =
-        cyhal_hwmgr_is_configured(udbClkRsc.type, udbClkRsc.block_num, udbClkRsc.channel_num, &isConfigured);
+        /* Assign clock divider */
+        obj->clock.div_type = CY_SYSCLK_DIV_8_BIT;
+        obj->clock.div_num = 0;
 
-        /* UDB SDIO uses hard-coded clock divider 0 */
-        if (retVal == CY_RSLT_SUCCESS && !isConfigured)
+        retVal = Cy_SysClk_PeriphSetDivider(obj->clock.div_type, obj->clock.div_num, 0U);
+
+        if (CY_SYSCLK_SUCCESS == retVal)
         {
-            /* Assign clock divider */
-            cy_en_sysclk_status_t clockAssignResult;
+            retVal = Cy_SysClk_PeriphEnableDivider(obj->clock.div_type, obj->clock.div_num);
+        }
 
-            obj->clock.div_type = CY_SYSCLK_DIV_8_BIT;
-            obj->clock.div_num = 0;
-
-            clockAssignResult = Cy_SysClk_PeriphSetDivider(obj->clock.div_type, obj->clock.div_num, 0U);
-
-            if (CY_SYSCLK_SUCCESS == clockAssignResult)
-            {
-                clockAssignResult = Cy_SysClk_PeriphEnableDivider(obj->clock.div_type, obj->clock.div_num);
-            }
-
-            if (CY_SYSCLK_SUCCESS == clockAssignResult)
-            {
-                clockAssignResult = Cy_SysClk_PeriphAssignDivider(PCLK_UDB_CLOCKS0, obj->clock.div_type, obj->clock.div_num);
-            }
-
-            retVal = (clockAssignResult == CY_SYSCLK_SUCCESS) ? CY_RSLT_SUCCESS : CYHAL_SDIO_RSLT_ERR_CLOCK;
-
-            /* Update object with reserved clock info */
-            cyhal_hwmgr_set_configured(udbClkRsc.type, udbClkRsc.block_num, udbClkRsc.channel_num);
+        if (CY_SYSCLK_SUCCESS == retVal)
+        {
+            retVal = Cy_SysClk_PeriphAssignDivider(PCLK_UDB_CLOCKS0, obj->clock.div_type, obj->clock.div_num);
         }
     }
 
@@ -374,50 +240,20 @@ cy_rslt_t cyhal_sdio_init(cyhal_sdio_t *obj, cyhal_gpio_t cmd, cyhal_gpio_t clk,
         /* Reserve DMA0 CH0 */
         cyhal_resource_inst_t dmaRsc = { CYHAL_RSC_DMA, 0, 0 };
         retVal = cyhal_hwmgr_reserve(&dmaRsc);
-
-        if (retVal == CY_RSLT_SUCCESS)
-        {
-            retVal = cyhal_hwmgr_is_configured(dmaRsc.type, dmaRsc.block_num, dmaRsc.channel_num, &isConfigured);
-
-            if (retVal == CY_RSLT_SUCCESS && !isConfigured)
-            {
-                cyhal_hwmgr_set_configured(dmaRsc.type, dmaRsc.block_num, dmaRsc.channel_num);
-            }
-        }
     }
 
     if (retVal == CY_RSLT_SUCCESS)
     {
         /* Reserve DMA0 CH1 */
         cyhal_resource_inst_t dmaRsc = { CYHAL_RSC_DMA, 0, 1 };
-
         retVal = cyhal_hwmgr_reserve(&dmaRsc);
-        if (retVal == CY_RSLT_SUCCESS)
-        {
-            retVal = cyhal_hwmgr_is_configured(dmaRsc.type, dmaRsc.block_num, dmaRsc.channel_num, &isConfigured);
-
-            if (retVal == CY_RSLT_SUCCESS && !isConfigured)
-            {
-                cyhal_hwmgr_set_configured(dmaRsc.type, dmaRsc.block_num, dmaRsc.channel_num);
-            }
-        }
     }
-    
+
     if (retVal == CY_RSLT_SUCCESS)
     {
         /* Reserve DMA1 CH1 */
         cyhal_resource_inst_t dmaRsc = { CYHAL_RSC_DMA, 1, 1 };
         retVal = cyhal_hwmgr_reserve(&dmaRsc);
-
-        if (retVal == CY_RSLT_SUCCESS)
-        {
-            retVal = cyhal_hwmgr_is_configured(dmaRsc.type, dmaRsc.block_num, dmaRsc.channel_num, &isConfigured);
-
-            if (retVal == CY_RSLT_SUCCESS && !isConfigured)
-            {
-                cyhal_hwmgr_set_configured(dmaRsc.type, dmaRsc.block_num, dmaRsc.channel_num);
-            }
-        }
     }
 
     if (retVal == CY_RSLT_SUCCESS)
@@ -425,16 +261,6 @@ cy_rslt_t cyhal_sdio_init(cyhal_sdio_t *obj, cyhal_gpio_t cmd, cyhal_gpio_t clk,
         /* Reserve DMA1 CH3 */
         cyhal_resource_inst_t dmaRsc = { CYHAL_RSC_DMA, 1, 3 };
         retVal = cyhal_hwmgr_reserve(&dmaRsc);
-
-        if (retVal == CY_RSLT_SUCCESS)
-        {
-            retVal = cyhal_hwmgr_is_configured(dmaRsc.type, dmaRsc.block_num, dmaRsc.channel_num, &isConfigured);
-            
-            if (retVal == CY_RSLT_SUCCESS && !isConfigured)
-            {
-                cyhal_hwmgr_set_configured(dmaRsc.type, dmaRsc.block_num, dmaRsc.channel_num);
-            }
-        }
     }
 
     /* Reserve the clk pin */
@@ -444,14 +270,8 @@ cy_rslt_t cyhal_sdio_init(cyhal_sdio_t *obj, cyhal_gpio_t cmd, cyhal_gpio_t clk,
         retVal = cyhal_hwmgr_reserve(&pinRsc);
         if (retVal == CY_RSLT_SUCCESS)
         {
-            retVal = cyhal_hwmgr_is_configured(pinRsc.type, pinRsc.block_num, pinRsc.channel_num, &isConfigured);
-            if (retVal == CY_RSLT_SUCCESS && !isConfigured)
-            {
-                Cy_GPIO_Pin_Init(CYHAL_GET_PORTADDR(clk), CYHAL_GET_PIN(clk), &pin_clk_config);
-
-                obj->pin_clk = clk;
-                cyhal_hwmgr_set_configured(pinRsc.type, pinRsc.block_num, pinRsc.channel_num);
-            }
+            obj->pin_clk = clk;
+            Cy_GPIO_Pin_Init(CYHAL_GET_PORTADDR(clk), CYHAL_GET_PIN(clk), &pin_clk_config);
         }
     }
 
@@ -462,14 +282,8 @@ cy_rslt_t cyhal_sdio_init(cyhal_sdio_t *obj, cyhal_gpio_t cmd, cyhal_gpio_t clk,
         retVal = cyhal_hwmgr_reserve(&pinRsc);
         if (retVal == CY_RSLT_SUCCESS)
         {
-            retVal = cyhal_hwmgr_is_configured(pinRsc.type, pinRsc.block_num, pinRsc.channel_num, &isConfigured);
-            if (retVal == CY_RSLT_SUCCESS && !isConfigured)
-            {
-                Cy_GPIO_Pin_Init(CYHAL_GET_PORTADDR(cmd), CYHAL_GET_PIN(cmd), &pin_cmd_config);
-
-                obj->pin_cmd = cmd;
-                cyhal_hwmgr_set_configured(pinRsc.type, pinRsc.block_num, pinRsc.channel_num);
-            }
+            obj->pin_cmd = cmd;
+            Cy_GPIO_Pin_Init(CYHAL_GET_PORTADDR(cmd), CYHAL_GET_PIN(cmd), &pin_cmd_config);
         }
     }
 
@@ -480,17 +294,11 @@ cy_rslt_t cyhal_sdio_init(cyhal_sdio_t *obj, cyhal_gpio_t cmd, cyhal_gpio_t clk,
         retVal = cyhal_hwmgr_reserve(&pinRsc);
         if (retVal == CY_RSLT_SUCCESS)
         {
-            retVal = cyhal_hwmgr_is_configured(pinRsc.type, pinRsc.block_num, pinRsc.channel_num, &isConfigured);
-            if (retVal == CY_RSLT_SUCCESS && !isConfigured)
-            {
-                Cy_GPIO_Pin_Init(CYHAL_GET_PORTADDR(data0), CYHAL_GET_PIN(data0), &pin_data_config);
-
-                obj->pin_data0 = data0;
-                cyhal_hwmgr_set_configured(pinRsc.type, pinRsc.block_num, pinRsc.channel_num);
-            }
+            obj->pin_data0 = data0;
+            Cy_GPIO_Pin_Init(CYHAL_GET_PORTADDR(data0), CYHAL_GET_PIN(data0), &pin_data_config);
         }
     }
-    
+
     /* Reserve the data1 pin */
     if (retVal == CY_RSLT_SUCCESS)
     {
@@ -498,17 +306,11 @@ cy_rslt_t cyhal_sdio_init(cyhal_sdio_t *obj, cyhal_gpio_t cmd, cyhal_gpio_t clk,
         retVal = cyhal_hwmgr_reserve(&pinRsc);
         if (retVal == CY_RSLT_SUCCESS)
         {
-            retVal = cyhal_hwmgr_is_configured(pinRsc.type, pinRsc.block_num, pinRsc.channel_num, &isConfigured);
-            if (retVal == CY_RSLT_SUCCESS && !isConfigured)
-            {
-                Cy_GPIO_Pin_Init(CYHAL_GET_PORTADDR(data1), CYHAL_GET_PIN(data1), &pin_data_config);
-
-                obj->pin_data1 = data1;
-                cyhal_hwmgr_set_configured(pinRsc.type, pinRsc.block_num, pinRsc.channel_num);
-            }
+            obj->pin_data1 = data1;
+            Cy_GPIO_Pin_Init(CYHAL_GET_PORTADDR(data1), CYHAL_GET_PIN(data1), &pin_data_config);
         }
     }
-    
+
     /* Reserve the data2 pin */
     if (retVal == CY_RSLT_SUCCESS)
     {
@@ -516,17 +318,11 @@ cy_rslt_t cyhal_sdio_init(cyhal_sdio_t *obj, cyhal_gpio_t cmd, cyhal_gpio_t clk,
         retVal = cyhal_hwmgr_reserve(&pinRsc);
         if (retVal == CY_RSLT_SUCCESS)
         {
-            retVal = cyhal_hwmgr_is_configured(pinRsc.type, pinRsc.block_num, pinRsc.channel_num, &isConfigured);
-            if (retVal == CY_RSLT_SUCCESS && !isConfigured)
-            {
-                Cy_GPIO_Pin_Init(CYHAL_GET_PORTADDR(data2), CYHAL_GET_PIN(data2), &pin_data_config);
-
-                obj->pin_data2 = data2;
-                cyhal_hwmgr_set_configured(pinRsc.type, pinRsc.block_num, pinRsc.channel_num);
-            }
+            obj->pin_data2 = data2;
+            Cy_GPIO_Pin_Init(CYHAL_GET_PORTADDR(data2), CYHAL_GET_PIN(data2), &pin_data_config);
         }
     }
-    
+
     /* Reserve the data3 pin */
     if (retVal == CY_RSLT_SUCCESS)
     {
@@ -534,14 +330,8 @@ cy_rslt_t cyhal_sdio_init(cyhal_sdio_t *obj, cyhal_gpio_t cmd, cyhal_gpio_t clk,
         retVal = cyhal_hwmgr_reserve(&pinRsc);
         if (retVal == CY_RSLT_SUCCESS)
         {
-            retVal = cyhal_hwmgr_is_configured(pinRsc.type, pinRsc.block_num, pinRsc.channel_num, &isConfigured);
-            if (retVal == CY_RSLT_SUCCESS && !isConfigured)
-            {
-                Cy_GPIO_Pin_Init(CYHAL_GET_PORTADDR(data3), CYHAL_GET_PIN(data3), &pin_data_config);
-
-                obj->pin_data3 = data3;
-                cyhal_hwmgr_set_configured(pinRsc.type, pinRsc.block_num, pinRsc.channel_num);
-            }
+            obj->pin_data3 = data3;
+            Cy_GPIO_Pin_Init(CYHAL_GET_PORTADDR(data3), CYHAL_GET_PIN(data3), &pin_data_config);
         }
     }
     
@@ -550,56 +340,54 @@ cy_rslt_t cyhal_sdio_init(cyhal_sdio_t *obj, cyhal_gpio_t cmd, cyhal_gpio_t clk,
     {
         /* UDB SDIO resource */
         cyhal_resource_inst_t udbRsc = { CYHAL_RSC_UDB, 0, 0 };
-    
+
         retVal = cyhal_hwmgr_reserve(&udbRsc);
         if (retVal == CY_RSLT_SUCCESS)
         {
-            /* Check is the UDB configured */
-            retVal = cyhal_hwmgr_is_configured(udbRsc.type, udbRsc.block_num, udbRsc.channel_num, &isConfigured);
-            if (retVal == CY_RSLT_SUCCESS && !isConfigured)
-            {
-                /* Update SDIO object */
-                obj->resource.type = udbRsc.type;
-                obj->resource.block_num = udbRsc.block_num;
-                obj->resource.channel_num = udbRsc.channel_num;
-                
-                /* Set default interrupt priority of 7 (lowest possible priority) */
-                cy_stc_sysint_t irqCfg = {udb_interrupts_0_IRQn, 7};
-                Cy_SysInt_Init(&irqCfg, &SDIO_IRQ);
-                NVIC_EnableIRQ(udb_interrupts_0_IRQn);
-                
-                /* Setup write DMA interrupt handler */
-                cy_stc_sysint_t irqDma1_1 = {cpuss_interrupts_dw1_1_IRQn, 7};
-                Cy_SysInt_Init(&irqDma1_1, &SDIO_WRITE_DMA_IRQ);
-                NVIC_EnableIRQ(cpuss_interrupts_dw1_1_IRQn);
-                
-                /* Setup read DMA interrupt handler */
-                cy_stc_sysint_t irqDma1_3 = {cpuss_interrupts_dw1_3_IRQn, 7};
-                Cy_SysInt_Init(&irqDma1_3, &SDIO_READ_DMA_IRQ);
-                NVIC_EnableIRQ(cpuss_interrupts_dw1_3_IRQn);
+            /* Update SDIO object */
+            obj->resource.type = udbRsc.type;
+            obj->resource.block_num = udbRsc.block_num;
+            obj->resource.channel_num = udbRsc.channel_num;
 
-                /* Connect UDB to DMA */
-                Cy_TrigMux_Connect(TRIG0_IN_TR_GROUP14_OUTPUT1, TRIG0_OUT_CPUSS_DW0_TR_IN1, false, TRIGGER_TYPE_LEVEL);
-                Cy_TrigMux_Connect(TRIG0_IN_TR_GROUP14_OUTPUT4, TRIG0_OUT_CPUSS_DW0_TR_IN0, false, TRIGGER_TYPE_LEVEL);
-                Cy_TrigMux_Connect(TRIG1_IN_TR_GROUP14_OUTPUT0, TRIG1_OUT_CPUSS_DW1_TR_IN1, false, TRIGGER_TYPE_LEVEL);
-                Cy_TrigMux_Connect(TRIG1_IN_TR_GROUP14_OUTPUT5, TRIG1_OUT_CPUSS_DW1_TR_IN3, false, TRIGGER_TYPE_LEVEL);
-                
-                Cy_TrigMux_Connect(TRIG14_IN_UDB_TR_UDB0, TRIG14_OUT_TR_GROUP1_INPUT43, false, TRIGGER_TYPE_LEVEL);
-                Cy_TrigMux_Connect(TRIG14_IN_UDB_TR_UDB1, TRIG14_OUT_TR_GROUP0_INPUT44, false, TRIGGER_TYPE_LEVEL);
-                Cy_TrigMux_Connect(TRIG14_IN_UDB_TR_UDB3, TRIG14_OUT_TR_GROUP0_INPUT47, false, TRIGGER_TYPE_LEVEL);
-                Cy_TrigMux_Connect(TRIG14_IN_UDB_TR_UDB7, TRIG14_OUT_TR_GROUP1_INPUT48, false, TRIGGER_TYPE_LEVEL);
-                
-                stc_sdio_irq_cb_t   irq_cbs;
-                irq_cbs.pfnCardIntCb = cyhal_sdio_interrupts_dispatcher_IRQHandler;
+            /* Set default interrupt priority of 7 (lowest possible priority) */
+            cy_stc_sysint_t irqCfg = {udb_interrupts_0_IRQn, 7};
+            Cy_SysInt_Init(&irqCfg, &SDIO_IRQ);
+            NVIC_EnableIRQ(udb_interrupts_0_IRQn);
 
-                SDIO_Init(&irq_cbs);
+            /* Setup write DMA interrupt handler */
+            cy_stc_sysint_t irqDma1_1 = {cpuss_interrupts_dw1_1_IRQn, 7};
+            Cy_SysInt_Init(&irqDma1_1, &SDIO_WRITE_DMA_IRQ);
+            NVIC_EnableIRQ(cpuss_interrupts_dw1_1_IRQn);
 
-                /* SDIO_Init() configures the SDIO to 40 kHz */
-                obj->frequencyhal_hz = CY_HAL_SDIO_DEF_FREQ;
-                obj->block_size   = CY_HAL_SDIO_64B;
+            /* Setup read DMA interrupt handler */
+            cy_stc_sysint_t irqDma1_3 = {cpuss_interrupts_dw1_3_IRQn, 7};
+            Cy_SysInt_Init(&irqDma1_3, &SDIO_READ_DMA_IRQ);
+            NVIC_EnableIRQ(cpuss_interrupts_dw1_3_IRQn);
 
-                retVal = cyhal_hwmgr_set_configured(udbRsc.type, udbRsc.block_num, udbRsc.channel_num);
-            }
+            /* Connect UDB to DMA */
+            Cy_TrigMux_Connect(TRIG0_IN_TR_GROUP14_OUTPUT1, TRIG0_OUT_CPUSS_DW0_TR_IN1, false, TRIGGER_TYPE_LEVEL);
+            Cy_TrigMux_Connect(TRIG0_IN_TR_GROUP14_OUTPUT4, TRIG0_OUT_CPUSS_DW0_TR_IN0, false, TRIGGER_TYPE_LEVEL);
+            Cy_TrigMux_Connect(TRIG1_IN_TR_GROUP14_OUTPUT0, TRIG1_OUT_CPUSS_DW1_TR_IN1, false, TRIGGER_TYPE_LEVEL);
+            Cy_TrigMux_Connect(TRIG1_IN_TR_GROUP14_OUTPUT5, TRIG1_OUT_CPUSS_DW1_TR_IN3, false, TRIGGER_TYPE_LEVEL);
+
+            Cy_TrigMux_Connect(TRIG14_IN_UDB_TR_UDB0, TRIG14_OUT_TR_GROUP1_INPUT43, false, TRIGGER_TYPE_LEVEL);
+            Cy_TrigMux_Connect(TRIG14_IN_UDB_TR_UDB1, TRIG14_OUT_TR_GROUP0_INPUT44, false, TRIGGER_TYPE_LEVEL);
+            Cy_TrigMux_Connect(TRIG14_IN_UDB_TR_UDB3, TRIG14_OUT_TR_GROUP0_INPUT47, false, TRIGGER_TYPE_LEVEL);
+            Cy_TrigMux_Connect(TRIG14_IN_UDB_TR_UDB7, TRIG14_OUT_TR_GROUP1_INPUT48, false, TRIGGER_TYPE_LEVEL);
+
+            stc_sdio_irq_cb_t   irq_cbs;
+            irq_cbs.pfnCardIntCb = cyhal_sdio_interrupts_dispatcher_IRQHandler;
+
+            SDIO_Init(&irq_cbs);
+
+            /* SDIO_Init() configures the SDIO to 40 kHz */
+            obj->frequencyhal_hz = CY_HAL_SDIO_DEF_FREQ;
+            obj->block_size   = CY_HAL_SDIO_64B;
+
+            /* Initialize interrupt cause */
+            obj->irq_cause = 0u;
+
+            retVal = cyhal_hwmgr_set_configured(udbRsc.type, udbRsc.block_num, udbRsc.channel_num);
         }
     }
 
@@ -611,56 +399,13 @@ cy_rslt_t cyhal_sdio_init(cyhal_sdio_t *obj, cyhal_gpio_t cmd, cyhal_gpio_t clk,
     return retVal;
 }
 
-
-/** Release the UDB SDIO and reserved peripheral.
- *
- * @param[in,out] obj The SDIO object
- * @return The status of the free request
- */
-cy_rslt_t cyhal_sdio_free(cyhal_sdio_t *obj)
+void cyhal_sdio_free(cyhal_sdio_t *obj)
 {
-    cy_rslt_t retVal;
-    
-    if (NULL == obj)
-    {
-        return CYHAL_SDIO_RSLT_ERR_BAD_PARAM;
-    }
-    
-    retVal = cyhal_free_pins(obj);
-
-    if (retVal == CY_RSLT_SUCCESS)
-    {
-        retVal = cyhal_free_clocks(obj);
-    }
-    
-    if (retVal == CY_RSLT_SUCCESS)
-    {
-        retVal = cyhal_free_dmas(obj);
-    }
-    
-    if ((retVal == CY_RSLT_SUCCESS) && (obj->resource.type != CYHAL_RSC_INVALID))
-    {
-        /* All other resources were released so need to release UDB resource */
-        retVal = cyhal_hwmgr_set_unconfigured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num);
-        
-        /* This is the only available function to disable functionality */
-        SDIO_DisableSdClk();
-        
-        if (retVal == CY_RSLT_SUCCESS)
-        {
-            retVal = cyhal_hwmgr_free(&(obj->resource));
-        }
-    }
-    return retVal;
+    cyhal_free_pins(obj);
+    cyhal_free_clocks(obj);
+    cyhal_free_dmas(obj);
 }
 
-
-/** Configure the SDIO block.
- *
- * @param[in,out] obj    The SDIO object
- * @param[in]     config The SDIO configuration to apply
- * @return The status of the configure request
- */
 cy_rslt_t cyhal_sdio_configure(cyhal_sdio_t *obj, const cyhal_sdio_cfg_t *config)
 {
     if (NULL == obj)
@@ -668,12 +413,14 @@ cy_rslt_t cyhal_sdio_configure(cyhal_sdio_t *obj, const cyhal_sdio_cfg_t *config
         return CYHAL_SDIO_RSLT_ERR_BAD_PARAM;
     }
 
+    /* Do not change frequency if requested value is zero */
     if (config->frequencyhal_hz != 0)
     {
         SDIO_SetSdClkFrequency(config->frequencyhal_hz);
         obj->frequencyhal_hz = config->frequencyhal_hz;
     }
     
+    /* Do not change block size if requested value is zero */
     if (config->block_size != 0)
     {
         SDIO_SetBlockSize(config->block_size);
@@ -683,16 +430,6 @@ cy_rslt_t cyhal_sdio_configure(cyhal_sdio_t *obj, const cyhal_sdio_cfg_t *config
     return CY_RSLT_SUCCESS;
 }
 
-
-/** Sends a command to the SDIO block.
- *
- * @param[in,out] obj       The SDIO object
- * @param[in]     direction The direction of transfer (read/write)
- * @param[in]     command   The SDIO command to send
- * @param[in]     argument  The argument to the command
- * @param[out]    response  The response from the SDIO device
- * @return The status of the configure request
- */
 cy_rslt_t cyhal_sdio_send_cmd(const cyhal_sdio_t *obj, cyhal_transfer_t direction, cyhal_sdio_command_t command, uint32_t argument, uint32_t* response)
 {
     if ((NULL == obj) && (command == CYHAL_SDIO_CMD_IO_RW_EXTENDED))
@@ -733,17 +470,6 @@ cy_rslt_t cyhal_sdio_send_cmd(const cyhal_sdio_t *obj, cyhal_transfer_t directio
     return retVal;
 }
 
-
-/** Performs a bulk data transfer (CMD=53) to the SDIO block.
- *
- * @param[in,out] obj       The SDIO object
- * @param[in]     direction The direction of transfer (read/write)
- * @param[in]     argument  The argument to the command
- * @param[in]     data      The data to send to the SDIO device
- * @param[in]     length    The number of bytes to send
- * @param[out]    response  The response from the SDIO device
- * @return The status of the configure request
- */
 cy_rslt_t cyhal_sdio_bulk_transfer(cyhal_sdio_t *obj, cyhal_transfer_t direction, uint32_t argument, const uint32_t* data, uint16_t length, uint32_t* response)
 {
     if (NULL == obj)
@@ -754,8 +480,8 @@ cy_rslt_t cyhal_sdio_bulk_transfer(cyhal_sdio_t *obj, cyhal_transfer_t direction
     stc_sdio_cmd_t cmd;
     en_sdio_result_t status;
     uint32_t cmdResponse;
-    cy_rslt_t retVal = CY_RSLT_SUCCESS;;
-
+    cy_rslt_t retVal = CY_RSLT_SUCCESS;
+    uint8_t* tempBuffer = NULL;
     if (response != NULL)
     {
         *response = 0;
@@ -770,7 +496,11 @@ cy_rslt_t cyhal_sdio_bulk_transfer(cyhal_sdio_t *obj, cyhal_transfer_t direction
     cmd.bRead = (direction != CYHAL_READ) ? false : true;
 
     /* Cypress ID BSP-542 */
-    uint8_t* tempBuffer = (uint8_t*)malloc(length + obj->block_size - 1);
+    if (cmd.bRead)
+    {
+        tempBuffer = (uint8_t*)malloc(length + obj->block_size - 1);
+    }
+
     if (length >= obj->block_size)
     {
         cmd.u16BlockCnt = (uint16_t) ((length + obj->block_size - 1)/obj->block_size);
@@ -789,6 +519,12 @@ cy_rslt_t cyhal_sdio_bulk_transfer(cyhal_sdio_t *obj, cyhal_transfer_t direction
     }
 
     status = SDIO_SendCommandAndWait(&cmd);
+    Cy_SysLib_DelayUs(30);
+    __DSB();
+
+    /* Wait until operation is complete on both sides */
+    Cy_SysLib_DelayUs(OPERATION_CMPLT_DELAY_US);
+    __DSB();
 
     if (Ok != status)
     {
@@ -799,26 +535,25 @@ cy_rslt_t cyhal_sdio_bulk_transfer(cyhal_sdio_t *obj, cyhal_transfer_t direction
     {
         memcpy((uint8_t *)data, tempBuffer, (size_t)length);
     }
+    
+    if (tempBuffer != NULL)
+    {
+        free(tempBuffer);
+    }
 
     if (response != NULL)
     {
         *response = cmdResponse;
     }
 
-    free(tempBuffer);
+    if (tempBuffer != NULL)
+    {
+        free(tempBuffer);
+    }
 
     return retVal;
 }
 
-/** Performs a bulk asynchronus data transfer (CMD=53) to the SDIO block.
- *
- * @param[in,out] obj       The SDIO object
- * @param[in]     direction The direction of transfer (read/write)
- * @param[in]     argument  The argument to the command
- * @param[in]     data      The data to send to the SDIO device
- * @param[in]     length    The number of bytes to send
- * @return The status of the configure request
- */
 cy_rslt_t cyhal_sdio_transfer_async(cyhal_sdio_t *obj, cyhal_transfer_t direction, uint32_t argument, const uint32_t* data, uint16_t length)
 {
     /* UDB SDIO implementation does not support async transfers */
@@ -832,29 +567,12 @@ cy_rslt_t cyhal_sdio_transfer_async(cyhal_sdio_t *obj, cyhal_transfer_t directio
     return CYHAL_SDIO_FUNC_NOT_SUPPORTED;
 }
 
-
-/** Checks if the specified SDIO is in use
- *
- * @param[in]  obj  The SDIO peripheral to check
- * @param[out] busy Indication of whether the SDIO is still transmitting
- * @return The status of the is_busy request
- */
-cy_rslt_t cyhal_sdio_is_busy(const cyhal_sdio_t *obj, bool *busy)
+bool cyhal_sdio_is_busy(const cyhal_sdio_t *obj)
 {
     /* UDB SDIO does not support async transfers */
-    if ((obj == NULL) && (busy == NULL))
-    {
-        return CYHAL_SDIO_RSLT_ERR_BAD_PARAM;
-    }
-
-    return CYHAL_SDIO_FUNC_NOT_SUPPORTED;
+    return true;
 }
 
-/** Abort an SDIO transfer
- *
- * @param[in] obj The SDIO peripheral to stop. Resets UDB block
- * @return The status of the abort_async request
- */
 cy_rslt_t cyhal_sdio_abort_async(const cyhal_sdio_t *obj)
 {
     /* Reset UDB SDIO */
@@ -862,59 +580,41 @@ cy_rslt_t cyhal_sdio_abort_async(const cyhal_sdio_t *obj)
     return CY_RSLT_SUCCESS;
 }
 
-/** The sdio interrupt handler registration
- *
- * @param[in] obj         The SDIO object
- * @param[in] handler     The callback handler which will be invoked when the interrupt fires
- * @param[in] handler_arg Generic argument that will be provided to the handler when called
- * @return The status of the register_irq request
- */
-cy_rslt_t cyhal_sdio_register_irq(cyhal_sdio_t *obj, cyhal_sdio_irq_handler handler, void *handler_arg)
+void cyhal_sdio_register_irq(cyhal_sdio_t *obj, cyhal_sdio_irq_handler handler, void *handler_arg)
 {
-    if (obj == NULL)
-    {
-        return CYHAL_SDIO_RSLT_ERR_BAD_PARAM;
-    }
-
     cyhal_sdio_config_struct = obj;
     cyhal_sdio_callback = handler;
     cyhal_sdio_callback_args = handler_arg;
-
-    return CY_RSLT_SUCCESS;
 }
 
-/** Configure SDIO interrupt.
- *
- * @param[in] obj      The SDIO object
- * @param[in] event    The SDIO IRQ type
- * @param[in] enable   Set to non-zero to enable events, or zero to disable them
- * @return The status of the irq_enable request
- */
-cy_rslt_t cyhal_sdio_irq_enable(cyhal_sdio_t *obj, cyhal_sdio_irq_event_t event, bool enable)
+void cyhal_sdio_irq_enable(cyhal_sdio_t *obj, cyhal_sdio_irq_event_t event, bool enable)
 {
-    if (enable)
+    /* Only CYHAL_SDIO_CARD_INTERRUPT event can be registered */
+    if (event == CYHAL_SDIO_CARD_INTERRUPT)
     {
-        obj->irq_cause |= event;
-        
-        if (cyhal_sdio_config_struct != NULL)
+        if (enable)
         {
-            cyhal_sdio_config_struct->irq_cause |= event;
-        }
-        
-        SDIO_EnableChipInt();
-    }
-    else
-    {
-        obj->irq_cause &= ~event;
+            obj->irq_cause = event;
 
-        if (cyhal_sdio_config_struct != NULL)
-        {
-            cyhal_sdio_config_struct->irq_cause &= ~event;
+            if (cyhal_sdio_config_struct != NULL)
+            {
+                cyhal_sdio_config_struct->irq_cause = event;
+            }
+            
+            SDIO_EnableChipInt();
         }
-        
-        SDIO_DisableChipInt();
+        else
+        {
+            obj->irq_cause = 0U;
+
+            if (cyhal_sdio_config_struct != NULL)
+            {
+                cyhal_sdio_config_struct->irq_cause = 0U;
+            }
+
+            SDIO_DisableChipInt();
+        }
     }
-    return CY_RSLT_SUCCESS;
 }
 
 

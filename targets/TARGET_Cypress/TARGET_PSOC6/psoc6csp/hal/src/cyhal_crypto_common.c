@@ -4,7 +4,7 @@
 * Description:
 * Provides a high level interface for interacting with the Cypress CRC. This is
 * a wrapper around the lower level PDL API.
-* 
+*
 ********************************************************************************
 * \copyright
 * Copyright 2018-2019 Cypress Semiconductor Corporation
@@ -37,35 +37,34 @@ CRYPTO_Type* CYHAL_CRYPTO_BASE_ADDRESSES[CYHAL_CRYPTO_INST_COUNT] =
 cy_rslt_t cyhal_crypto_reserve(CRYPTO_Type** base, cyhal_resource_inst_t *resource)
 {
     cy_rslt_t result = CYHAL_HWMGR_RSLT_ERR_NONE_FREE;
-    for(uint32_t i = 0u; i < CYHAL_CRYPTO_INST_COUNT; i++)
+    for (uint32_t i = 0u; i < CYHAL_CRYPTO_INST_COUNT; i++)
     {
         resource->block_num = i;
         result = cyhal_hwmgr_reserve(resource);
-        if(result == CY_RSLT_SUCCESS)
+        if (result == CY_RSLT_SUCCESS)
         {
             *base = CYHAL_CRYPTO_BASE_ADDRESSES[i];
             Cy_Crypto_Core_Enable(*base);
             result = cyhal_hwmgr_set_configured(resource->type, resource->block_num, resource->channel_num);
-            break;
+            if (result == CY_RSLT_SUCCESS)
+            {
+                break;
+            }
+            else
+            {
+                cyhal_hwmgr_free(resource);
+            }
         }
-    }
-    if (result != CY_RSLT_SUCCESS)
-    {
-        cyhal_crypto_free(*base, resource);
     }
     return result;
 }
 
-cy_rslt_t cyhal_crypto_free(CRYPTO_Type* base, const cyhal_resource_inst_t *resource)
+void cyhal_crypto_free(CRYPTO_Type* base, const cyhal_resource_inst_t *resource)
 {
-    cy_rslt_t result = CY_RSLT_SUCCESS; 
-    cy_rslt_t ret = CY_RSLT_SUCCESS;
-    if(Cy_Crypto_Core_IsEnabled(base))
+    cyhal_hwmgr_set_unconfigured(resource->type, resource->block_num, resource->channel_num);
+    if (Cy_Crypto_Core_IsEnabled(base))
+    {
         Cy_Crypto_Core_Disable(base);
-    result = cyhal_hwmgr_set_unconfigured(resource->type, resource->block_num, resource->channel_num);
-    ret = result;
-    result = cyhal_hwmgr_free(resource);
-    if(ret == CY_RSLT_SUCCESS)
-        ret = result;
-    return ret;
+    }
+    cyhal_hwmgr_free(resource);
 }

@@ -76,58 +76,6 @@ CySCB_Type* CY_SCB_BASE_ADDRESSES[CY_IP_MXSCB_INSTANCES] =
 #endif
 };
 
-uint16_t CY_SCB_BUFFER_SIZE[CY_IP_MXSCB_INSTANCES] =
-{
-#ifdef SCB0_EZ_DATA_NR
-    SCB0_EZ_DATA_NR,
-#endif
-#ifdef SCB1_EZ_DATA_NR
-    SCB1_EZ_DATA_NR,
-#endif
-#ifdef SCB2_EZ_DATA_NR
-    SCB2_EZ_DATA_NR,
-#endif
-#ifdef SCB3_EZ_DATA_NR
-    SCB3_EZ_DATA_NR,
-#endif
-#ifdef SCB4_EZ_DATA_NR
-    SCB4_EZ_DATA_NR,
-#endif
-#ifdef SCB5_EZ_DATA_NR
-    SCB5_EZ_DATA_NR,
-#endif
-#ifdef SCB6_EZ_DATA_NR
-    SCB6_EZ_DATA_NR,
-#endif
-#ifdef SCB7_EZ_DATA_NR
-    SCB7_EZ_DATA_NR,
-#endif
-#ifdef SCB8_EZ_DATA_NR
-    SCB8_EZ_DATA_NR,
-#endif
-#ifdef SCB9_EZ_DATA_NR
-    SCB9_EZ_DATA_NR,
-#endif
-#ifdef SCB10_EZ_DATA_NR
-    SCB10_EZ_DATA_NR,
-#endif
-#ifdef SCB11_EZ_DATA_NR
-    SCB11_EZ_DATA_NR,
-#endif
-#ifdef SCB12_EZ_DATA_NR
-    SCB12_EZ_DATA_NR,
-#endif
-#ifdef SCB13_EZ_DATA_NR
-    SCB13_EZ_DATA_NR,
-#endif
-#ifdef SCB14_EZ_DATA_NR
-    SCB14_EZ_DATA_NR,
-#endif
-#ifdef SCB15_EZ_DATA_NR
-    SCB15_EZ_DATA_NR,
-#endif
-};
-
 IRQn_Type CY_SCB_IRQ_N[CY_IP_MXSCB_INSTANCES] =
 {
 #ifdef SCB0

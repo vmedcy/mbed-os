@@ -4,7 +4,7 @@
 * Description:
 * Provides a high level interface for interacting with the Cypress GPIO. This is
 * a wrapper around the lower level PDL API.
-* 
+*
 ********************************************************************************
 * \copyright
 * Copyright 2018-2019 Cypress Semiconductor Corporation
@@ -28,6 +28,7 @@
 #include "cy_gpio.h"
 #include "cyhal_gpio.h"
 #include "cyhal_utils.h"
+#include "cy_utils.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -42,26 +43,26 @@ extern "C" {
 *       Functions
 *******************************************************************************/
 
-__STATIC_INLINE cy_rslt_t cyhal_gpio_write(cyhal_gpio_t pin, bool value)
+__STATIC_INLINE void cyhal_gpio_write_internal(cyhal_gpio_t pin, bool value)
 {
     Cy_GPIO_Write(CYHAL_GET_PORTADDR(pin), CYHAL_GET_PIN(pin), value);
-
-    return CY_RSLT_SUCCESS;
 }
 
-__STATIC_INLINE cy_rslt_t cyhal_gpio_read(cyhal_gpio_t pin, bool *value)
+#define cyhal_gpio_write(pin, value) cyhal_gpio_write_internal(pin, value)
+
+__STATIC_INLINE bool cyhal_gpio_read_internal(cyhal_gpio_t pin)
 {
-    *value = Cy_GPIO_Read(CYHAL_GET_PORTADDR(pin), CYHAL_GET_PIN(pin));
-
-    return CY_RSLT_SUCCESS;
+    return 0 != Cy_GPIO_Read(CYHAL_GET_PORTADDR(pin), CYHAL_GET_PIN(pin));
 }
 
-__STATIC_INLINE cy_rslt_t cyhal_gpio_toggle(cyhal_gpio_t pin)
+#define cyhal_gpio_read(pin) cyhal_gpio_read_internal(pin)
+
+__STATIC_INLINE void cyhal_gpio_toggle_internal(cyhal_gpio_t pin)
 {
     Cy_GPIO_Inv(CYHAL_GET_PORTADDR(pin), CYHAL_GET_PIN(pin));
-
-    return CY_RSLT_SUCCESS;
 }
+
+#define cyhal_gpio_toggle(pin) cyhal_gpio_toggle_internal(pin)
 
 #if defined(__cplusplus)
 }

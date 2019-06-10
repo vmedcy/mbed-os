@@ -2,11 +2,11 @@
 * \file cyhal_timer.h
 *
 * \brief
-* Provides a high level interface for interacting with the Cypress Timer/Counter. 
+* Provides a high level interface for interacting with the Cypress Timer/Counter.
 * This interface abstracts out the chip specific details. If any chip specific
 * functionality is necessary, or performance is critical the low level functions
 * can be used directly.
-* 
+*
 ********************************************************************************
 * \copyright
 * Copyright 2018-2019 Cypress Semiconductor Corporation
@@ -42,7 +42,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cy_result.h"
-#include "cyhal_implementation.h"
+#include "cyhal_hw_types.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -87,7 +87,7 @@ typedef struct
       */
     bool is_continuous; //!< Whether the timer/counter operates continuous (true) or one shot (false)
     cyhal_timer_direction_t direction; //!< Direction the timer/counter is running
-    bool is_compare; //!< Is it in compare (true) or capture (false) mode 
+    bool is_compare; //!< Is it in compare (true) or capture (false) mode
     uint32_t period; //!< Timer/counter period
     uint32_t compare_value; //!< Timer/counter comparison value
     uint32_t value; //!< Current value of the timer/counter
@@ -131,9 +131,8 @@ cy_rslt_t cyhal_timer_init(cyhal_timer_t *obj, cyhal_gpio_t pin, const cyhal_clo
 /** Deinitialize the timer/counter object
  *
  * @param[in,out] obj The timer/counter object
- * @return The status of the free request
  */
-cy_rslt_t cyhal_timer_free(cyhal_timer_t *obj);
+void cyhal_timer_free(cyhal_timer_t *obj);
 
 /** Updates the configuration of the timer/counter object
  *
@@ -163,18 +162,16 @@ cy_rslt_t cyhal_timer_stop(cyhal_timer_t *obj);
  * @param[in] priority    The NVIC interrupt channel priority
  * @param[in] handler     The callback handler which will be invoked when the interrupt fires
  * @param[in] handler_arg Generic argument that will be provided to the handler when called
- * @return The status of the register_irq request
  */
-cy_rslt_t cyhal_timer_register_irq(cyhal_timer_t *obj, uint8_t priority, cyhal_timer_irq_handler handler, void *handler_arg);
+void cyhal_timer_register_irq(cyhal_timer_t *obj, uint8_t priority, cyhal_timer_irq_handler handler, void *handler_arg);
 
 /** Configure timer/counter interrupt enablement.
  *
  * @param[in] obj      The timer/counter object
  * @param[in] event    The timer/counter IRQ type
  * @param[in] enable   True to turn on interrupts, False to turn off
- * @return The status of the irq_enable request
  */
-cy_rslt_t cyhal_timer_irq_enable(cyhal_timer_t *obj, cyhal_timer_irq_event_t event, bool enable);
+void cyhal_timer_irq_enable(cyhal_timer_t *obj, cyhal_timer_irq_event_t event, bool enable);
 
 /** \} group_hal_timer_functions */
 

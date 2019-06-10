@@ -1853,7 +1853,11 @@
         "public": false,
         "extra_labels": ["STM"],
         "supported_toolchains": ["ARM", "uARM", "IAR", "GCC_ARM"],
-        "macros": ["TRANSACTION_QUEUE_SIZE_SPI=2"],
+        "macros": [
+            "USE_HAL_DRIVER",
+            "USE_FULL_LL_DRIVER",
+            "TRANSACTION_QUEUE_SIZE_SPI=2"
+        ],
         "config": {
             "lse_available": {
                 "help": "Define if a Low Speed External xtal (LSE) is available on the board (0 = No, 1 = Yes). If Yes, the LSE will be used to clock the RTC, LPUART, ... otherwise the Low Speed Internal clock (LSI) will be used",
@@ -3170,9 +3174,7 @@
         "core": "Cortex-M7FD",
         "extra_labels_add": [
             "STM32H7",
-            "STM32H743",
-            "STM32H743xI",
-            "STM32H743ZI"
+            "STM32H743xI"
         ],
         "config": {
             "d11_configuration": {
@@ -3196,8 +3198,8 @@
             }
         },
         "macros_add": [
-            "MBED_TICKLESS",
-            "USE_FULL_LL_DRIVER"
+            "STM32H743xx",
+            "MBED_TICKLESS"
         ],
         "overrides": { "lpticker_delay_ticks": 4 },
         "supported_form_factors": ["ARDUINO"],
@@ -3620,8 +3622,9 @@
         "extra_labels_add": [
             "STM32F4",
             "STM32F407",
-            "STM32F407xG",
-            "STM32F407VG",
+            "STM32F407xx",
+            "STM32F407xE",
+            "STM32F407VE",
             "STM_EMAC"
         ],
         "device_has_add": ["ANALOGOUT", "TRNG", "FLASH", "EMAC", "MPU"],
@@ -3639,7 +3642,7 @@
         },
         "release_versions": ["2", "5"],
         "overrides": {"lse_available": 0},
-        "device_name": "STM32F407VG",
+        "device_name": "STM32F407VETx",
         "overrides": {
             "network-default-interface-type": "ETHERNET"
         }
@@ -7088,6 +7091,7 @@
             "MBED_TICKLESS",
             "MBED_MPU_CUSTOM"
         ],
+        "features": ["BLE"],
         "device_has": [
             "ANALOGIN",
             "FLASH",
@@ -7114,10 +7118,11 @@
             "NORDIC",
             "NRF5x",
             "NRF52",
-            "SDK_14_2",
-            "NORDIC_SOFTDEVICE",
-            "SOFTDEVICE_COMMON",
-            "SOFTDEVICE_S132_FULL"
+            "SDK_15_0",
+            "CORDIO",
+            "CORDIO_LL",
+            "SOFTDEVICE_NONE",
+            "NORDIC_CORDIO"
         ],
         "config": {
             "lf_clock_src": {
@@ -7213,7 +7218,7 @@
             "WSF_MAX_HANDLERS=10",
             "MBED_MPU_CUSTOM"
         ],
-        "features": ["CRYPTOCELL310"],
+        "features": ["CRYPTOCELL310", "BLE"],
         "device_has": [
             "ANALOGIN",
             "FLASH",
@@ -7241,10 +7246,11 @@
             "NORDIC",
             "NRF5x",
             "NRF52",
-            "SDK_14_2",
-            "NORDIC_SOFTDEVICE",
-            "SOFTDEVICE_COMMON",
-            "SOFTDEVICE_S140_FULL"
+            "SDK_15_0",
+            "CORDIO",
+            "CORDIO_LL",
+            "SOFTDEVICE_NONE",
+            "NORDIC_CORDIO"
         ],
         "config": {
             "lf_clock_src": {
@@ -7285,6 +7291,7 @@
         "detect_code": ["0465"],
         "features_remove": ["CRYPTOCELL310"],
         "macros_remove": ["MBEDTLS_CONFIG_HW_SUPPORT"],
+        "macros_add": ["NRFX_RNG_ENABLED=1", "RNG_ENABLED=1", "NRF_QUEUE_ENABLED=1"],
         "overrides": {
             "lf_clock_src": "NRF_LF_SRC_RC"
         }
@@ -7878,10 +7885,6 @@
             "usb-device-hsusbd": {
                 "help": "Select high-speed USB device or not",
                 "value": 1
-            },
-            "ctrl01-enable": {
-                "help": "Enable control_01",
-                "value": 0
             }
         },
         "inherits": ["Target"],
@@ -8646,7 +8649,8 @@
         "inherits": ["GD32_Target"],
         "supported_form_factors": ["ARDUINO"],
         "core": "Cortex-M4F",
-        "extra_labels_add": ["GD32F4XX", "GD32F450ZI", "GD_EMAC"],
+        "components_add": ["FLASHIAP"],
+        "extra_labels_add": ["GD32F4XX", "GD32F450ZI", "GD_EMAC","PSA"],
         "device_has_add": [
             "RTC",
             "I2C",
@@ -8665,7 +8669,8 @@
         ],
         "device_name": "GD32F450ZI",
         "detect_code": ["1702"],
-        "macros_add": ["GD32F450"],
+        "macros_add": ["GD32F450", "MBEDTLS_PSA_CRYPTO_C"],
+        "bootloader_supported": true,
         "release_versions": ["5"],
         "overrides": {
             "network-default-interface-type": "ETHERNET"
@@ -8722,6 +8727,26 @@
 		"detect_code": ["8013"],
 		"release_versions": ["5"],
 		"bootloader_supported": true
+    },
+    "EP_AGORA": {
+        "inherits": ["MCU_NRF52840"],
+        "device_name": "nRF52840_xxAA",
+        "supported_form_factors": [],
+        "config": {
+            "modem_is_on_board": {
+                "help": "Value: Tells the build system that the modem is on-board as oppose to a plug-in shield/module.",
+                "value": 0,
+                "macro_name": "MODEM_ON_BOARD"
+            },
+            "modem_data_connection_type": {
+                "help": "Value: Defines how an on-board modem is wired up to the MCU, e.g., data connection can be a UART or USB and so forth.",
+                "value": 0,
+                "macro_name": "MODEM_ON_BOARD_UART"
+            }
+        },
+        "components_add": ["SPIF"],
+        "components_remove": ["QSPIF"],
+        "release_versions": ["5"]
     },
     "__build_tools_metadata__": {
         "version": "1",

@@ -19,41 +19,22 @@
 * TODO: Buffer abstraction high-level description
 * to be set in abstraction/include/cy_network_buffer.h
 *
-* \defgroup group_abstraction_buffer_macros Macros
 * \defgroup group_abstraction_buffer_functions Functions
 */
 
 #pragma once
+#if defined(TARGET_WHD)
 
 #include <stdint.h>
 #include <stdbool.h>
 #include "cy_result.h"
 #include "whd.h"
 #include "whd_network_types.h"
+#include "pbuf.h"
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
-
-/**
-* \addtogroup group_abstraction_buffer_macros
-* \{
-*/
-
-/** Error indicating that memory for the specified buffer could not be allocated. */
-#define CY_RSLT_BUFFER_UNAVAILABLE (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CY_RSLT_MODULE_ABSTRACTION_BUFFER, 0))
-/** Error indicating that the provided buffer is too small to accomodate the request. */
-#define CY_RSLT_BUFFER_TOO_SMALL (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CY_RSLT_MODULE_ABSTRACTION_BUFFER, 1))
-
-/** \} group_abstraction_buffer_macros */
-
-
-/**
-* \addtogroup group_abstraction_buffer_structures
-* \{
-*/
-
-/** \} group_abstraction_buffer_structures */
 
 
 /**
@@ -76,7 +57,7 @@ extern "C" {
  *  @param size      : The number of bytes to allocate.
  *  @param timeout_ms: Time to wait for a packet buffer to be available
  *
- *  @return          : CY_RSLT_SUCCESS or error code
+ *  @return          : CY_RSLT_SUCCESS or WHD_BUFFER_ALLOC_FAIL if the buffer could not be allocated
  */
 cy_rslt_t cy_host_buffer_get(whd_buffer_t *buffer, whd_buffer_dir_t direction, uint16_t size, uint32_t timeout_ms);
 
@@ -126,7 +107,7 @@ uint16_t cy_buffer_get_current_piece_size(whd_buffer_t buffer);
  *  @param buffer : The packet to be modified
  *  @param size   : The new size of the packet buffer
  *
- *  @return       : CY_RSLT_SUCCESS or error code
+ *  @return       : CY_RSLT_SUCCESS or WHD_PMK_WRONG_LENGTH if the requested size is not valid
  */
 cy_rslt_t cy_buffer_set_size(whd_buffer_t buffer, uint16_t size);
 
@@ -146,7 +127,8 @@ cy_rslt_t cy_buffer_set_size(whd_buffer_t buffer, uint16_t size);
  *                             buffer - a negative value increases the space for headers at the front
  *                             of the packet, a positive value decreases the space.
  *
- *  @return                  : CY_RSLT_SUCCESS or error code
+ *  @return                  : CY_RSLT_SUCCESS or WHD_PMK_WRONG_LENGTH if the added amount is outside 
+ *                             the size of the buffer
  */
 cy_rslt_t cy_buffer_add_remove_at_front(whd_buffer_t *buffer, int32_t add_remove_amount);
 
@@ -184,5 +166,7 @@ void cy_network_process_ethernet_data(whd_interface_t interface, whd_buffer_t bu
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
+
+#endif /* defined(TARGET_WHD) */
 
 /** \} group_abstraction_buffer */

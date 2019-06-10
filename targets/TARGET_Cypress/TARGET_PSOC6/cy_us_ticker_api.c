@@ -32,8 +32,7 @@ static bool cy_us_ticker_initialized = false;
 
 static cy_en_syspm_status_t cy_us_ticker_pm_callback(cy_stc_syspm_callback_params_t *params, cy_en_syspm_callback_mode_t mode)
 {
-    if (mode == CY_SYSPM_AFTER_TRANSITION)
-    {
+    if (mode == CY_SYSPM_AFTER_TRANSITION) {
         Cy_TCPWM_Counter_Enable(cy_us_timer.base, cy_us_timer.resource.channel_num);
         Cy_TCPWM_TriggerStart(cy_us_timer.base, 1u << cy_us_timer.resource.channel_num);
     }
@@ -54,10 +53,10 @@ static void cy_us_ticker_irq_handler(MBED_UNUSED void *arg, MBED_UNUSED cyhal_ti
 
 void us_ticker_init(void)
 {
-    if (!cy_us_ticker_initialized)
-    {
-        if (CY_RSLT_SUCCESS != cyhal_timer_init(&cy_us_timer, NC, NULL))
+    if (!cy_us_ticker_initialized) {
+        if (CY_RSLT_SUCCESS != cyhal_timer_init(&cy_us_timer, NC, NULL)) {
             MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_timer_init");
+        }
         // Configure clock for about 1 MHz
         MBED_ASSERT(cy_PeriClkFreqHz >= 1000000);
         uint32_t div_value = cy_PeriClkFreqHz / 1000000;
@@ -65,22 +64,24 @@ void us_ticker_init(void)
         cy_us_ticker_info.bits = 16;
         Cy_SysClk_PeriphSetDivider(cy_us_timer.clock.div_type, cy_us_timer.clock.div_num, div_value - 1u);
         static const cyhal_timer_cfg_t cfg = {
-        /* .is_continuous = */ true,
-        /* .direction = */     CYHAL_TIMER_DIR_UP,
-        /* .is_compare = */    true,
-        /* .period = */        0xFFFFu,
-        /* .compare_value = */ 0xFFFFu,
-        /* .value = */         0u
+            /* .is_continuous = */ true,
+            /* .direction = */     CYHAL_TIMER_DIR_UP,
+            /* .is_compare = */    true,
+            /* .period = */        0xFFFFu,
+            /* .compare_value = */ 0xFFFFu,
+            /* .value = */         0u
         };
-        if (CY_RSLT_SUCCESS != cyhal_timer_set_config(&cy_us_timer, &cfg))
+        if (CY_RSLT_SUCCESS != cyhal_timer_set_config(&cy_us_timer, &cfg)) {
             MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_timer_set_cfg");
+        }
         Cy_TCPWM_ClearInterrupt(cy_us_timer.base, cy_us_timer.resource.channel_num, CY_TCPWM_INT_ON_CC_OR_TC);
-        if (CY_RSLT_SUCCESS != cyhal_timer_register_irq(&cy_us_timer, CY_US_TICKER_IRQ_PRIORITY, &cy_us_ticker_irq_handler, NULL))
-            MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_timer_register_irq");
-        if (CY_RSLT_SUCCESS != cyhal_timer_start(&cy_us_timer))
+        cyhal_timer_register_irq(&cy_us_timer, CY_US_TICKER_IRQ_PRIORITY, &cy_us_ticker_irq_handler, NULL);
+        if (CY_RSLT_SUCCESS != cyhal_timer_start(&cy_us_timer)) {
             MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_timer_start");
-        if (!Cy_SysPm_RegisterCallback(&cy_us_ticker_pm_data))
+        }
+        if (!Cy_SysPm_RegisterCallback(&cy_us_ticker_pm_data)) {
             MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "Cy_SysPm_RegisterCallback");
+        }
         cy_us_ticker_initialized = true;
     }
     us_ticker_disable_interrupt();
@@ -88,15 +89,14 @@ void us_ticker_init(void)
 
 void us_ticker_free(void)
 {
-    if (cy_us_ticker_initialized)
-    {
+    if (cy_us_ticker_initialized) {
         cy_us_ticker_initialized = false;
         us_ticker_disable_interrupt();
         Cy_SysPm_UnregisterCallback(&cy_us_ticker_pm_data);
-        if (CY_RSLT_SUCCESS != cyhal_timer_stop(&cy_us_timer))
+        if (CY_RSLT_SUCCESS != cyhal_timer_stop(&cy_us_timer)) {
             MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_timer_stop");
-        if (CY_RSLT_SUCCESS != cyhal_timer_free(&cy_us_timer))
-            MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_timer_free");
+        }
+        cyhal_timer_free(&cy_us_timer);
     }
 }
 
@@ -110,19 +110,16 @@ void us_ticker_set_interrupt(timestamp_t timestamp)
 {
     MBED_ASSERT(cy_us_ticker_initialized);
     Cy_TCPWM_Counter_SetCompare0(cy_us_timer.base, cy_us_timer.resource.channel_num, timestamp);
-    if (CY_TCPWM_INT_NONE == Cy_TCPWM_GetInterruptMask(cy_us_timer.base, cy_us_timer.resource.channel_num))
-    {
+    if (CY_TCPWM_INT_NONE == Cy_TCPWM_GetInterruptMask(cy_us_timer.base, cy_us_timer.resource.channel_num)) {
         Cy_TCPWM_ClearInterrupt(cy_us_timer.base, cy_us_timer.resource.channel_num, CY_TCPWM_INT_ON_CC_OR_TC);
-        if (CY_RSLT_SUCCESS != cyhal_timer_irq_enable(&cy_us_timer, CYHAL_TIMER_IRQ_CAPTURE_COMPARE, true))
-            MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_timer_irq_enable");
+        cyhal_timer_irq_enable(&cy_us_timer, CYHAL_TIMER_IRQ_CAPTURE_COMPARE, true);
     }
 }
 
 void us_ticker_disable_interrupt(void)
 {
     MBED_ASSERT(cy_us_ticker_initialized);
-    if (CY_RSLT_SUCCESS != cyhal_timer_irq_enable(&cy_us_timer, CYHAL_TIMER_IRQ_CAPTURE_COMPARE, false))
-        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_timer_irq_enable");
+    cyhal_timer_irq_enable(&cy_us_timer, CYHAL_TIMER_IRQ_CAPTURE_COMPARE, false);
 }
 
 void us_ticker_clear_interrupt(void)
@@ -135,7 +132,7 @@ void us_ticker_fire_interrupt(void)
     MBED_ASSERT(cy_us_ticker_initialized);
     // TODO: no HAL function for this. Needs to work even when masked
     IRQn_Type irq = cy_us_timer.resource.block_num == 0
-        ? tcpwm_0_interrupts_0_IRQn : tcpwm_1_interrupts_0_IRQn;
+                    ? tcpwm_0_interrupts_0_IRQn : tcpwm_1_interrupts_0_IRQn;
     irq = (IRQn_Type)(irq + cy_us_timer.resource.channel_num);
     NVIC_SetPendingIRQ(irq);
 }

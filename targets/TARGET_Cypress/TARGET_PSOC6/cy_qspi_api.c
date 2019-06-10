@@ -32,7 +32,8 @@ qspi_status_t qspi_init(qspi_t *obj, PinName io0, PinName io1, PinName io2, PinN
 
 qspi_status_t qspi_free(qspi_t *obj)
 {
-    return CY_RSLT_SUCCESS == cyhal_qspi_free(&(obj->hal_qspi)) ? QSPI_STATUS_OK : QSPI_STATUS_ERROR;
+    cyhal_qspi_free(&(obj->hal_qspi));
+    return QSPI_STATUS_OK;
 }
 
 qspi_status_t qspi_frequency(qspi_t *obj, int hz)
@@ -42,36 +43,44 @@ qspi_status_t qspi_frequency(qspi_t *obj, int hz)
 
 static inline cyhal_qspi_bus_width_t cyhal_qspi_convert_width(qspi_bus_width_t width)
 {
-    switch (width)
-    {
-    case QSPI_CFG_BUS_SINGLE: return CY_QSPI_CFG_BUS_SINGLE;
-    case QSPI_CFG_BUS_DUAL: return CY_QSPI_CFG_BUS_DUAL;
-    default: // fallthrough
-    case QSPI_CFG_BUS_QUAD: return CY_QSPI_CFG_BUS_QUAD;
+    switch (width) {
+        case QSPI_CFG_BUS_SINGLE:
+            return CY_QSPI_CFG_BUS_SINGLE;
+        case QSPI_CFG_BUS_DUAL:
+            return CY_QSPI_CFG_BUS_DUAL;
+        default: // fallthrough
+        case QSPI_CFG_BUS_QUAD:
+            return CY_QSPI_CFG_BUS_QUAD;
     }
 }
 
 static inline cyhal_qspi_size_t cyhal_qspi_convert_addr_size(qspi_address_size_t size)
 {
-    switch (size)
-    {
-    case QSPI_CFG_ADDR_SIZE_8: return CY_QSPI_CFG_SIZE_8;
-    case QSPI_CFG_ADDR_SIZE_16: return CY_QSPI_CFG_SIZE_16;
-    case QSPI_CFG_ADDR_SIZE_24: return CY_QSPI_CFG_SIZE_24;
-    default: // fallthrough
-    case QSPI_CFG_ADDR_SIZE_32: return CY_QSPI_CFG_SIZE_32;
+    switch (size) {
+        case QSPI_CFG_ADDR_SIZE_8:
+            return CY_QSPI_CFG_SIZE_8;
+        case QSPI_CFG_ADDR_SIZE_16:
+            return CY_QSPI_CFG_SIZE_16;
+        case QSPI_CFG_ADDR_SIZE_24:
+            return CY_QSPI_CFG_SIZE_24;
+        default: // fallthrough
+        case QSPI_CFG_ADDR_SIZE_32:
+            return CY_QSPI_CFG_SIZE_32;
     }
 }
 
 static inline cyhal_qspi_size_t cyhal_qspi_convert_alt_size(qspi_alt_size_t size)
 {
-    switch (size)
-    {
-    case QSPI_CFG_ALT_SIZE_8: return CY_QSPI_CFG_SIZE_8;
-    case QSPI_CFG_ALT_SIZE_16: return CY_QSPI_CFG_SIZE_16;
-    case QSPI_CFG_ALT_SIZE_24: return CY_QSPI_CFG_SIZE_24;
-    default: // fallthrough
-    case QSPI_CFG_ALT_SIZE_32: return CY_QSPI_CFG_SIZE_32;
+    switch (size) {
+        case QSPI_CFG_ALT_SIZE_8:
+            return CY_QSPI_CFG_SIZE_8;
+        case QSPI_CFG_ALT_SIZE_16:
+            return CY_QSPI_CFG_SIZE_16;
+        case QSPI_CFG_ALT_SIZE_24:
+            return CY_QSPI_CFG_SIZE_24;
+        default: // fallthrough
+        case QSPI_CFG_ALT_SIZE_32:
+            return CY_QSPI_CFG_SIZE_32;
     }
 }
 

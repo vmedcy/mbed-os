@@ -35,14 +35,18 @@ void cy_gpio_irq_handler_impl(void *handler_arg, cyhal_gpio_irq_event_t event)
 {
     gpio_irq_t *obj = (gpio_irq_t *)handler_arg;
     void (*handler)(uint32_t, int) = (void (*)(uint32_t, int))obj->handler;
-    if (NULL != handler && CYHAL_GPIO_IRQ_NONE != (event & obj->mask))
-    {
+    if (NULL != handler && CYHAL_GPIO_IRQ_NONE != (event & obj->mask)) {
         gpio_irq_event mbed_event;
-        switch (event)
-        {
-            case CYHAL_GPIO_IRQ_RISE: mbed_event = IRQ_RISE; break;
-            case CYHAL_GPIO_IRQ_FALL: mbed_event = IRQ_FALL; break;
-            default: mbed_event = IRQ_NONE; break;
+        switch (event) {
+            case CYHAL_GPIO_IRQ_RISE:
+                mbed_event = IRQ_RISE;
+                break;
+            case CYHAL_GPIO_IRQ_FALL:
+                mbed_event = IRQ_FALL;
+                break;
+            default:
+                mbed_event = IRQ_NONE;
+                break;
         }
         (*handler)(obj->id, (int)mbed_event);
     }
@@ -51,7 +55,7 @@ void cy_gpio_irq_handler_impl(void *handler_arg, cyhal_gpio_irq_event_t event)
 int gpio_irq_init(gpio_irq_t *obj, PinName pin, gpio_irq_handler handler, uint32_t id)
 {
     obj->pin = pin;
-    obj->handler = (void*)handler;
+    obj->handler = (void *)handler;
     obj->id = id;
     obj->mask = CYHAL_GPIO_IRQ_NONE;
     return pin != NC ? 0 : -1;
@@ -59,8 +63,9 @@ int gpio_irq_init(gpio_irq_t *obj, PinName pin, gpio_irq_handler handler, uint32
 
 void gpio_irq_free(gpio_irq_t *obj)
 {
-    if (obj->pin != NC)
+    if (obj->pin != NC) {
         gpio_irq_disable(obj);
+    }
     obj->pin = NC;
     obj->handler = NULL;
     obj->id = 0;
@@ -70,12 +75,13 @@ void gpio_irq_free(gpio_irq_t *obj)
 void gpio_irq_set(gpio_irq_t *obj, gpio_irq_event event, uint32_t enable)
 {
     cyhal_gpio_irq_event_t bits;
-    if (event == IRQ_RISE)
+    if (event == IRQ_RISE) {
         bits = CYHAL_GPIO_IRQ_RISE;
-    else if (event == IRQ_FALL)
+    } else if (event == IRQ_FALL) {
         bits = CYHAL_GPIO_IRQ_FALL;
-    else
+    } else {
         bits = CYHAL_GPIO_IRQ_NONE;
+    }
     obj->mask = enable ? (obj->mask | bits) : (obj->mask & ~bits);
 }
 

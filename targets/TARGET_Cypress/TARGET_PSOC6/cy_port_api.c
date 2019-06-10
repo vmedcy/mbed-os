@@ -29,10 +29,8 @@ void port_init(port_t *obj, PortName port, int mask, PinDirection dir)
     obj->port = Cy_GPIO_PortToAddr(port);
     obj->mask = (uint8_t)mask;
     uint32_t driveMode = dir == PIN_INPUT ? CY_GPIO_DM_HIGHZ : CY_GPIO_DM_STRONG;
-    for (int i = 0; i < 8; i++)
-    {
-        if (0 != (mask & (1 << i)))
-        {
+    for (int i = 0; i < 8; i++) {
+        if (0 != (mask & (1 << i))) {
             Cy_GPIO_Pin_FastInit(obj->port, i, driveMode, 0, HSIOM_SEL_GPIO);
         }
     }
@@ -40,10 +38,8 @@ void port_init(port_t *obj, PortName port, int mask, PinDirection dir)
 
 void port_mode(port_t *obj, PinMode mode)
 {
-    for (int i = 0; i < 8; i++)
-    {
-        if (0 != (obj->mask & (1 << i)))
-        {
+    for (int i = 0; i < 8; i++) {
+        if (0 != (obj->mask & (1 << i))) {
             uint32_t origMode = Cy_GPIO_GetDrivemode(obj->port, i);
             Cy_GPIO_SetDrivemode(obj->port, i, (origMode & CY_GPIO_DM_HIGHZ) | mode);
         }
@@ -52,14 +48,12 @@ void port_mode(port_t *obj, PinMode mode)
 
 void port_dir(port_t *obj, PinDirection dir)
 {
-    for (int i = 0; i < 8; i++)
-    {
-        if (0 != (obj->mask & (1 << i)))
-        {
+    for (int i = 0; i < 8; i++) {
+        if (0 != (obj->mask & (1 << i))) {
             uint32_t origMode = Cy_GPIO_GetDrivemode(obj->port, i);
             Cy_GPIO_SetDrivemode(obj->port, i, origMode == PIN_OUTPUT
-                ? (origMode & ~CY_GPIO_DM_HIGHZ)
-                : (origMode | CY_GPIO_DM_HIGHZ));
+                                 ? (origMode & ~CY_GPIO_DM_HIGHZ)
+                                 : (origMode | CY_GPIO_DM_HIGHZ));
         }
     }
 }

@@ -29,14 +29,14 @@ static cyhal_rtc_t cy_rtc;
 
 void rtc_init(void)
 {
-    if (CY_RSLT_SUCCESS != cyhal_rtc_init(&cy_rtc))
+    if (CY_RSLT_SUCCESS != cyhal_rtc_init(&cy_rtc)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_rtc_init");
+    }
 }
 
 void rtc_free(void)
 {
-    if (CY_RSLT_SUCCESS != cyhal_rtc_free(&cy_rtc))
-        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_rtc_free");
+    cyhal_rtc_free(&cy_rtc);
 }
 
 int rtc_isenabled(void)
@@ -47,21 +47,25 @@ int rtc_isenabled(void)
 time_t rtc_read(void)
 {
     struct tm rtc_time;
-    if (CY_RSLT_SUCCESS != cyhal_rtc_read(&cy_rtc, &rtc_time))
+    if (CY_RSLT_SUCCESS != cyhal_rtc_read(&cy_rtc, &rtc_time)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_rtc_read");
+    }
     time_t seconds;
-    if (!_rtc_maketime(&rtc_time, &seconds, RTC_FULL_LEAP_YEAR_SUPPORT))
+    if (!_rtc_maketime(&rtc_time, &seconds, RTC_FULL_LEAP_YEAR_SUPPORT)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "_rtc_maketime");
+    }
     return seconds;
 }
 
 void rtc_write(time_t t)
 {
     struct tm rtc_time;
-    if (!_rtc_localtime(t, &rtc_time, RTC_FULL_LEAP_YEAR_SUPPORT))
+    if (!_rtc_localtime(t, &rtc_time, RTC_FULL_LEAP_YEAR_SUPPORT)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "_rtc_localtime");
-    if (CY_RSLT_SUCCESS != cyhal_rtc_write(&cy_rtc, &rtc_time))
+    }
+    if (CY_RSLT_SUCCESS != cyhal_rtc_write(&cy_rtc, &rtc_time)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_rtc_write");
+    }
 }
 
 #ifdef __cplusplus

@@ -40,16 +40,18 @@ void gpio_init(gpio_t *obj, PinName pin)
     MBED_ASSERT(pin != CYHAL_NC_PIN_VALUE);
     obj->pin = pin;
     cy_rslt_t rslt;
-    if (CY_RSLT_SUCCESS != (rslt = cyhal_gpio_init(obj->pin, CYHAL_GPIO_DIR_INPUT, CYHAL_GPIO_DRIVE_ANALOG, false)))
+    if (CY_RSLT_SUCCESS != (rslt = cyhal_gpio_init(obj->pin, CYHAL_GPIO_DIR_INPUT, CYHAL_GPIO_DRIVE_ANALOG, false))) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_GPIO, CY_RSLT_GET_CODE(rslt)), "cyhal_gpio_init failed");
+    }
 }
 
 void gpio_mode(gpio_t *obj, PinMode mode)
 {
     MBED_ASSERT(obj->pin != CYHAL_NC_PIN_VALUE);
     cy_rslt_t rslt;
-    if (CY_RSLT_SUCCESS != (rslt = cyhal_gpio_drivemode(obj->pin, mode)))
+    if (CY_RSLT_SUCCESS != (rslt = cyhal_gpio_drivemode(obj->pin, mode))) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_GPIO, CY_RSLT_GET_CODE(rslt)), "cyhal_gpio_mode failed");
+    }
 }
 
 void gpio_dir(MBED_UNUSED gpio_t *obj, MBED_UNUSED PinDirection direction)

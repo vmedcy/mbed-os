@@ -30,16 +30,16 @@ static const int CY_US_PER_MS = 1000;
 
 void pwmout_init(pwmout_t *obj, PinName pin)
 {
-    if (CY_RSLT_SUCCESS != cyhal_pwm_init(&(obj->hal_pwm), pin, NULL))
+    if (CY_RSLT_SUCCESS != cyhal_pwm_init(&(obj->hal_pwm), pin, NULL)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_PWM, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_pwm_init");
+    }
     obj->period_us = 100;
     obj->width_us = 0;
 }
 
 void pwmout_free(pwmout_t *obj)
 {
-    if (CY_RSLT_SUCCESS != cyhal_pwm_free(&(obj->hal_pwm)))
-        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_PWM, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_pwm_free");
+    cyhal_pwm_free(&(obj->hal_pwm));
 }
 
 void pwmout_write(pwmout_t *obj, float percent)
@@ -66,8 +66,9 @@ void pwmout_period_ms(pwmout_t *obj, int ms)
 void pwmout_period_us(pwmout_t *obj, int us)
 {
     obj->period_us = (uint32_t)us;
-    if (CY_RSLT_SUCCESS != cyhal_pwm_period(&(obj->hal_pwm), obj->period_us, obj->width_us))
+    if (CY_RSLT_SUCCESS != cyhal_pwm_period(&(obj->hal_pwm), obj->period_us, obj->width_us)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_PWM, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_pwm_period");
+    }
 }
 
 void pwmout_pulsewidth(pwmout_t *obj, float seconds)
@@ -83,8 +84,9 @@ void pwmout_pulsewidth_ms(pwmout_t *obj, int ms)
 void pwmout_pulsewidth_us(pwmout_t *obj, int us)
 {
     obj->width_us = (uint32_t)us;
-    if (CY_RSLT_SUCCESS != cyhal_pwm_period(&(obj->hal_pwm), obj->period_us, obj->width_us))
+    if (CY_RSLT_SUCCESS != cyhal_pwm_period(&(obj->hal_pwm), obj->period_us, obj->width_us)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_PWM, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_pwm_period");
+    }
 }
 
 const PinMap *pwmout_pinmap(void)

@@ -39,9 +39,10 @@ static struct spi_s *cy_get_spi(spi_t *obj)
 
 SPIName spi_get_peripheral_name(PinName mosi, PinName miso, PinName mclk)
 {
-    const cyhal_resource_pin_mapping_t *map = cyhal_utils_get_resource(mclk, cyhal_pin_map_scb_spi_clk, sizeof(cyhal_pin_map_scb_spi_clk)/sizeof(*cyhal_pin_map_scb_spi_clk));
-    if (NULL != map)
+    const cyhal_resource_pin_mapping_t *map = cyhal_utils_get_resource(mclk, cyhal_pin_map_scb_spi_clk, sizeof(cyhal_pin_map_scb_spi_clk) / sizeof(*cyhal_pin_map_scb_spi_clk));
+    if (NULL != map) {
         return (SPIName)CY_SCB_BASE_ADDRESSES[map->inst->block_num];
+    }
     MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_SPI, MBED_ERROR_CODE_FAILED_OPERATION), "SPI not found");
     return (SPIName)0;
 }
@@ -50,15 +51,17 @@ static void cy_spi_irq_handler_internal(void *handler_arg, cyhal_spi_irq_event_t
 {
     struct spi_s *spi = cy_get_spi((spi_t *)handler_arg);
     spi->async_events = 0;
-    if (0 != (event & CYHAL_SPI_IRQ_DONE))
+    if (0 != (event & CYHAL_SPI_IRQ_DONE)) {
         spi->async_events |= SPI_EVENT_COMPLETE;
-    if (0 != (event & CYHAL_SPI_IRQ_ERROR))
+    }
+    if (0 != (event & CYHAL_SPI_IRQ_ERROR)) {
         spi->async_events |= SPI_EVENT_ERROR;
-    if (0 != (spi->async_events & spi->async_event_mask))
-    {
+    }
+    if (0 != (spi->async_events & spi->async_event_mask)) {
         void (*async_handler)(void) = spi->async_handler;
-        if (async_handler != NULL)
+        if (async_handler != NULL) {
             (*async_handler)();
+        }
     }
 }
 
@@ -72,17 +75,16 @@ void spi_init(spi_t *obj, PinName mosi, PinName miso, PinName sclk, PinName ssel
     spi->miso = miso;
     spi->sclk = sclk;
     spi->ssel = ssel;
-    if (CY_RSLT_SUCCESS != cyhal_spi_init(&(spi->hal_spi), mosi, miso, sclk, ssel, NULL, spi->cfg.data_bits, spi->cfg.mode, spi->cfg.is_slave))
+    if (CY_RSLT_SUCCESS != cyhal_spi_init(&(spi->hal_spi), mosi, miso, sclk, ssel, NULL, spi->cfg.data_bits, spi->cfg.mode, spi->cfg.is_slave)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_SPI, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_spi_init");
-    if (CY_RSLT_SUCCESS != cyhal_spi_register_irq(&(spi->hal_spi), &cy_spi_irq_handler_internal, obj))
-        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_SPI, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_spi_register_irq");
+    }
+    cyhal_spi_register_irq(&(spi->hal_spi), &cy_spi_irq_handler_internal, obj);
 }
 
 void spi_free(spi_t *obj)
 {
     struct spi_s *spi = cy_get_spi(obj);
-    if (CY_RSLT_SUCCESS != cyhal_spi_free(&(spi->hal_spi)))
-        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_SPI, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_spi_free");
+    cyhal_spi_free(&(spi->hal_spi));
 }
 
 void spi_format(spi_t *obj, int bits, int mode, int slave)
@@ -90,26 +92,35 @@ void spi_format(spi_t *obj, int bits, int mode, int slave)
     struct spi_s *spi = cy_get_spi(obj);
     cyhal_gpio_t mosi = spi->mosi, miso = spi->miso, sclk = spi->sclk, ssel = spi->ssel;
     int hz = spi->hz;
-    if (CY_RSLT_SUCCESS != cyhal_spi_free(&(spi->hal_spi)))
-        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_SPI, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_spi_free");
+    cyhal_spi_free(&(spi->hal_spi));
     cyhal_spi_mode_t hal_mode;
     switch (mode) {
         default: // fallthrough
-        case 0: hal_mode = CYHAL_SPI_MODE_00_MSB; break;
-        case 1: hal_mode = CYHAL_SPI_MODE_01_MSB; break;
-        case 2: hal_mode = CYHAL_SPI_MODE_10_MSB; break;
-        case 3: hal_mode = CYHAL_SPI_MODE_11_MSB; break;
+        case 0:
+            hal_mode = CYHAL_SPI_MODE_00_MSB;
+            break;
+        case 1:
+            hal_mode = CYHAL_SPI_MODE_01_MSB;
+            break;
+        case 2:
+            hal_mode = CYHAL_SPI_MODE_10_MSB;
+            break;
+        case 3:
+            hal_mode = CYHAL_SPI_MODE_11_MSB;
+            break;
     }
-    if (CY_RSLT_SUCCESS != cyhal_spi_init(&(spi->hal_spi), mosi, miso, sclk, ssel, NULL, (uint8_t)bits, hal_mode, slave != 0))
+    if (CY_RSLT_SUCCESS != cyhal_spi_init(&(spi->hal_spi), mosi, miso, sclk, ssel, NULL, (uint8_t)bits, hal_mode, slave != 0)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_SPI, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_spi_init");
+    }
     spi_frequency(obj, hz);
 }
 
 void spi_frequency(spi_t *obj, int hz)
 {
     struct spi_s *spi = cy_get_spi(obj);
-    if (CY_RSLT_SUCCESS != cyhal_spi_frequency(&(spi->hal_spi), hz))
+    if (CY_RSLT_SUCCESS != cyhal_spi_frequency(&(spi->hal_spi), hz)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_SPI, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_spi_frequency");
+    }
     spi->hz = hz;
 }
 
@@ -117,16 +128,18 @@ int spi_master_write(spi_t *obj, int value)
 {
     struct spi_s *spi = cy_get_spi(obj);
     uint8_t received;
-    if (CY_RSLT_SUCCESS != cyhal_spi_transfer(&(spi->hal_spi), (const uint8_t *)value, 1, &received, 1, 0))
+    if (CY_RSLT_SUCCESS != cyhal_spi_transfer(&(spi->hal_spi), (const uint8_t *)value, 1, &received, 1, 0)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_SPI, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_spi_transfer");
+    }
     return received;
 }
 
 int spi_master_block_write(spi_t *obj, const char *tx_buffer, int tx_length, char *rx_buffer, int rx_length, char write_fill)
 {
     struct spi_s *spi = cy_get_spi(obj);
-    if (CY_RSLT_SUCCESS != cyhal_spi_transfer(&(spi->hal_spi), (const uint8_t *)tx_buffer, (size_t)tx_length, (uint8_t *)rx_buffer, (size_t)rx_length, (uint8_t)write_fill))
+    if (CY_RSLT_SUCCESS != cyhal_spi_transfer(&(spi->hal_spi), (const uint8_t *)tx_buffer, (size_t)tx_length, (uint8_t *)rx_buffer, (size_t)rx_length, (uint8_t)write_fill)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_SPI, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_spi_transfer");
+    }
     return tx_length > rx_length ? tx_length : rx_length;
 }
 
@@ -140,25 +153,24 @@ int spi_slave_read(spi_t *obj)
 {
     uint8_t value;
     struct spi_s *spi = cy_get_spi(obj);
-    if (CY_RSLT_SUCCESS != cyhal_spi_read(&(spi->hal_spi), &value))
+    if (CY_RSLT_SUCCESS != cyhal_spi_read(&(spi->hal_spi), &value)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_SPI, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_spi_read");
+    }
     return value;
 }
 
 void spi_slave_write(spi_t *obj, int value)
 {
     struct spi_s *spi = cy_get_spi(obj);
-    if (CY_RSLT_SUCCESS != cyhal_spi_write(&(spi->hal_spi), value))
+    if (CY_RSLT_SUCCESS != cyhal_spi_write(&(spi->hal_spi), value)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_SPI, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_spi_write");
+    }
 }
 
-int  spi_busy(spi_t *obj)
+int spi_busy(spi_t *obj)
 {
-    bool busy;
     struct spi_s *spi = cy_get_spi(obj);
-    if (CY_RSLT_SUCCESS != cyhal_spi_is_busy(&(spi->hal_spi), &busy))
-        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_SPI, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_spi_is_busy");
-    return busy;
+    return cyhal_spi_is_busy(&(spi->hal_spi));
 }
 
 uint8_t spi_get_module(spi_t *obj)
@@ -213,8 +225,9 @@ void spi_master_transfer(spi_t *obj, const void *tx, size_t tx_length, void *rx,
     struct spi_s *spi = cy_get_spi(obj);
     spi->async_handler = (void (*)(void))handler;
     spi->async_event_mask = event;
-    if (CY_RSLT_SUCCESS != cyhal_spi_transfer_async(&(spi->hal_spi), (const uint8_t *)tx, (size_t)tx_length, (uint8_t *)rx, (size_t)rx_length))
+    if (CY_RSLT_SUCCESS != cyhal_spi_transfer_async(&(spi->hal_spi), (const uint8_t *)tx, (size_t)tx_length, (uint8_t *)rx, (size_t)rx_length)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_SPI, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_spi_transfer_async");
+    }
 }
 
 uint32_t spi_irq_handler_asynch(spi_t *obj)
@@ -231,8 +244,9 @@ uint8_t spi_active(spi_t *obj)
 void spi_abort_asynch(spi_t *obj)
 {
     struct spi_s *spi = cy_get_spi(obj);
-    if (CY_RSLT_SUCCESS != cyhal_spi_abort_async(&(spi->hal_spi)))
+    if (CY_RSLT_SUCCESS != cyhal_spi_abort_async(&(spi->hal_spi))) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_SPI, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_spi_abort_async");
+    }
 }
 
 #endif

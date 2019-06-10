@@ -38,14 +38,15 @@ bool hal_crc_is_supported(const crc_mbed_config_t *config)
 
 void hal_crc_compute_partial_start(const crc_mbed_config_t *config)
 {
-    if (!cy_crc_initialized)
-    {
-        if (CY_RSLT_SUCCESS != cyhal_crc_init(&cy_crc))
+    if (!cy_crc_initialized) {
+        if (CY_RSLT_SUCCESS != cyhal_crc_init(&cy_crc)) {
             MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_crc_init");
+        }
         cy_crc_initialized = true;
     }
-    if (!hal_crc_is_supported(config))
+    if (!hal_crc_is_supported(config)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_UNSUPPORTED), "unsupported CRC width");
+    }
     cy_crc_cfg.width = config->width;
     cy_crc_cfg.polynomial = config->polynomial;
     cy_crc_cfg.lfsrInitState = config->initial_xor;
@@ -53,30 +54,32 @@ void hal_crc_compute_partial_start(const crc_mbed_config_t *config)
     cy_crc_cfg.remXor = config->final_xor;
     cy_crc_cfg.dataReverse = config->reflect_in ? 1 : 0;
     cy_crc_cfg.remReverse = config->reflect_out ? 1 : 0;
-    if (CY_RSLT_SUCCESS != cyhal_crc_start(&cy_crc, &cy_crc_cfg))
+    if (CY_RSLT_SUCCESS != cyhal_crc_start(&cy_crc, &cy_crc_cfg)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_crc_start");
+    }
 }
 
 void hal_crc_compute_partial(const uint8_t *data, const size_t size)
 {
     MBED_ASSERT(cy_crc_initialized);
-    if (NULL == data || 0 == size)
+    if (NULL == data || 0 == size) {
         return;
-    if (CY_RSLT_SUCCESS != cyhal_crc_compute(&cy_crc, data, size))
+    }
+    if (CY_RSLT_SUCCESS != cyhal_crc_compute(&cy_crc, data, size)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_crc_compute");
+    }
 }
 
 uint32_t hal_crc_get_result(void)
 {
     uint32_t value;
-    if (CY_RSLT_SUCCESS != cyhal_crc_finish(&cy_crc, &value))
+    if (CY_RSLT_SUCCESS != cyhal_crc_finish(&cy_crc, &value)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_crc_finish");
-    if (CY_RSLT_SUCCESS != cyhal_crc_free(&cy_crc))
-        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_crc_free");
+    }
+    cyhal_crc_free(&cy_crc);
     cy_crc_initialized = false;
     // mbed expects result to be aligned unusually in this case
-    if (0 != (cy_crc_cfg.width % 8) && 0 == cy_crc_cfg.remReverse)
-    {
+    if (0 != (cy_crc_cfg.width % 8) && 0 == cy_crc_cfg.remReverse) {
         value ^= cy_crc_cfg.remXor; // Undo result XOR
         value <<= 8 - (cy_crc_cfg.width % 8);   // Left align to nearest byte
         value ^= cy_crc_cfg.remXor; // Redo result XOR

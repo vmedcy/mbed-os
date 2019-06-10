@@ -53,11 +53,11 @@ extern const PinMap PinMap_SPI_SSEL[];
 
 //*** QSPI ***
 #if DEVICE_QSPI
-extern const PinMap PinMap_QSPI_SCLK[]; 
+extern const PinMap PinMap_QSPI_SCLK[];
 extern const PinMap PinMap_QSPI_DATA[];
 extern const PinMap PinMap_QSPI_SSEL[];
 #endif
-    
+
 //*** ADC ***
 #if DEVICE_ANALOGIN
 extern const PinMap PinMap_ADC[];

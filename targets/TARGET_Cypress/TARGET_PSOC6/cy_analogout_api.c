@@ -27,16 +27,15 @@ extern "C" {
 
 void analogout_init(dac_t *obj, PinName pin)
 {
-    if (CY_RSLT_SUCCESS != cyhal_dac_init(&(obj->hal_dac), pin))
+    if (CY_RSLT_SUCCESS != cyhal_dac_init(&(obj->hal_dac), pin)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_ANALOG, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_dac_init");
-    if (CY_RSLT_SUCCESS != cyhal_dac_get_max(&(obj->hal_dac), &(obj->max)))
-        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_ANALOG, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_dac_get_max");
+    }
+    obj->max = cyhal_dac_get_max(&(obj->hal_dac));
 }
 
 void analogout_free(dac_t *obj)
 {
-    if (CY_RSLT_SUCCESS != cyhal_dac_free(&(obj->hal_dac)))
-        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_ANALOG, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_dac_free");
+    cyhal_dac_free(&(obj->hal_dac));
 }
 
 void analogout_write(dac_t *obj, float value)
@@ -47,8 +46,7 @@ void analogout_write(dac_t *obj, float value)
 
 void analogout_write_u16(dac_t *obj, uint16_t value)
 {
-    if (CY_RSLT_SUCCESS != cyhal_dac_write(&(obj->hal_dac), value))
-        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_ANALOG, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_dac_write");
+    cyhal_dac_write(&(obj->hal_dac), value);
 }
 
 float analogout_read(dac_t *obj)
@@ -58,10 +56,7 @@ float analogout_read(dac_t *obj)
 
 uint16_t analogout_read_u16(dac_t *obj)
 {
-    uint16_t value;
-    if (CY_RSLT_SUCCESS != cyhal_dac_read(&(obj->hal_dac), &value))
-        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_ANALOG, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_dac_read");
-    return value;
+    return cyhal_dac_read(&(obj->hal_dac));
 }
 
 const PinMap *analogout_pinmap(void)

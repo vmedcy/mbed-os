@@ -23,7 +23,7 @@
 #include "mbed_assert.h"
 #include "PinNamesTypes.h"
 #include "PinNames.h"
-#include "cyhal_gpio.h"
+#include "cyhal_gpio_impl.h"
 #include "cyhal_pin_package.h"
 
 #ifdef __cplusplus
@@ -65,9 +65,7 @@ static inline void gpio_write(gpio_t *obj, int value)
 static inline int gpio_read(gpio_t *obj)
 {
     MBED_ASSERT(obj->pin != CYHAL_NC_PIN_VALUE);
-    bool value;
-    cyhal_gpio_read(obj->pin, &value);
-    return value;
+    return cyhal_gpio_read(obj->pin);
 }
 
 static inline int gpio_is_connected(const gpio_t *obj)
@@ -83,7 +81,7 @@ static inline int gpio_is_connected(const gpio_t *obj)
  */
 static inline PinName port_pin(PortName port, int pin_n)
 {
-    return (PinName)CY_GET_GPIO(port, pin_n);
+    return (PinName)CYHAL_GET_GPIO(port, pin_n);
 }
 
 

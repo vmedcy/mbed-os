@@ -66,14 +66,16 @@ whd_tlv8_data_t *whd_tlv_find_tlv8(const uint8_t *message, uint32_t message_leng
     return 0;
 }
 
-inline /*@null@*/ whd_tlv8_header_t *whd_parse_tlvs(const whd_tlv8_header_t *tlv_buf, uint32_t buflen,
-                                                    dot11_ie_id_t key)
+inline whd_tlv8_header_t *whd_parse_tlvs(const whd_tlv8_header_t *tlv_buf, uint32_t buflen,
+                                         dot11_ie_id_t key)
 {
     return (whd_tlv8_header_t *)whd_tlv_find_tlv8( (const uint8_t *)tlv_buf, buflen, key );
 }
 
 whd_bool_t whd_is_wpa_ie(vendor_specific_ie_header_t *wpaie, whd_tlv8_header_t **tlvs, uint32_t *tlvs_len)
 {
+    whd_tlv8_header_t *prev_tlvs = *tlvs;
+    whd_tlv8_header_t *new_tlvs = *tlvs;
     vendor_specific_ie_header_t *ie = wpaie;
 
     /* If the contents match the WPA_OUI and type=1 */
@@ -84,11 +86,24 @@ whd_bool_t whd_is_wpa_ie(vendor_specific_ie_header_t *wpaie, whd_tlv8_header_t *
         return WHD_TRUE;
     }
 
-    /* point to the next ie */
-    *tlvs = (whd_tlv8_header_t *)( ( (uint8_t *)ie ) + ie->tlv_header.length + sizeof(whd_tlv8_header_t) );
+    /* calculate the next ie address */
+    new_tlvs = (whd_tlv8_header_t *)( ( (uint8_t *)ie ) + ie->tlv_header.length + sizeof(whd_tlv8_header_t) );
 
-    /* calculate the length of the rest of the buffer */
-    *tlvs_len -= (uint32_t)(*tlvs - (whd_tlv8_header_t *)ie);
+    /* check the rest of length of buffer */
+    if (*tlvs_len < (uint32_t)( ( (uint8_t *)new_tlvs ) - ( (uint8_t *)prev_tlvs ) ) )
+    {
+        /* set rest of length to zero to avoid buffer overflow */
+        *tlvs_len = 0;
+    }
+    else
+    {
+        /* point to the next ie */
+        *tlvs = new_tlvs;
+
+        /* tlvs now points to the beginning of next IE pointer, and *ie points to one or more TLV further
+         * down from the *prev_tlvs. So the tlvs_len need to be adjusted by prev_tlvs instead of *ie */
+        *tlvs_len -= (uint32_t)( ( (uint8_t *)*tlvs ) - ( (uint8_t *)prev_tlvs ) );
+    }
 
     return WHD_FALSE;
 }
@@ -623,17 +638,18 @@ void whd_hexdump(uint8_t *data, uint32_t data_len)
     uint32_t i;
     uint8_t buff[17] = {0};
 
+    UNUSED_PARAMETER(buff);
     for (i = 0; i < data_len; i++)
     {
         if ( (i % 16) == 0 )
         {
             if (i != 0)
             {
-                WPRINT_MACRO(("  %s\n", buff));
+                WPRINT_MACRO( ("  %s\n", buff) );
             }
-            WPRINT_MACRO(("%04lx ", i));
+            WPRINT_MACRO( ("%04" PRIx32 " ", i) );
         }
-        WPRINT_MACRO((" %02x", data[i]));
+        WPRINT_MACRO( (" %02x", data[i]) );
 
         if ( (data[i] < 0x20) || (data[i] > 0x7e) )
         {
@@ -647,10 +663,10 @@ void whd_hexdump(uint8_t *data, uint32_t data_len)
     }
     while ( (i % 16) != 0 )
     {
-        WPRINT_MACRO(("   "));
+        WPRINT_MACRO( ("   ") );
         i++;
     }
-    WPRINT_MACRO(("  %s\n", buff));
+    WPRINT_MACRO( ("  %s\n", buff) );
 }
 
 void whd_ioctl_to_string(uint32_t cmd, char *ioctl_str, uint16_t ioctl_str_len)

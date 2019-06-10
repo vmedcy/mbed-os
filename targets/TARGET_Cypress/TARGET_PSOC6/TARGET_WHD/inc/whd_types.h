@@ -20,10 +20,10 @@
  *
  */
 
+#include <stdint.h>
+
 #ifndef INCLUDED_WHD_TYPES_H_
 #define INCLUDED_WHD_TYPES_H_
-
-#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -55,13 +55,13 @@ extern "C"
 #define NO_POWERSAVE_MODE           (0)
 
 /* Suppress unused parameter warning */
-#define UNUSED_PARAMETER(x) /*@-noeffect@*/ ( (void)(x) ) /*@+noeffect@*/
+#define UNUSED_PARAMETER(x) ( (void)(x) )
 
 /* Suppress unused variable warning */
-#define UNUSED_VARIABLE(x) /*@-noeffect@*/ ( (void)(x) ) /*@+noeffect@*/
+#define UNUSED_VARIABLE(x) ( (void)(x) )
 
 /* Suppress unused variable warning occurring due to an assert which is disabled in release mode */
-#define REFERENCE_DEBUG_ONLY_VARIABLE(x) /*@-noeffect@*/ ( (void)(x) ) /*@+noeffect@*/
+#define REFERENCE_DEBUG_ONLY_VARIABLE(x) ( (void)(x) )
 
 /******************************************************
 *                 Type Definitions
@@ -101,7 +101,7 @@ typedef struct wl_af_params whd_af_params_t;
  * 6 + (8 + 4) + 4 + 4 + 4 = 30 bytes
  */
 #define WHD_LINK_HEADER (BDC_HEADER_WITH_PAD + BDC_HEADER_OFFSET_TO_DATA + \
-                        SDPCM_HEADER + MAX_BUS_HEADER_SIZE + BUFFER_OVERHEAD)
+                         SDPCM_HEADER + MAX_BUS_HEADER_SIZE + BUFFER_OVERHEAD)
 
 /**
  * The size of an Ethernet header
@@ -125,11 +125,18 @@ typedef struct wl_af_params whd_af_params_t;
  * taken into account along with this during buffer pool creation. Also align with
  * cache size of the platform for better performance
  */
-#define WHD_LINK_MTU            (WHD_PAYLOAD_MTU + WHD_PHYSICAL_HEADER )
+#define WHD_LINK_MTU            (WHD_PAYLOAD_MTU + WHD_PHYSICAL_HEADER)
+
+#ifdef __x86_64__
+typedef uint64_t whd_thread_arg_t;
+#else
+typedef uint32_t whd_thread_arg_t;
+#endif
 
 /******************************************************
 *               Structures and  Enumerations
 ******************************************************/
+
 /**
  * Enumeration of Dot11 Reason Codes
  */
@@ -280,6 +287,59 @@ enum
     WL_MFP_CAPABLE,
     WL_MFP_REQUIRED
 };
+
+/**
+** Enumeration of ioctl get
+*/
+typedef enum
+{
+    WHD_IOCTL_GET_RATE = 12,
+    WHD_IOCTL_GET_COUNTRY = 83,
+    WHD_IOCTL_GET_CLK = 160,
+    WHD_IOCTL_GET_WSEC = 133,
+    WHD_IOCTL_GET_AUTH = 21,
+    WHD_IOCTL_GET_WPA_AUTH = 164,
+    WHD_IOCTL_GET_PM = 85,
+    WHD_IOCTL_GET_BSSID = 23,
+    WHD_IOCTL_GET_ASSOCLIST = 159,
+    WHD_IOCTL_GET_BSS_INFO = 136,
+    WHD_IOCTL_GET_CHANNEL = 29
+
+} whd_usr_ioctl_get_list_t;
+
+/**
+** Enumeration of ioctl get
+*/
+typedef enum
+{
+    WHD_IOCTL_SET_CHANNEL = 30,
+    WHD_IOCTL_SET_WSEC_PMK = 268,
+    WHD_IOCTL_SET_KEY = 45,
+    WHD_IOCTL_SET_WPA_AUTH = 165,
+    WHD_IOCTL_SCB_DEAUTHENTICATE_FOR_REASON = 201,
+    WHD_IOCTL_SET_PM = 86,
+    WHD_IOCTL_SET_SSID = 26,
+    WHD_IOCTL_SET_BCNPRD = 76,
+    WHD_IOCTL_SET_DTIMPRD = 78,
+    WHD_IOCTL_SET_WSEC = 134,
+    WHD_IOCTL_SET_INFRA = 20,
+    WHD_IOCTL_SET_AUTH = 22
+
+} whd_usr_ioctl_set_list_t;
+
+typedef enum
+{
+    WHD_IOVAR_STR_BWTE_BWTE_GCI_MASK = 0,
+    WHD_IOVAR_STR_BWTE_GCI_SENDMSG,
+
+} whd_usr_iovar_set_list_t;
+
+typedef enum
+{
+    WHD_IOVAR_BWTE_BWTE_GCI_MASK = 0,
+    WHD_IOVAR_STR_LISTEN_INTERVAL,
+    WHD_GET_MAC_ADDRESS,
+} whd_usr_iovar_get_list_t;
 
 /******************************************************
 *                 Type Definitions
@@ -606,8 +666,8 @@ typedef struct whd_scan_result
     uint8_t ccode[2]; /**< Two letter ISO country code from AP                                       */
     uint8_t flags; /**< flags                                                                     */
     struct whd_scan_result *next; /**< Pointer to the next scan result                                           */
-    uint8_t*                  ie_ptr;           /**< Pointer to received Beacon/Probe Response IE  */
-    uint32_t                  ie_len;           /**< Length of IE   */
+    uint8_t *ie_ptr;                            /**< Pointer to received Beacon/Probe Response IE  */
+    uint32_t ie_len;                            /**< Length of IE   */
 } whd_scan_result_t;
 #pragma pack()
 
@@ -676,8 +736,8 @@ typedef uint32_t whd_result_t;
  */
 #define WHD_RESULT_MODULE_ID 0
 #define WHD_RESULT_TYPE 0
-#define WHD_RESULT_CODE_OFFSET ((WHD_RESULT_MODULE_ID << 18U) | (WHD_RESULT_TYPE << 16U))
-#define WHD_RESULT_CREATE(x) ((WHD_RESULT_CODE_OFFSET) | ((x) & 0xFFFF))
+#define WHD_RESULT_CODE_OFFSET ( (WHD_RESULT_MODULE_ID << 18U) | (WHD_RESULT_TYPE << 16U) )
+#define WHD_RESULT_CREATE(x) ( (WHD_RESULT_CODE_OFFSET) | ( (x) & 0xFFFF ) )
 
 
 #define WHD_SUCCESS                         0  /**< Success */
@@ -842,53 +902,42 @@ typedef struct
     uint8_t data[32]; /**< WEP key as values NOT chars                                     */
 } whd_wep_key_t;
 
-/** WiFi device host wake pin selections
+/**
+ * Variant data type.
  */
-typedef enum whd_dev_host_wake_sel
+typedef union whd_variant
 {
-    WHD_DEV_HOST_WAKE_SEL_GPIO0 = 0, /**< Select GPIO0 */
-    WHD_DEV_HOST_WAKE_SEL_GPIO1 = 1, /**< Select GPIO1 */
-    /* others? */
-} whd_dev_host_wake_sel_t;
+    void *pvval;
+    uint32_t u32val;
+} whd_variant_t;
 
-/** WiFi host wake signal triggers
+/**
+ * SDIO bus will use the host-wake out-of-band (OOB) signal.
+ * @ref whd_get_intr_config_t must be specified when this flag is set.
  */
-typedef enum whd_host_wake_trigger
-{
-    WHD_HOST_WAKE_TRIGGER_ON_RISING_EDGE = 0,   /**< Trigger on rising edge */
-    WHD_HOST_WAKE_TRIGGER_ON_FALLING_EDGE = 1,  /**< Trigger on falling edge */
-} whd_host_wake_trigger_t;
-
-/** WHD request to enable host wake IRQ function
- *
- * @param[in] enable : WHD_TRUE to enable IRQ; WHD_FALSE to disable IRQ.
- *
- * The WHD is requesting the platform to enable the IRQ assigned to the
- * host-wake signal.  When the IRQ is triggered, the ISR must call
- * @ref whd_host_wake_irq_handler.
- */
-typedef void (*whd_enable_host_wake_irq_func_t)(whd_bool_t enable);
-
-/** SDIO host wake configuration structure
- */
-typedef struct whd_sdio_host_wake_cfg
-{
-    whd_dev_host_wake_sel_t dev_host_wake_sel;           /**< WiFi device-side host wake pin selection */
-    whd_host_wake_trigger_t host_wake_trigger;           /**< Host wake pin trigger (polarity) */
-    whd_enable_host_wake_irq_func_t *enable_host_wake_irq_func; /**< Enable the host wake IRQ function */
-} whd_sdio_host_wake_cfg_t;
+#define WHD_BUS_SDIO_OOB_INTR (1UL << 0)
 
 /**
  * Structure for SDIO config parameters which can be set by application during whd power up
  */
 typedef struct whd_sdio_config
 {
+    uint32_t flags; /* Configuration flags (see WHD_BUS_SDIO_XXX constants). */
     /* Bus config */
     whd_bool_t sdio_1bit_mode; /* Default is false, means SDIO operates under 4 bit mode */
     whd_bool_t high_speed_sdio_clock; /* Default is false, means operates in normal clock rate */
-    uint8_t oob_gpio_pin;
-    whd_sdio_host_wake_cfg_t *host_wake_cfg; /**< (Optional) Host wake configuration (NULL signifies host will not power-down SDIO bus) */
+    whd_variant_t oob_intr; /* Caller provided opaque data (@ref WHD_BUS_SDIO_OOB_INTR) */
 } whd_sdio_config_t;
+
+/**
+ * Structure for SPI config parameters which can be set by application during whd power up
+ */
+typedef struct whd_spi_config
+{
+    /* Bus config */
+    whd_bool_t is_spi_normal_mode; /* Default is false */
+    whd_variant_t oob_intr; /* Caller provided opaque data */
+} whd_spi_config_t;
 
 /**
  * Enumeration of applicable packet mask bits for custom Information Elements (IEs)

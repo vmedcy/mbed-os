@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
+#include "whd_rtos.h" /* For semaphores */
+#include "whd.h"
 
 
 #ifndef INCLUDED_WHD_WIFI_P2P_H
 #define INCLUDED_WHD_WIFI_P2P_H
 
-#include "whd_rtos.h" /* For semaphores */
-#include "whd.h"
 
 #ifdef __cplusplus
 extern "C"

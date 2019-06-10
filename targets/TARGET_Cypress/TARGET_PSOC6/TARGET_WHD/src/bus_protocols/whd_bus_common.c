@@ -210,7 +210,7 @@ static whd_result_t whd_bus_common_download_resource(whd_driver_t whd_driver, wh
         {
             if (whd_driver->bus_common_info->resource_download_abort == WHD_TRUE)
             {
-                WPRINT_WHD_ERROR( ("Download_resource is aborted; terminating after %lu iterations\n",
+                WPRINT_WHD_ERROR( ("Download_resource is aborted; terminating after %" PRIu32 " iterations\n",
                                    transfer_progress) );
                 CHECK_RETURN(whd_buffer_release(whd_driver, buffer, WHD_NETWORK_TX) );
                 result = WHD_UNFINISHED;
@@ -255,8 +255,8 @@ static whd_result_t whd_bus_common_download_resource(whd_driver_t whd_driver, wh
 
             if ( (result == WHD_SUCCESS) && (tmp != reset_instr) )
             {
-                WPRINT_WHD_ERROR( ("%s: Failed to write 0x%08lx to addr 0\n", __FUNCTION__, reset_instr) );
-                WPRINT_WHD_ERROR( ("%s: contents of addr 0 is 0x%08lx\n", __FUNCTION__, tmp) );
+                WPRINT_WHD_ERROR( ("%s: Failed to write 0x%08" PRIx32 " to addr 0\n", __FUNCTION__, reset_instr) );
+                WPRINT_WHD_ERROR( ("%s: contents of addr 0 is 0x%08" PRIx32 "\n", __FUNCTION__, tmp) );
                 return WHD_WLAN_SDIO_ERROR;
             }
         }
@@ -492,7 +492,7 @@ whd_result_t whd_bus_resume_after_deep_sleep(whd_driver_t whd_driver)
 }
 
 whd_result_t whd_bus_transfer_backplane_bytes(whd_driver_t whd_driver, whd_bus_transfer_direction_t direction,
-                                              uint32_t address, uint32_t size, /*@in@*//*@out@*/ uint8_t *data)
+                                              uint32_t address, uint32_t size, uint8_t *data)
 {
     whd_buffer_t pkt_buffer = NULL;
     uint8_t *packet;
@@ -539,7 +539,9 @@ whd_result_t whd_bus_transfer_backplane_bytes(whd_driver_t whd_driver, whd_bus_t
 
         if (direction == BUS_WRITE)
         {
+            DISABLE_COMPILER_WARNING(diag_suppress = Pa039)
             memcpy( ( (whd_transfer_bytes_packet_t *)packet )->data, data + size - remaining_buf_size, transfer_size );
+            ENABLE_COMPILER_WARNING(diag_suppress = Pa039)
             result = whd_bus_transfer_bytes(whd_driver, direction, BACKPLANE_FUNCTION,
                                             (address & BACKPLANE_ADDRESS_MASK), (uint16_t)transfer_size,
                                             (whd_transfer_bytes_packet_t *)packet);
@@ -559,8 +561,10 @@ whd_result_t whd_bus_transfer_backplane_bytes(whd_driver_t whd_driver, whd_bus_t
                 WPRINT_WHD_ERROR( ("whd_bus_transfer_bytes failed\n") );
                 goto done;
             }
+            DISABLE_COMPILER_WARNING(diag_suppress = Pa039)
             memcpy(data + size - remaining_buf_size, (uint8_t *)( (whd_transfer_bytes_packet_t *)packet )->data +
                    whd_bus_backplane_read_padd_size(whd_driver), transfer_size);
+            ENABLE_COMPILER_WARNING(diag_suppress = Pa039)
         }
     }
 

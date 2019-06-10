@@ -96,9 +96,9 @@ typedef struct
  */
 typedef struct
 {
-    const /*@null@*/ whd_event_num_t *events;
-    /*@null@*/ whd_event_handler_t handler;
-    /*@null@*/ void *handler_user_data;
+    const whd_event_num_t *events;
+    whd_event_handler_t handler;
+    void *handler_user_data;
     uint8_t ifidx;
 } event_list_elem_t;
 
@@ -113,7 +113,6 @@ typedef struct whd_cdc_info
     /* IOCTL variables*/
     uint16_t requested_ioctl_id;
     whd_semaphore_type_t ioctl_mutex;
-    /*@only@*/
     whd_buffer_t ioctl_response;
     whd_semaphore_type_t ioctl_sleep;
 

@@ -66,9 +66,8 @@ typedef enum
 /******************************************************
  *  *               Function Declarations
  *   ******************************************************/
-extern uint32_t whd_wifi_set_mac_address(whd_interface_t ifp, whd_mac_t mac);
 static void *whd_handle_apsta_event(whd_interface_t ifp, const whd_event_header_t *event_header,
-                                    const uint8_t *event_data, /*@returned@*/ void *handler_user_data);
+                                    const uint8_t *event_data, void *handler_user_data);
 
 /******************************************************
  *        Variables Definitions
@@ -162,7 +161,7 @@ whd_result_t whd_wifi_set_ampdu_parameters(whd_interface_t ifp)
 
 /* All chips */
 static void *whd_handle_apsta_event(whd_interface_t ifp, const whd_event_header_t *event_header,
-                                    const uint8_t *event_data, /*@returned@*/ void *handler_user_data)
+                                    const uint8_t *event_data, void *handler_user_data)
 {
     whd_driver_t whd_driver = ifp->whd_driver;
 
@@ -361,7 +360,7 @@ uint32_t whd_wifi_init_ap(whd_interface_t ifp, whd_ssid_t *ssid, whd_security_t 
         /* Change the AP MAC address to be different from STA MAC */
         if ( (result = whd_wifi_get_mac_address(prim_ifp, &ifp->mac_addr) ) != WHD_SUCCESS )
         {
-            WPRINT_WHD_INFO ( (" Get STA MAC address failed result=%lu\n", result) );
+            WPRINT_WHD_INFO ( (" Get STA MAC address failed result=%" PRIu32 "\n", result) );
             return result;
         }
         else
@@ -372,7 +371,7 @@ uint32_t whd_wifi_init_ap(whd_interface_t ifp, whd_ssid_t *ssid, whd_security_t 
 
     if ( (result = whd_wifi_set_mac_address(ifp, ifp->mac_addr) ) != WHD_SUCCESS )
     {
-        WPRINT_WHD_INFO ( (" Set AP MAC address failed result=%lu\n", result) );
+        WPRINT_WHD_INFO ( (" Set AP MAC address failed result=%" PRIu32 "\n", result) );
         return result;
     }
 
@@ -618,7 +617,7 @@ uint32_t whd_wifi_init_ap(whd_interface_t ifp, whd_ssid_t *ssid, whd_security_t 
     }
     else if (result != WHD_SUCCESS)
     {
-        WPRINT_WHD_INFO( ("configure maxassoc : ioctl failed!( err code : %lu )\n", result) );
+        WPRINT_WHD_INFO( ("configure maxassoc : ioctl failed!( err code : %" PRIu32 " )\n", result) );
         whd_assert("start_ap: Failed to configure maxassoc\r\n", result == WHD_SUCCESS);
         return result;
     }

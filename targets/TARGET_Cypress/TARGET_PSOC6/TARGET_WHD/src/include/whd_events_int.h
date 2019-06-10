@@ -22,10 +22,10 @@
  *  whd and user applications to receive event callbacks.
  */
 
-#ifndef INCLUDED_WHD_EVENTS_H
-#define INCLUDED_WHD_EVENTS_H
-
 #include "whd.h"
+
+#ifndef INCLUDED_WHD_EVENTS_INT_H
+#define INCLUDED_WHD_EVENTS_INT_H
 
 #ifdef __cplusplus
 extern "C"
@@ -367,7 +367,7 @@ typedef enum
  * @param[out] handler_user_data  : semaphore data
  */
 typedef void *(*whd_event_handler_t)(whd_interface_t ifp, const whd_event_header_t *event_header,
-                                     const uint8_t *event_data, /*@null@*/ void *handler_user_data);
+                                     const uint8_t *event_data, void *handler_user_data);
 /** @endcond */
 
 /** @addtogroup mgmt WHD Management
@@ -399,10 +399,10 @@ typedef void *(*whd_event_handler_t)(whd_interface_t ifp, const whd_event_header
  *
  * @return WHD_SUCCESS or Error code
  */
-extern whd_result_t whd_management_set_event_handler_locally(/*@keep@*/ whd_interface_t ifp,
-                                                                        const whd_event_num_t *event_nums,
-                                                                        /*@null@*/ whd_event_handler_t handler_func,
-                                                                        /*@null@*/ /*@keep@*/ void *handler_user_data);
+extern whd_result_t whd_management_set_event_handler_locally(whd_interface_t ifp,
+                                                             const whd_event_num_t *event_nums,
+                                                             whd_event_handler_t handler_func,
+                                                             void *handler_user_data);
 
 /**
  * Registers a handler to receive event callbacks.
@@ -427,16 +427,16 @@ extern whd_result_t whd_management_set_event_handler_locally(/*@keep@*/ whd_inte
  *
  * @return WHD_SUCCESS or Error code
  */
-extern whd_result_t whd_management_set_event_handler(/*@keep@*/ whd_interface_t ifp, const whd_event_num_t *event_nums,
-                                                                /*@null@*/ whd_event_handler_t handler_func,
-                                                                /*@null@*/ /*@keep@*/ void *handler_user_data);
+extern whd_result_t whd_management_set_event_handler(whd_interface_t ifp, const whd_event_num_t *event_nums,
+                                                     whd_event_handler_t handler_func,
+                                                     void *handler_user_data);
 
 /** @cond */
 
-//extern void* whd_rrm_report_handler( const whd_event_header_t* event_header, const uint8_t* event_data, /*@returned@*/void* handler_user_data );
+//extern void* whd_rrm_report_handler( const whd_event_header_t* event_header, const uint8_t* event_data, void* handler_user_data );
 
 extern void *whd_nan_scan_handler(const whd_event_header_t *event_header, const uint8_t *event_data,
-                                  /*@returned@*/ void *handler_user_data);
+                                  void *handler_user_data);
 #define WHD_MSG_IFNAME_MAX 16
 
 #pragma pack(1)

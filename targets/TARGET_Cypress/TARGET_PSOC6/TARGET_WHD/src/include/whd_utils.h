@@ -24,6 +24,9 @@
 #include "whd_events_int.h"
 #include "whd_types_int.h"
 
+#ifndef INCLUDED_WHD_UTILS_H_
+#define INCLUDED_WHD_UTILS_H_
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -151,5 +154,6 @@ extern wl_chanspec_t whd_channel_to_wl_band(whd_driver_t whd_driver, uint32_t ch
 
 #ifdef __cplusplus
 } /* extern "C" */
+#endif
 #endif
 

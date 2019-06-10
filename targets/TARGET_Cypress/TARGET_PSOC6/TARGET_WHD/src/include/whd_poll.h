@@ -24,10 +24,10 @@
  *
  */
 
+#include "whd.h"
+
 #ifndef INCLUDED_WHD_POLL_H
 #define INCLUDED_WHD_POLL_H
-
-#include "whd.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -38,7 +38,6 @@ extern "C"
 *             Function declarations
 ******************************************************/
 
-/*@-exportlocal@*/
 
 /** Sends the first queued packet
  *
@@ -52,7 +51,7 @@ extern "C"
  * @return    1 : packet was sent
  *            0 : no packet sent
  */
-extern int8_t whd_thread_send_one_packet(whd_driver_t whd_driver) /*@modifies internalState @*/;
+extern int8_t whd_thread_send_one_packet(whd_driver_t whd_driver);
 
 
 /** Receives a packet if one is waiting
@@ -68,7 +67,7 @@ extern int8_t whd_thread_send_one_packet(whd_driver_t whd_driver) /*@modifies in
  * @return    1 : packet was received
  *            0 : no packet waiting
  */
-extern int8_t whd_thread_receive_one_packet(whd_driver_t whd_driver) /*@modifies internalState @*/;
+extern int8_t whd_thread_receive_one_packet(whd_driver_t whd_driver);
 
 
 /** Sends and Receives all waiting packets
@@ -84,9 +83,8 @@ extern int8_t whd_thread_receive_one_packet(whd_driver_t whd_driver) /*@modifies
  * @return    1 : packet was sent or received
  *            0 : no packet was sent or received
  */
-extern int8_t whd_thread_poll_all(whd_driver_t whd_driver) /*@modifies internalState@*/;
+extern int8_t whd_thread_poll_all(whd_driver_t whd_driver);
 
-/*@+exportlocal@*/
 
 #ifdef __cplusplus
 } /* extern "C" */

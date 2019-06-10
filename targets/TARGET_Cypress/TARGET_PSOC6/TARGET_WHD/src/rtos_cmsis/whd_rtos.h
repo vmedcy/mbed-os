@@ -17,8 +17,10 @@
 
 #include "whd_types.h"
 #include "whd_debug.h"
-#include "whd_rtos_interface.h"
 #include "cmsis_os2.h"
+
+#ifndef INCLUDED_WHD_RTOS_H_
+#define INCLUDED_WHD_RTOS_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -66,5 +68,6 @@ typedef osMessageQueueId_t whd_queue_type_t;                  /** CMSIS definiti
 
 #ifdef __cplusplus
 } /* extern "C" */
+#endif
 #endif
 

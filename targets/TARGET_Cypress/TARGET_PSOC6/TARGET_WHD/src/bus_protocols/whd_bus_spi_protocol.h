@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-#ifndef INCLUDED_SPI_WHD_BUS_PROTOCOL_H
-#define INCLUDED_SPI_WHD_BUS_PROTOCOL_H
-
 #include "whd.h"
 #include "whd_bus_protocol_interface.h"
 #include "cy_result.h"
 #include "cyhal_spi.h"
+
+#ifndef INCLUDED_SPI_WHD_BUS_PROTOCOL_H
+#define INCLUDED_SPI_WHD_BUS_PROTOCOL_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,14 +69,14 @@ extern whd_result_t whd_bus_spi_wait_for_wlan_event(whd_driver_t whd_driver,
 extern whd_result_t whd_bus_spi_write_register_value(whd_driver_t whd_driver, whd_bus_function_t function,
                                                      uint32_t address, uint8_t value_length, uint32_t value);
 extern whd_result_t whd_bus_spi_read_register_value(whd_driver_t whd_driver, whd_bus_function_t function,
-                                                    uint32_t address, uint8_t value_length, /*@out@*/ uint8_t *value);
+                                                    uint32_t address, uint8_t value_length, uint8_t *value);
 extern whd_result_t whd_bus_spi_write_backplane_value(whd_driver_t whd_driver, uint32_t address,
                                                       uint8_t register_length, uint32_t value);
 extern whd_result_t whd_bus_spi_read_backplane_value(whd_driver_t whd_driver, uint32_t address, uint8_t register_length,
-                                                     /*@out@*/ uint8_t *value);
+                                                     uint8_t *value);
 extern whd_result_t whd_bus_spi_transfer_bytes(whd_driver_t whd_driver, whd_bus_transfer_direction_t direction,
                                                whd_bus_function_t function, uint32_t address, uint16_t size,
-                                               /*@in@*/ /*@out@*/ whd_transfer_bytes_packet_t *packet);
+                                               whd_transfer_bytes_packet_t *packet);
 extern whd_result_t whd_bus_spi_wakeup(whd_driver_t whd_driver);
 extern whd_result_t whd_bus_spi_sleep(whd_driver_t whd_driver);
 extern void whd_bus_spi_init_stats(whd_driver_t whd_driver);

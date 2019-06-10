@@ -18,11 +18,10 @@
 /** @file
  *
  */
+#include "whd.h"
 
 #ifndef INCLUDED_WHD_EVENTS_API_H
 #define INCLUDED_WHD_EVENTS_API_H
-
-#include "whd.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -145,7 +144,7 @@ typedef struct whd_event
  * @param[out] handler_user_data  : semaphore data
  */
 typedef void *(*whd_event_handler_t)(whd_interface_t ifp, const whd_event_header_t *event_header,
-                                     const uint8_t *event_data, /*@null@*/ void *handler_user_data);
+                                     const uint8_t *event_data, void *handler_user_data);
 
 /** Registers a handler to receive event callbacks.
  *
@@ -176,3 +175,4 @@ uint32_t whd_wifi_set_event_handler(whd_interface_t ifp, const uint32_t *event_t
 } /* extern "C" */
 #endif
 #endif /* ifndef  */
+

@@ -184,6 +184,7 @@ uint32_t host_get_resource_block(whd_driver_t whd_drv, whd_resource_type_t type,
     uint32_t block_count;
     static uint32_t transfer_progress;
     static uint32_t i;
+    uint32_t result;
 
     host_platform_resource_size(whd_drv, type, &resource_size);
     host_get_resource_block_size(whd_drv, type, &block_size);
@@ -203,8 +204,12 @@ uint32_t host_get_resource_block(whd_driver_t whd_drv, whd_resource_type_t type,
 
     if (type == WHD_RESOURCE_WLAN_FIRMWARE)
     {
-        resource_read( (const resource_hnd_t *)&wifi_firmware_image, transfer_progress, block_size, size_out,
-                       r_buffer );
+        result = resource_read( (const resource_hnd_t *)&wifi_firmware_image, transfer_progress, block_size, size_out,
+                                r_buffer );
+        if (result != WHD_SUCCESS)
+        {
+            return result;
+        }
         *data = (uint8_t *)&r_buffer;
     }
     else if (type == WHD_RESOURCE_WLAN_NVRAM)
@@ -214,8 +219,13 @@ uint32_t host_get_resource_block(whd_driver_t whd_drv, whd_resource_type_t type,
     }
     else
     {
-        resource_read( (const resource_hnd_t *)&wifi_firmware_clm_blob, transfer_progress, block_size, size_out,
-                       r_buffer );
+        result = resource_read( (const resource_hnd_t *)&wifi_firmware_clm_blob, transfer_progress, block_size,
+                                size_out,
+                                r_buffer );
+        if (result != WHD_SUCCESS)
+        {
+            return result;
+        }
         *data = (uint8_t *)&r_buffer;
     }
     transfer_progress = 0;

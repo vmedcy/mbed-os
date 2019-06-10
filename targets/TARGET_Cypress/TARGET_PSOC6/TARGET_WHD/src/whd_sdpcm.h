@@ -66,8 +66,8 @@ typedef struct whd_sdpcm_info
 
     /* Packet send queue variables */
     whd_semaphore_type_t send_queue_mutex;
-    whd_buffer_t /*@owned@*//*@null@*/ send_queue_head;
-    whd_buffer_t /*@owned@*//*@null@*/ send_queue_tail;
+    whd_buffer_t send_queue_head;
+    whd_buffer_t send_queue_tail;
 
 } whd_sdpcm_info_t;
 
@@ -96,14 +96,14 @@ typedef struct
 *             Function declarations
 ******************************************************/
 
-extern void whd_sdpcm_process_rx_packet(whd_driver_t whd_driver, /*@only@*/ whd_buffer_t buffer);
+extern void whd_sdpcm_process_rx_packet(whd_driver_t whd_driver, whd_buffer_t buffer);
 extern whd_result_t whd_sdpcm_init(whd_driver_t whd_driver);
-extern void whd_sdpcm_quit(whd_driver_t whd_driver) /*@modifies internalState@*/;
+extern void whd_sdpcm_quit(whd_driver_t whd_driver);
 extern void whd_sdpcm_bus_vars_init(whd_driver_t whd_driver);
-extern void whd_sdpcm_quit(whd_driver_t whd_driver) /*@modifies internalState@*/;
+extern void whd_sdpcm_quit(whd_driver_t whd_driver);
 extern whd_bool_t whd_sdpcm_has_tx_packet(whd_driver_t whd_driver);
 
-extern whd_result_t whd_sdpcm_get_packet_to_send(whd_driver_t whd_driver, /*@out@*/ whd_buffer_t *buffer);
+extern whd_result_t whd_sdpcm_get_packet_to_send(whd_driver_t whd_driver, whd_buffer_t *buffer);
 extern void whd_sdpcm_update_credit(whd_driver_t whd_driver, uint8_t *data);
 extern uint8_t whd_sdpcm_get_available_credits(whd_driver_t whd_driver);
 extern void whd_update_host_interface_to_bss_index_mapping(whd_driver_t whd_driver, whd_interface_t interface,

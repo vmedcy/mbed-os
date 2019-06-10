@@ -18,10 +18,11 @@
 /** @file
  *
  */
-#ifndef INCLUDED_WHD_BUS_H_
-#define INCLUDED_WHD_BUS_H_
 
 #include "whd_bus_protocol_interface.h"
+
+#ifndef INCLUDED_WHD_BUS_H_
+#define INCLUDED_WHD_BUS_H_
 
 #ifdef __cplusplus
 extern "C"
@@ -47,16 +48,16 @@ typedef whd_result_t (*whd_bus_read_frame_t)(whd_driver_t whd_driver, whd_buffer
 typedef whd_result_t (*whd_bus_write_backplane_value_t)(whd_driver_t whd_driver, uint32_t address,
                                                         uint8_t register_length, uint32_t value);
 typedef whd_result_t (*whd_bus_read_backplane_value_t)(whd_driver_t whd_driver, uint32_t address,
-                                                       uint8_t register_length, /*@out@*/ uint8_t *value);
+                                                       uint8_t register_length, uint8_t *value);
 
 typedef whd_result_t (*whd_bus_write_register_value_t)(whd_driver_t whd_driver, whd_bus_function_t function,
                                                        uint32_t address, uint8_t value_length, uint32_t value);
 typedef whd_result_t (*whd_bus_read_register_value_t)(whd_driver_t whd_driver, whd_bus_function_t function,
-                                                      uint32_t address, uint8_t value_length, /*@out@*/ uint8_t *value);
+                                                      uint32_t address, uint8_t value_length, uint8_t *value);
 
 typedef whd_result_t (*whd_bus_transfer_bytes_t)(whd_driver_t whd_driver, whd_bus_transfer_direction_t direction,
                                                  whd_bus_function_t function, uint32_t address, uint16_t size,
-                                                 /*@in@*/ /*@out@*/ whd_transfer_bytes_packet_t *data);
+                                                 whd_transfer_bytes_packet_t *data);
 
 typedef whd_result_t (*whd_bus_poke_wlan_t)(whd_driver_t whd_driver);
 

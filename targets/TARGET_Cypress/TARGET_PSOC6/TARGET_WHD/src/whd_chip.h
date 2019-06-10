@@ -292,7 +292,7 @@ typedef struct
 } wlan_shared_t;
 
 /* Buffer size to be allocated to read wlan log */
-#define WLAN_LOG_BUF_LEN (4*1024)
+#define WLAN_LOG_BUF_LEN (4 * 1024)
 
 #define WHD_IOCTL_LOG_SIZE 64
 #define WHD_IOVAR_STRING_SIZE 128
@@ -378,7 +378,7 @@ extern whd_result_t whd_chip_specific_socsram_init(whd_driver_t whd_driver);
 extern whd_result_t whd_wifi_read_wlan_log_unsafe(whd_driver_t whd_driver, uint32_t wlan_shared_address, char *buffer,
                                                   uint32_t buffer_size);
 
-extern void whd_wifi_peek(whd_driver_t whd_driver, uint32_t address, uint8_t register_length, /*@out@*/ uint8_t *value);
+extern void whd_wifi_peek(whd_driver_t whd_driver, uint32_t address, uint8_t register_length, uint8_t *value);
 extern void whd_wifi_poke(whd_driver_t whd_driver, uint32_t address, uint8_t register_length, uint32_t value);
 extern uint32_t whd_wifi_get_btc_params(whd_driver_t whd_driver, uint32_t address, whd_interface_t interface);
 

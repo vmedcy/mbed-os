@@ -257,9 +257,6 @@ void whd_sdpcm_bus_vars_init(whd_driver_t whd_driver)
  *  De-initialises mutex and semaphore flags needed by the SDPCM handler.
  *  This function is called from the @ref whd_thread_func function when it is exiting.
  */
-/*@globals killed whd_sdpcm_ioctl_sleep, killed whd_sdpcm_ioctl_mutex, killed whd_sdpcm_send_queue_mutex@*/
-/*@modifies whd_sdpcm_send_queue_head@*/
-
 void whd_sdpcm_quit(whd_driver_t whd_driver)
 {
     whd_sdpcm_info_t *sdpcm_info = &whd_driver->sdpcm_info;
@@ -325,7 +322,7 @@ void whd_sdpcm_update_credit(whd_driver_t whd_driver, uint8_t *data)
  * @param buffer  : The SDPCM packet buffer received from the Broadcom 802.11 device
  *
  */
-void whd_sdpcm_process_rx_packet(/*@only@*/ whd_driver_t whd_driver, whd_buffer_t buffer)
+void whd_sdpcm_process_rx_packet(whd_driver_t whd_driver, whd_buffer_t buffer)
 {
     bus_common_header_t *packet;
     uint16_t size;
@@ -467,7 +464,7 @@ whd_bool_t whd_sdpcm_has_tx_packet(whd_driver_t whd_driver)
     return WHD_FALSE;
 }
 
-whd_result_t whd_sdpcm_get_packet_to_send(whd_driver_t whd_driver, /*@special@*/ /*@out@*/ whd_buffer_t *buffer)
+whd_result_t whd_sdpcm_get_packet_to_send(whd_driver_t whd_driver, whd_buffer_t *buffer)
 {
     bus_common_header_t *packet;
     sdpcm_header_t sdpcm_header;
@@ -546,7 +543,7 @@ uint8_t whd_sdpcm_get_available_credits(whd_driver_t whd_driver)
  *  @param header_type  : DATA_HEADER, ASYNCEVENT_HEADER or CONTROL_HEADER - indicating what type of SDPCM packet this is.
  */
 
-void whd_send_to_bus(whd_driver_t whd_driver, /*@only@*/ whd_buffer_t buffer,
+void whd_send_to_bus(whd_driver_t whd_driver, whd_buffer_t buffer,
                      sdpcm_header_type_t header_type)
 {
     uint16_t size;

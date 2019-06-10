@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
+#include "whd.h"
+
 #ifndef INC_WHD_NETWORK_TYPES_H_
 #define INC_WHD_NETWORK_TYPES_H_
-
-#include "whd.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -28,7 +28,6 @@ extern "C"
 /******************************************************
 * @cond       Constants
 ******************************************************/
-typedef void *whd_buffer_t;
 
 typedef enum
 {
@@ -207,3 +206,4 @@ extern void whd_network_send_ethernet_data(whd_interface_t ifp, whd_buffer_t buf
 } /*extern "C" */
 #endif
 #endif /* INC_WHD_NETWORK_TYPES_H_ */
+

@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-#ifndef INCLUDED_WHD_BUS_PROTOCOL_INTERFACE_H_
-#define INCLUDED_WHD_BUS_PROTOCOL_INTERFACE_H_
-
 #include "whd.h"
 #include "whd_rtos.h"
 #include "whd_network_types.h"
 #include "whd_types_int.h"
+
+#ifndef INCLUDED_WHD_BUS_PROTOCOL_INTERFACE_H_
+#define INCLUDED_WHD_BUS_PROTOCOL_INTERFACE_H_
 
 #ifdef __cplusplus
 extern "C"
@@ -78,20 +78,20 @@ extern whd_result_t whd_bus_deinit(whd_driver_t whd_driver);
 extern whd_result_t whd_bus_write_backplane_value(whd_driver_t whd_driver, uint32_t address, uint8_t register_length,
                                                   uint32_t value);
 extern whd_result_t whd_bus_read_backplane_value(whd_driver_t whd_driver, uint32_t address, uint8_t register_length,
-                                                 /*@out@*/ uint8_t *value);
+                                                 uint8_t *value);
 extern whd_result_t whd_bus_write_register_value(whd_driver_t whd_driver, whd_bus_function_t function, uint32_t address,
                                                  uint8_t value_length, uint32_t value);
 extern whd_result_t whd_bus_read_register_value(whd_driver_t whd_driver, whd_bus_function_t function, uint32_t address,
-                                                uint8_t value_length, /*@out@*/ uint8_t *value);
+                                                uint8_t value_length, uint8_t *value);
 
 /* Device data transfer functions */
 extern whd_result_t whd_bus_send_buffer(whd_driver_t whd_driver, whd_buffer_t buffer);
 extern whd_result_t whd_bus_transfer_bytes(whd_driver_t whd_driver, whd_bus_transfer_direction_t direction,
                                            whd_bus_function_t function, uint32_t address, uint16_t size,
-                                           /*@in@*/ /*@out@*/ whd_transfer_bytes_packet_t *data);
+                                           whd_transfer_bytes_packet_t *data);
 
 /* Frame transfer function */
-extern whd_result_t whd_bus_read_frame(whd_driver_t whd_driver, /*@out@*/ whd_buffer_t *buffer);
+extern whd_result_t whd_bus_read_frame(whd_driver_t whd_driver, whd_buffer_t *buffer);
 
 extern uint32_t     whd_bus_packet_available_to_read(whd_driver_t whd_driver);
 extern whd_result_t whd_bus_poke_wlan(whd_driver_t whd_driver);

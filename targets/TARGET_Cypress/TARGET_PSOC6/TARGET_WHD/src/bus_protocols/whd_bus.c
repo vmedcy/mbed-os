@@ -59,13 +59,13 @@ whd_result_t whd_bus_write_backplane_value(whd_driver_t whd_driver, uint32_t add
 }
 
 whd_result_t whd_bus_read_backplane_value(whd_driver_t whd_driver, uint32_t address, uint8_t register_length,
-                                          /*@out@*/ uint8_t *value)
+                                          uint8_t *value)
 {
     return whd_driver->bus_if->whd_bus_read_backplane_value_fptr(whd_driver, address, register_length, value);
 }
 
 whd_result_t whd_bus_read_register_value(whd_driver_t whd_driver, whd_bus_function_t function, uint32_t address,
-                                         uint8_t value_length, /*@out@*/ uint8_t *value)
+                                         uint8_t value_length, uint8_t *value)
 {
     return whd_driver->bus_if->whd_bus_read_register_value_fptr(whd_driver, function, address, value_length, value);
 }
@@ -78,7 +78,7 @@ whd_result_t whd_bus_write_register_value(whd_driver_t whd_driver, whd_bus_funct
 
 whd_result_t whd_bus_transfer_bytes(whd_driver_t whd_driver, whd_bus_transfer_direction_t direction,
                                     whd_bus_function_t function, uint32_t address, uint16_t size,
-                                    /*@in@*/ /*@out@*/ whd_transfer_bytes_packet_t *data)
+                                    whd_transfer_bytes_packet_t *data)
 {
     return whd_driver->bus_if->whd_bus_transfer_bytes_fptr(whd_driver, direction, function, address, size, data);
 }

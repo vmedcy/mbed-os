@@ -191,6 +191,9 @@ extern "C" {
 #define SDIO_FUNC_MASK_F1          ( (uint32_t)0x01 )     /* interrupt mask enable for function 1 */
 #define SDIO_FUNC_MASK_F2          ( (uint32_t)0x02 )     /* interrupt mask enable for function 2 */
 
+/* SDIO_DEVICE_CONTROL Bits */
+#define SDIO_DATA_PAD_ISO          ( (uint32_t)0x08 )     /* isolate internal SDIO data bus signals */
+
 /* SDIO_CHIP_CLOCK_CSR Bits */
 #define SBSDIO_FORCE_ALP           ( (uint32_t)0x01 )     /* Force ALP request to backplane */
 #define SBSDIO_FORCE_HT            ( (uint32_t)0x02 )     /* Force HT request to backplane */

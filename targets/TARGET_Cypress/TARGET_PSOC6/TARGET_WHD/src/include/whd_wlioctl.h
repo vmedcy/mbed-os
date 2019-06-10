@@ -18,8 +18,8 @@
  * Custom OID/ioctl definitions for
  * 802.11abg Networking Device Driver
  */
-#ifndef _wlioctl_h_
-#define    _wlioctl_h_
+#ifndef INCLUDED_WHD_WLIOCTL_H
+#define INCLUDED_WHD_WLIOCTL_H
 
 #ifdef __cplusplus
 extern "C"
@@ -34,7 +34,6 @@ extern "C"
 #define MAX_WFDS_SVC_NAME_LEN   (200)     /* maximum service_name length */
 
 #define ACTION_FRAME_SIZE 1040
-typedef uint16_t wl_chanspec_t;
 typedef uint16_t chanspec_t;
 #define    ETHER_ADDR_LEN        6
 

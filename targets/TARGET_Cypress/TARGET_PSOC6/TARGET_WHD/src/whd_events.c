@@ -81,9 +81,9 @@ static uint8_t *whd_management_alloc_event_msgs_buffer(whd_interface_t ifp, whd_
  *
  * @return WHD result code
  */
-whd_result_t whd_management_set_event_handler_locally(whd_interface_t ifp, /*@keep@*/ const whd_event_num_t *event_nums,
-                                                      /*@null@*/ whd_event_handler_t handler_func,
-                                                      /*@null@*/ /*@keep@*/ void *handler_user_data)
+whd_result_t whd_management_set_event_handler_locally(whd_interface_t ifp, const whd_event_num_t *event_nums,
+                                                      whd_event_handler_t handler_func,
+                                                      void *handler_user_data)
 {
     uint16_t entry = (uint16_t)0xFF;
     uint16_t i;

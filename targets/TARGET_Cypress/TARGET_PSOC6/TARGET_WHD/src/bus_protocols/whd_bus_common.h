@@ -14,11 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef INCLUDED__WHD_BUS_COMMON_H
-#define INCLUDED_WHD_BUS_COMMON_H
-
 #include "whd.h"
 #include <stdint.h>
+
+#ifndef INCLUDED_WHD_BUS_COMMON_H
+#define INCLUDED_WHD_BUS_COMMON_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,7 +40,7 @@ extern whd_result_t whd_bus_write_wifi_nvram_image(whd_driver_t whd_driver);
 extern void         whd_bus_set_resource_download_halt(whd_driver_t whd_driver, whd_bool_t halt);
 
 extern whd_result_t whd_bus_transfer_backplane_bytes(whd_driver_t whd_driver, whd_bus_transfer_direction_t direction,
-                                                     uint32_t address, uint32_t size, /*@in@*/ /*@out@*/ uint8_t *data);
+                                                     uint32_t address, uint32_t size, uint8_t *data);
 extern void whd_bus_init_backplane_window(whd_driver_t whd_driver);
 whd_result_t whd_bus_set_backplane_window(whd_driver_t whd_driver, uint32_t addr);
 

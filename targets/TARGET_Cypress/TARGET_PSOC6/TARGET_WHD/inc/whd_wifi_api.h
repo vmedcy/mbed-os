@@ -24,11 +24,11 @@
  *
  */
 
-#ifndef INCLUDED_WHD_WIFI_API_H
-#define INCLUDED_WHD_WIFI_API_H
-
 #include "whd.h"
 #include "whd_types.h"
+
+#ifndef INCLUDED_WHD_WIFI_API_H
+#define INCLUDED_WHD_WIFI_API_H
 
 #ifdef __cplusplus
 extern "C"
@@ -58,10 +58,22 @@ extern uint32_t whd_init(whd_driver_t *whd_driver_ptr, whd_init_config_t *whd_in
  *  @param  whd_driver        : Pointer to handle instance of the driver
  *  @param  whd_config        : Configuration for SDIO bus
  *  @param  sdio_obj          : The SDHC hardware interface, from the Level 3 CY HW APIs
+ *  @param  sdio_ops          : Pointer to a whd_sdio_funcs_t to provide SDIO services to the driver instance
  *
  *  @return WHD_SUCCESS or Error code
  */
-extern void whd_bus_sdio_attach(whd_driver_t whd_driver, whd_sdio_config_t *whd_config, void *sdio_obj);
+extern void whd_bus_sdio_attach(whd_driver_t whd_driver, whd_sdio_config_t *whd_config, void *sdio_obj,
+                                whd_sdio_funcs_t *sdio_ops);
+
+/**
+ * Notify the WLAN device that the SDIO host-wake signal asserted.
+ *
+ * This function may be called after the WHD calls @ref whd_enable_intr_func_t with enable
+ * set to WHD_TRUE.
+ *
+ *  @param  whd_driver       : Pointer to the handle instance of the driver associated to the event
+ */
+extern void whd_bus_sdio_oob_intr_asserted(whd_driver_t whd_driver);
 
 /** Attach the WLAN Device to specific SPI bus
  *
@@ -71,7 +83,18 @@ extern void whd_bus_sdio_attach(whd_driver_t whd_driver, whd_sdio_config_t *whd_
  *
  *  @return WHD_SUCCESS or Error code
  */
-extern void whd_bus_spi_attach(whd_driver_t whd_driver, whd_spi_config_t *whd_config, void *spi_obj);
+extern void whd_bus_spi_attach(whd_driver_t whd_driver, whd_spi_config_t *whd_config, void *spi_obj,
+                               whd_spi_funcs_t *spi_ops);
+
+/**
+ * Notify the WLAN device that the SPI interrupt signal asserted.
+ *
+ * This function may be called after the WHD calls @ref whd_enable_intr_func_t with enable
+ * set to WHD_TRUE.
+ *
+ *  @param  whd_driver       : Pointer to the handle instance of the driver associated to the event
+ */
+extern void whd_bus_spi_oob_intr_asserted(whd_driver_t whd_driver);
 
 /**
  * Turn on the Wi-Fi device
@@ -152,7 +175,7 @@ typedef void (*whd_scan_result_callback_t)(whd_scan_result_t **result_ptr, void 
  *  @return record count or Error code
  */
 extern uint32_t whd_wifi_scan_synch(whd_interface_t ifp,
-                                    /*@null@*/ whd_sync_scan_result_t *scan_result,
+                                    whd_sync_scan_result_t *scan_result,
                                     uint32_t count
                                     );
 
@@ -189,13 +212,13 @@ extern uint32_t whd_wifi_scan_synch(whd_interface_t ifp,
 extern uint32_t whd_wifi_scan(whd_interface_t ifp,
                               whd_scan_type_t scan_type,
                               whd_bss_type_t bss_type,
-                              /*@null@*/ const whd_ssid_t *optional_ssid,
-                              /*@null@*/ const whd_mac_t *optional_mac,
-                              /*@null@*/ /*@unique@*/ const uint16_t *optional_channel_list,
-                              /*@null@*/ const whd_scan_extended_params_t *optional_extended_params,
+                              const whd_ssid_t *optional_ssid,
+                              const whd_mac_t *optional_mac,
+                              const uint16_t *optional_channel_list,
+                              const whd_scan_extended_params_t *optional_extended_params,
                               whd_scan_result_callback_t callback,
                               whd_scan_result_t **result_ptr,
-                              /*@null@*/ void *user_data);
+                              void *user_data);
 
 /** Abort a previously issued scan
  *
@@ -664,8 +687,8 @@ extern uint32_t whd_wifi_get_ioctl_buffer(whd_interface_t ifp, uint32_t ioctl, u
  *
  *  @return WHD_SUCCESS or Error code
  */
-extern uint32_t whd_wifi_get_iovar_buffer_with_param(whd_interface_t ifp, const char* iovar_name, void *param,
-                                          uint32_t paramlen, uint8_t* out_buffer, uint32_t out_length);
+extern uint32_t whd_wifi_get_iovar_buffer_with_param(whd_interface_t ifp, const char *iovar_name, void *param,
+                                                     uint32_t paramlen, uint8_t *out_buffer, uint32_t out_length);
 
 /* Debug APIs */
 

@@ -564,7 +564,7 @@ whd_result_t whd_wifi_read_wlan_log_unsafe(whd_driver_t whd_driver, uint32_t wla
 done: return result;
 }
 
-void whd_wifi_peek(whd_driver_t whd_driver, uint32_t address, uint8_t register_length, /*@out@*/ uint8_t *value)
+void whd_wifi_peek(whd_driver_t whd_driver, uint32_t address, uint8_t register_length, uint8_t *value)
 {
     uint8_t status;
 
@@ -642,7 +642,10 @@ whd_result_t whd_ioctl_print(whd_driver_t whd_driver)
                 whd_driver->whd_ioctl_log[i].data_size--;
                 data++;
             }
-            strncpy(iovar, (char *)data, strlen( (char *)data ) );
+
+            if (strlen( (char *)data ) <= WHD_IOVAR_STRING_SIZE)
+                strncpy(iovar, (char *)data, strlen( (char *)data ) );
+
             iovar_string_size = strlen( (const char *)data );
             data += iovar_string_size;
             whd_driver->whd_ioctl_log[i].data_size -= iovar_string_size;
@@ -652,7 +655,8 @@ whd_result_t whd_ioctl_print(whd_driver_t whd_driver)
         {
             whd_event_info_to_string(whd_driver->whd_ioctl_log[i].ioct_log, whd_driver->whd_ioctl_log[i].flag,
                                      whd_driver->whd_ioctl_log[i].reason, iovar, sizeof(iovar) - 1);
-            WPRINT_MACRO( ("\n<- E:%lu\t\t\tS:%d\t\t\t\tR:%lu\n%s\n", whd_driver->whd_ioctl_log[i].ioct_log,
+            WPRINT_MACRO( ("\n<- E:%" PRIu32 "\t\t\tS:%d\t\t\t\tR:%" PRIu32 "\n%s\n",
+                           whd_driver->whd_ioctl_log[i].ioct_log,
                            whd_driver->whd_ioctl_log[i].flag, whd_driver->whd_ioctl_log[i].reason, iovar) );
         }
         else if (whd_driver->whd_ioctl_log[i].ioct_log == WLC_SET_VAR)
@@ -668,7 +672,7 @@ whd_result_t whd_ioctl_print(whd_driver_t whd_driver)
         else if (whd_driver->whd_ioctl_log[i].ioct_log != 0)
         {
             whd_ioctl_to_string(whd_driver->whd_ioctl_log[i].ioct_log, iovar, sizeof(iovar) - 1);
-            WPRINT_MACRO( ("\n%s:%lu\n", iovar, whd_driver->whd_ioctl_log[i].ioct_log) );
+            WPRINT_MACRO( ("\n%s:%" PRIu32 "\n", iovar, whd_driver->whd_ioctl_log[i].ioct_log) );
             whd_hexdump(data, whd_driver->whd_ioctl_log[i].data_size);
         }
     }
@@ -800,21 +804,38 @@ uint32_t whd_wifi_print_whd_log(whd_driver_t whd_driver)
     {
         result = whd_wifi_read_wlan_log_unsafe(whd_driver, ( (GET_C_VAR(whd_driver, CHIP_RAM_SIZE) +
                                                               PLATFORM_WLAN_RAM_BASE) - 4 ), buffer, WLAN_LOG_BUF_LEN);
-        CHECK_RETURN(result);
+        if (result != WHD_SUCCESS)
+        {
+            free(buffer);
+            WPRINT_WHD_ERROR( ("Function %s failed at line %d \n", __func__, __LINE__) );
+            return result;
+        }
+        free(buffer);
         return WHD_SUCCESS;
     }
     else if (wlan_chip_id == 43909)
     {
-        CHECK_RETURN(whd_ensure_wlan_bus_is_up(whd_driver) );
+        result = whd_ensure_wlan_bus_is_up(whd_driver);
+        if (result != WHD_SUCCESS)
+        {
+            free(buffer);
+            return result;
+        }
         result = whd_wifi_read_wlan_log_unsafe(whd_driver, ( (GET_C_VAR(whd_driver, CHIP_RAM_SIZE) +
                                                               PLATFORM_WLAN_RAM_BASE) - 4 ), buffer, WLAN_LOG_BUF_LEN);
         whd_thread_notify(whd_driver);
-        CHECK_RETURN(result);
+        if (result != WHD_SUCCESS)
+        {
+            free(buffer);
+            return result;
+        }
+        free(buffer);
         return WHD_SUCCESS;
     }
     else if ( (wlan_chip_id == 4334) || (wlan_chip_id == 4390) )
     {
         WPRINT_WHD_ERROR( ("Unsupported chip, Function %s failed at line %d \n", __func__, __LINE__) );
+        free(buffer);
         return WHD_UNSUPPORTED;
     }
     else
@@ -925,6 +946,7 @@ static whd_bool_t whd_is_fw_sr_capable(whd_driver_t whd_driver)
     uint32_t retention_ctl = 0;
     uint32_t srctrl = 0;
     whd_bool_t save_restore_capable = WHD_FALSE;
+    whd_result_t result = WHD_SUCCESS;
 
     /* Get chip number */
     uint16_t wlan_chip_id = whd_chip_get_chip_id(whd_driver);
@@ -949,12 +971,21 @@ static whd_bool_t whd_is_fw_sr_capable(whd_driver_t whd_driver)
     else if ( (wlan_chip_id == 43340) || (wlan_chip_id == 43342) )
     {
         /* check if fw initialized sr engine */
-        CHECK_RETURN(whd_bus_read_backplane_value(whd_driver, (uint32_t)CHIPCOMMON_CORE_CAPEXT_ADDR, (uint8_t)4,
-                                                  (uint8_t *)&core_capext) );
+        result = whd_bus_read_backplane_value(whd_driver, (uint32_t)CHIPCOMMON_CORE_CAPEXT_ADDR, (uint8_t)4,
+                                              (uint8_t *)&core_capext);
+        if (result != WHD_SUCCESS)
+        {
+            return WHD_FALSE;
+        }
+
         if ( (core_capext & CHIPCOMMON_CORE_CAPEXT_SR_SUPPORTED) != 0 )
         {
-            CHECK_RETURN(whd_bus_read_backplane_value(whd_driver, (uint32_t)CHIPCOMMON_CORE_RETENTION_CTL, (uint8_t)4,
-                                                      (uint8_t *)&retention_ctl) );
+            result = whd_bus_read_backplane_value(whd_driver, (uint32_t)CHIPCOMMON_CORE_RETENTION_CTL, (uint8_t)4,
+                                                  (uint8_t *)&retention_ctl);
+            if (result != WHD_SUCCESS)
+            {
+                return WHD_FALSE;
+            }
             if ( (retention_ctl & (CHIPCOMMON_CORE_RCTL_MACPHY_DISABLE | CHIPCOMMON_CORE_RCTL_LOGIC_DISABLE) ) == 0 )
             {
                 save_restore_capable = WHD_TRUE;
@@ -965,8 +996,12 @@ static whd_bool_t whd_is_fw_sr_capable(whd_driver_t whd_driver)
     else
     {
         /* check if fw initialized sr engine */
-        CHECK_RETURN(whd_bus_read_backplane_value(whd_driver, (uint32_t)RETENTION_CTL, (uint8_t)sizeof(retention_ctl),
-                                                  (uint8_t *)&retention_ctl) );
+        result = whd_bus_read_backplane_value(whd_driver, (uint32_t)RETENTION_CTL, (uint8_t)sizeof(retention_ctl),
+                                              (uint8_t *)&retention_ctl);
+        if (result != WHD_SUCCESS)
+        {
+            return WHD_FALSE;
+        }
         if ( (retention_ctl & (RCTL_MACPHY_DISABLE | RCTL_LOGIC_DISABLE) ) == 0 )
         {
             save_restore_capable = WHD_TRUE;

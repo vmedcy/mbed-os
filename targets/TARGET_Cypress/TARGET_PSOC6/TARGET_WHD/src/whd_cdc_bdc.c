@@ -156,7 +156,7 @@ whd_result_t whd_cdc_bdc_info_init(whd_driver_t whd_driver)
  */
 whd_result_t whd_cdc_send_ioctl(whd_interface_t ifp, cdc_command_type_t type, uint32_t command,
                                 whd_buffer_t send_buffer_hnd,
-                                whd_buffer_t *response_buffer_hnd)                                                                                                                /*@allocates *response_buffer_hnd@*/  /*@defines **response_buffer_hnd@*/
+                                whd_buffer_t *response_buffer_hnd)
 {
 
     uint32_t data_length;
@@ -232,7 +232,6 @@ whd_result_t whd_cdc_send_ioctl(whd_interface_t ifp, cdc_command_type_t type, ui
     retval = whd_rtos_get_semaphore(&cdc_bdc_info->ioctl_sleep, (uint32_t)WHD_IOCTL_TIMEOUT_MS, WHD_FALSE);
     if (retval != WHD_SUCCESS)
     {
-        WPRINT_WHD_ERROR( ("whd_rtos_get_semaphore returned %ld\n", retval) );
         /* Release the mutex since ioctl response will no longer be referenced. */
         CHECK_RETURN(whd_rtos_set_semaphore(&cdc_bdc_info->ioctl_mutex, WHD_FALSE) );
         return retval;
@@ -290,11 +289,9 @@ whd_result_t whd_cdc_send_ioctl(whd_interface_t ifp, cdc_command_type_t type, ui
  *
  * @return    WHD result code
  */
-/*@allocates *response_buffer_hnd@*/  /*@defines **response_buffer_hnd@*/
-
 whd_result_t whd_cdc_send_iovar(whd_interface_t ifp, cdc_command_type_t type,
-                                /*@only@*/ whd_buffer_t send_buffer_hnd,
-                                /*@special@*/ /*@out@*/ /*@null@*/ whd_buffer_t *response_buffer_hnd)
+                                whd_buffer_t send_buffer_hnd,
+                                whd_buffer_t *response_buffer_hnd)
 {
     if (type == CDC_SET)
     {
@@ -350,7 +347,7 @@ void *whd_cdc_get_iovar_buffer(whd_driver_t whd_driver,
  *
  */
 /* Returns immediately - whd_buffer_tx_completed will be called once the transmission has finished */
-void whd_network_send_ethernet_data(whd_interface_t ifp, /*@only@*/ whd_buffer_t buffer)
+void whd_network_send_ethernet_data(whd_interface_t ifp, whd_buffer_t buffer)
 {
     data_header_t *packet;
     whd_result_t result;
@@ -431,9 +428,9 @@ void whd_network_send_ethernet_data(whd_interface_t ifp, /*@only@*/ whd_buffer_t
  *
  * @return A pointer to the start of user data with data_length space available
  */
-/*@null@*/ /*@exposed@*/ void *whd_cdc_get_ioctl_buffer(/*@special@*/ /*@out@*/ whd_driver_t whd_driver,
-                                                                                whd_buffer_t *buffer,
-                                                                                uint16_t data_length)                                                    /*@allocates *buffer@*/  /*@defines **buffer@*/
+void *whd_cdc_get_ioctl_buffer(whd_driver_t whd_driver,
+                               whd_buffer_t *buffer,
+                               uint16_t data_length)
 {
     if (whd_host_buffer_get(whd_driver, buffer, WHD_NETWORK_TX, (unsigned short)(IOCTL_OFFSET + data_length),
                             (unsigned long)WHD_IOCTL_PACKET_TIMEOUT) == WHD_SUCCESS)
@@ -595,8 +592,7 @@ void whd_process_bdc_event(whd_driver_t whd_driver, whd_buffer_t buffer, uint16_
     whd_event->reason     = (whd_event_reason_t)ntoh32(whd_event->reason);
     whd_event->auth_type  =                        ntoh32(whd_event->auth_type);
     whd_event->datalen    =                        ntoh32(whd_event->datalen);
-    whd_event->ifidx      = whd_event->ifidx;
-    whd_event->bsscfgidx  = whd_event->bsscfgidx;
+
     /* Ensure data length is correct */
     if (whd_event->datalen >
         (uint32_t)(size - ( (char *)DATA_AFTER_HEADER(event) - (char *)bdc_header ) ) )
@@ -658,7 +654,6 @@ void whd_process_bdc_event(whd_driver_t whd_driver, whd_buffer_t buffer, uint16_
                                                                 (uint8_t *)DATA_AFTER_HEADER(
                                                                     event),
                                                                 cdc_bdc_info->whd_event_list[i].handler_user_data);
-                    /*@innerbreak@*/
                     break;
                 }
             }

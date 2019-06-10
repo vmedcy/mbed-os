@@ -47,8 +47,7 @@
 /******************************************************
 *             Static Function Prototypes
 ******************************************************/
-/*@globals killed whd_transceive_semaphore@*/ /*@modifies whd_wlan_status, whd_bus_interrupt, whd_thread_quit_flag@*/
-static void whd_thread_func(whd_thread_arg_t /*@unused@*/ thread_input);
+static void whd_thread_func(whd_thread_arg_t thread_input);
 
 /******************************************************
 *             Global Functions
@@ -69,7 +68,6 @@ void whd_thread_info_init(whd_driver_t whd_driver, whd_init_config_t *whd_init_c
  * @return    WHD_SUCCESS : if initialisation succeeds
  *            otherwise, a result code
  */
-/*@globals undef whd_thread, undef whd_transceive_semaphore@*/ /*@modifies whd_inited@*/
 whd_result_t whd_thread_init(whd_driver_t whd_driver)
 {
     whd_result_t retval;
@@ -79,9 +77,8 @@ whd_result_t whd_thread_init(whd_driver_t whd_driver)
     if (retval != WHD_SUCCESS)
     {
         WPRINT_WHD_ERROR( ("Could not initialize SDPCM codec\n") );
-        /*@-unreachable@*/ /*@-globstate@*/ /* Lint: Reachable after hitting assert & globals not defined due to error */
+        /* Lint: Reachable after hitting assert & globals not defined due to error */
         return retval;
-        /*@+unreachable@*/ /*@+globstate@*/
     }
 
     /* Create the event flag which signals the WHD thread needs to wake up */
@@ -89,15 +86,14 @@ whd_result_t whd_thread_init(whd_driver_t whd_driver)
     if (retval != WHD_SUCCESS)
     {
         WPRINT_WHD_ERROR( ("Could not initialize WHD thread semaphore\n") );
-        /*@-unreachable@*/ /*@-globstate@*/ /* Lint: Reachable after hitting assert & globals not defined due to error */
+        /* Lint: Reachable after hitting assert & globals not defined due to error */
         return retval;
-        /*@+unreachable@*/ /*@+globstate@*/
     }
 
-    whd_driver->thread_info.thread_stack_size = 3*1024;
-    if(whd_driver->thread_info.thread_stack_start == NULL)
+    whd_driver->thread_info.thread_stack_size = 3 * 1024;
+    if (whd_driver->thread_info.thread_stack_start == NULL)
     {
-        whd_driver->thread_info.thread_stack_start = (char*)malloc(whd_driver->thread_info.thread_stack_size);
+        whd_driver->thread_info.thread_stack_start = (char *)malloc(whd_driver->thread_info.thread_stack_size);
     }
 
     retval = whd_rtos_create_thread_with_arg(&whd_driver->thread_info.whd_thread, whd_thread_func,
@@ -108,9 +104,7 @@ whd_result_t whd_thread_init(whd_driver_t whd_driver)
     {
         /* Could not start WHD main thread */
         WPRINT_WHD_ERROR( ("Could not start WHD thread\n") );
-        /*@-unreachable@*/ /* Reachable after hitting assert */
         return retval;
-        /*@+unreachable@*/
     }
 
     /* Ready now. Indicate it here and in thread, whatever be executed first. */
@@ -131,16 +125,15 @@ whd_result_t whd_thread_init(whd_driver_t whd_driver)
  * @return    1 : packet was sent
  *            0 : no packet sent
  */
-int8_t whd_thread_send_one_packet(whd_driver_t whd_driver)   /*@modifies internalState @*/
+int8_t whd_thread_send_one_packet(whd_driver_t whd_driver)
 {
     whd_buffer_t tmp_buf_hnd = NULL;
     whd_result_t result;
 
     if (whd_sdpcm_get_packet_to_send(whd_driver, &tmp_buf_hnd) != WHD_SUCCESS)
     {
-        /*@-mustfreeonly@*/ /* Failed to get a packet */
+        /* Failed to get a packet */
         return 0;
-        /*@+mustfreeonly@*/
     }
 
     /* Ensure the wlan backplane bus is up */
@@ -182,9 +175,8 @@ int8_t whd_thread_receive_one_packet(whd_driver_t whd_driver)
     whd_buffer_t recv_buffer;
     if (whd_bus_read_frame(whd_driver, &recv_buffer) != WHD_SUCCESS)
     {
-        /*@-mustfreeonly@*/ /* Failed to read a packet */
+        /* Failed to read a packet */
         return 0;
-        /*@+mustfreeonly@*/
     }
 
     if (recv_buffer != NULL)    /* Could be null if it was only a credit update */
@@ -211,7 +203,7 @@ int8_t whd_thread_receive_one_packet(whd_driver_t whd_driver)
  *
  * Note: do not loop in here, to avoid overwriting previously rx-ed packets
  */
-int8_t whd_thread_poll_all(whd_driver_t whd_driver)   /*@modifies internalState@*/
+int8_t whd_thread_poll_all(whd_driver_t whd_driver)
 {
     int8_t result = 0;
     result |= whd_thread_send_one_packet(whd_driver);
@@ -290,9 +282,7 @@ void whd_thread_notify(whd_driver_t whd_driver)
  * @param thread_input  : unused parameter needed to match thread prototype.
  *
  */
-/*@globals killed whd_transceive_semaphore@*/
-/*@modifies whd_wlan_status, whd_bus_interrupt, whd_thread_quit_flag, whd_inited, whd_thread@*/
-static void whd_thread_func(whd_thread_arg_t /*@unused@*/ thread_input)
+static void whd_thread_func(whd_thread_arg_t thread_input)
 {
     int8_t rx_status;
     int8_t tx_status;

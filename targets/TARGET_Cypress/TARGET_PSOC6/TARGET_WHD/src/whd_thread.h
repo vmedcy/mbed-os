@@ -31,12 +31,11 @@
  *  Received messages are delivered in the context of the whd Thread, so the callback function needs to avoid blocking.
  *
  */
+#include "whd_rtos.h"
+#include "whd.h"
 
 #ifndef INCLUDED_WHD_THREAD_H_
 #define INCLUDED_WHD_THREAD_H_
-
-#include "whd_rtos.h"
-#include "whd.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -66,7 +65,7 @@ void whd_thread_info_init(whd_driver_t whd_driver, whd_init_config_t *whd_init_c
  *
  * @return    whd result code
  */
-extern whd_result_t whd_thread_init(whd_driver_t whd_driver) /*@modifies internalState@*/;
+extern whd_result_t whd_thread_init(whd_driver_t whd_driver);
 
 
 /** Terminates the whd Thread

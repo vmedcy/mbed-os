@@ -138,7 +138,8 @@ whd_result_t whd_process_clm_data(whd_interface_t ifp)
             whd_buffer_t response;
             void *data;
 
-            WPRINT_WHD_DEBUG( ("clmload (%ld byte file) failed with return %lu; ", clm_blob_size, ret) );
+            WPRINT_WHD_DEBUG( ("clmload (%" PRIu32 " byte file) failed with return %" PRIu32 "; ", clm_blob_size,
+                               ret) );
             data = (int *)whd_cdc_get_iovar_buffer(whd_driver, &buffer, 4, IOVAR_STR_CLMLOAD_STATUS);
             CHECK_IOCTL_BUFFER(data);
             ret_clmload_status = whd_cdc_send_iovar(ifp, CDC_GET, buffer, &response);

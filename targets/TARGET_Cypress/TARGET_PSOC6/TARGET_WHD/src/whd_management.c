@@ -21,6 +21,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include "bus_protocols/whd_bus_common.h"
 #include "bus_protocols/whd_bus_protocol_interface.h"
 #include "whd_debug.h"
@@ -78,7 +79,9 @@ whd_result_t whd_add_interface(whd_driver_t whd_driver, uint8_t bsscfgidx, uint8
         ifp->whd_driver = whd_driver;
 
         /* Add a interface name */
-        strncpy(ifp->if_name, name, sizeof(ifp->if_name) );
+        /* strncpy doesn't terminate with null if the src string is long */
+        ifp->if_name[WHD_MSG_IFNAME_MAX - 1] = '\0';
+        strncpy(ifp->if_name, name, sizeof(ifp->if_name) - 1);
 
         /* Primary interface takes 0 as default */
         ifp->ifidx = ifidx;
@@ -293,9 +296,7 @@ uint32_t whd_wifi_on(whd_driver_t whd_driver, whd_interface_t *ifpp)
     if (data == NULL)
     {
         whd_assert("Could not get buffer for IOVAR", 0 != 0);
-        /*@-unreachable@*/ /* Lint: Reachable after hitting assert */
         return WHD_BUFFER_ALLOC_FAIL;
-        /*@-unreachable@*/
     }
     *data = 0;
     retval = whd_cdc_send_iovar(ifp, CDC_SET, buffer, 0);

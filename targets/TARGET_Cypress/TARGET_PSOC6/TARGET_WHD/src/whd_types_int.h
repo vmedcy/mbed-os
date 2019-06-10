@@ -24,6 +24,8 @@
 #define INCLUDED_WHD_TYPES_INT_H_
 
 #include <stdint.h>
+#include <stddef.h>
+#include <inttypes.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -72,7 +74,8 @@ extern "C"
                                                                 __func__, __LINE__) ); \
                                              return WHD_BUFFER_ALLOC_FAIL; }
 #define CHECK_RETURN(expr)  { whd_result_t check_res = (expr); if (check_res != WHD_SUCCESS) \
-                              {WPRINT_WHD_ERROR( ("Function %s failed at line %d \n", __func__, __LINE__) ); \
+                              {WPRINT_WHD_ERROR( ("Function %s failed at line %d checkres = %u \n", __func__, __LINE__, \
+                                                  (unsigned int)check_res) ); \
                                return check_res; } }
 
 #define CHECK_RETURN_UNSUPPORTED_OK(expr)  { whd_result_t check_res = (expr);                                      \
@@ -117,13 +120,21 @@ extern "C"
                        ( ( ( (unsigned char *)a )[5] ) == 0 ) )
 
 /* Suppress unused variable warning occurring due to an assert which is disabled in release mode */
-#define REFERENCE_DEBUG_ONLY_VARIABLE(x) /*@-noeffect@*/ ( (void)(x) ) /*@+noeffect@*/
+#define REFERENCE_DEBUG_ONLY_VARIABLE(x) ( (void)(x) )
 
 /* Suppress unused parameter warning */
-#define UNUSED_PARAMETER(x) /*@-noeffect@*/ ( (void)(x) ) /*@+noeffect@*/
+#define UNUSED_PARAMETER(x) ( (void)(x) )
 
 /* Suppress unused variable warning */
-#define UNUSED_VARIABLE(x) /*@-noeffect@*/ ( (void)(x) ) /*@+noeffect@*/
+#define UNUSED_VARIABLE(x) ( (void)(x) )
+
+#if defined (__IAR_SYSTEMS_ICC__)
+#define DISABLE_COMPILER_WARNING(x) _Pragma(#x)
+#define ENABLE_COMPILER_WARNING(x) _Pragma(#x)
+#else
+#define DISABLE_COMPILER_WARNING(x)
+#define ENABLE_COMPILER_WARNING(x)
+#endif
 
 /******************************************************
 *                 Type Definitions
@@ -139,7 +150,6 @@ extern "C"
 #pragma pack(1)
 typedef struct
 {
-    /*@owned@*/
     whd_buffer_queue_ptr_t queue_next;
     char bus_header[MAX_BUS_HEADER_SIZE];
 } whd_buffer_header_t;
@@ -283,6 +293,77 @@ uint32_t whd_wifi_get_iovar_value(whd_interface_t ifp, const char *iovar, uint32
 uint32_t whd_wifi_set_iovar_buffers(whd_interface_t ifp, const char *iovar, const void **in_buffers,
                                     const uint16_t *lengths, const uint8_t num_buffers);
 uint32_t whd_wifi_set_iovar_value(whd_interface_t ifp, const char *iovar, uint32_t value);
+
+/** Sends an IOVAR command
+ *
+ *  @param  ifp                 : Pointer to handle instance of whd interface
+ *  @param  iovar               : IOVAR name
+ *
+ *  @return WHD_SUCCESS or Error code
+ */
+extern uint32_t whd_wifi_set_iovar_void(whd_interface_t ifp, const char *iovar);
+
+/** Sends an IOVAR command
+ *
+ *  @param  ifp                 : Pointer to handle instance of whd interface
+ *  @param  iovar               : IOVAR name
+ *  @param  buffer              : Handle for a packet buffer containing the data value to be sent.
+ *  @param  buffer_length       : Length of out_buffer
+ *
+ *  @return WHD_SUCCESS or Error code
+ */
+extern uint32_t whd_wifi_set_iovar_buffer(whd_interface_t ifp, const char *iovar, void *buffer, uint16_t buffer_length);
+
+/** Sends an IOVAR command
+ *
+ *  @param  ifp                 : Pointer to handle instance of whd interface
+ *  @param  iovar               : IOVAR name
+ *  @param  in_buffers          : Handle for a packet buffers containing the data value to be sent.
+ *  @param  in_buffer_lengths   : Length of in_buffers
+ *  @param  num_buffers         : Number of handle buffers
+ *
+ *  @return WHD_SUCCESS or Error code
+ */
+extern uint32_t whd_wifi_set_iovar_buffers(whd_interface_t ifp, const char *iovar, const void **in_buffers,
+                                           const uint16_t *in_buffer_lengths, const uint8_t num_buffers);
+
+/** Sends an IOVAR command
+ *
+ *  @param  ifp                 : Pointer to handle instance of whd interface
+ *  @param  iovar               : IOVAR name
+ *  @param  out_buffer          : Pointer to receive the handle for the packet buffer containing the response data value received
+ *  @param  out_length          : Length of out_buffer
+ *
+ *  @return WHD_SUCCESS or Error code
+ */
+extern uint32_t whd_wifi_get_iovar_buffer(whd_interface_t ifp, const char *iovar_name, uint8_t *out_buffer,
+                                          uint16_t out_length);
+
+/** Sends an IOVAR command
+ *
+ *  @param  ifp                 : Pointer to handle instance of whd interface
+ *  @param  iovar               : IOVAR name
+ *  @param  buffer              : Handle for a packet buffer containing the data value to be sent.
+ *  @param  buffer_length       : Length of out_buffer
+ *
+ *  @return WHD_SUCCESS or Error code
+ */
+extern uint32_t whd_wifi_set_iovar_buffer(whd_interface_t ifp, const char *iovar, void *buffer, uint16_t buffer_length);
+
+/** Sends an IOVAR command
+ *
+ *  @param  ifp                 : Pointer to handle instance of whd interface
+ *  @param  iovar               : IOVAR name
+ *  @param  in_buffers          : Handle for a packet buffers containing the data value to be sent.
+ *  @param  in_buffer_lengths   : Length of in_buffers
+ *  @param  num_buffers         : Number of handle buffers
+ *
+ *  @return WHD_SUCCESS or Error code
+ */
+extern uint32_t whd_wifi_set_iovar_buffers(whd_interface_t ifp, const char *iovar, const void **in_buffers,
+                                           const uint16_t *in_buffer_lengths, const uint8_t num_buffers);
+
+extern uint32_t whd_wifi_set_mac_address(whd_interface_t ifp, whd_mac_t mac);
 
 #ifdef __cplusplus
 }     /* extern "C" */

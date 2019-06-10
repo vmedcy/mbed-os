@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-#ifndef INCLUDED_WHD_DEBUG_H
-#define INCLUDED_WHD_DEBUG_H
-
 #include <stdio.h>
 #include <stdio.h>
 #include <string.h>
 #include "whd.h"
+
+#ifndef INCLUDED_WHD_DEBUG_H
+#define INCLUDED_WHD_DEBUG_H
 
 #ifdef __cplusplus
 extern "C"

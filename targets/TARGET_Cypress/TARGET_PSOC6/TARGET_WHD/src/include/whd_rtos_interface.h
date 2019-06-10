@@ -22,17 +22,11 @@
  *  such as threads, semaphores & timing functions in an abstract way.
  */
 
-#ifndef INCLUDED_WHD_RTOS_INTERFACE_H_
-#define INCLUDED_WHD_RTOS_INTERFACE_H_
-
 #include "whd_rtos.h"
 #include "whd_types.h"
 
-#ifdef __x86_64__
-typedef uint64_t whd_thread_arg_t;
-#else
-typedef uint32_t whd_thread_arg_t;
-#endif
+#ifndef INCLUDED_WHD_RTOS_INTERFACE_H_
+#define INCLUDED_WHD_RTOS_INTERFACE_H_
 
 #ifdef __cplusplus
 extern "C"
@@ -76,8 +70,8 @@ extern "C"
  *
  * @return WHD result code
  */
-extern whd_result_t whd_rtos_create_thread_with_arg(/*@out@*/ whd_thread_type_t *thread, void (*entry_function)(
-                                                                  whd_thread_arg_t arg), const char *name, /*@null@*/ void *stack, uint32_t stack_size, uint32_t priority, whd_thread_arg_t arg);
+extern whd_result_t whd_rtos_create_thread_with_arg(whd_thread_type_t *thread, void (*entry_function)(
+                                                        whd_thread_arg_t arg), const char *name, void *stack, uint32_t stack_size, uint32_t priority, whd_thread_arg_t arg);
 
 
 /**
@@ -94,7 +88,7 @@ extern whd_result_t whd_rtos_create_thread_with_arg(/*@out@*/ whd_thread_type_t 
  *
  * @return WHD_SUCCESS or Error code
  */
-extern whd_result_t whd_rtos_finish_thread(whd_thread_type_t *thread) /*@modifies *thread@*/;
+extern whd_result_t whd_rtos_finish_thread(whd_thread_type_t *thread);
 
 /**
  * Deletes a terminated thread
@@ -135,8 +129,7 @@ extern whd_result_t whd_rtos_join_thread(whd_thread_type_t *thread);
  *
  * @return WHD_SUCCESS or Error code
  */
-/*@allocates *semaphore@*//*@defines **semaphore@*/
-extern whd_result_t whd_rtos_init_semaphore(/*@special@*//*@out@*/ whd_semaphore_type_t *semaphore);
+extern whd_result_t whd_rtos_init_semaphore(whd_semaphore_type_t *semaphore);
 
 /**
  * Get a semaphore
@@ -159,7 +152,6 @@ extern whd_result_t whd_rtos_init_semaphore(/*@special@*//*@out@*/ whd_semaphore
  * @return whd_result_t : WHD_SUCCESS if semaphore was successfully acquired
  *                     : WHD_TIMEOUT if semaphore was not acquired before timeout_ms period
  */
-/*@modifies internalState@*/
 extern whd_result_t whd_rtos_get_semaphore(whd_semaphore_type_t *semaphore, uint32_t timeout_ms,
                                            whd_bool_t will_set_in_isr);
 
@@ -197,8 +189,7 @@ extern whd_result_t whd_rtos_set_semaphore(whd_semaphore_type_t *semaphore, whd_
  * @return whd_result_t : WHD_SUCCESS if semaphore was successfully deleted
  *                        : Error code if an error occurred
  */
-/*@releases *semaphore@*/
-extern whd_result_t whd_rtos_deinit_semaphore(/*@special@*/ whd_semaphore_type_t *semaphore);
+extern whd_result_t whd_rtos_deinit_semaphore(whd_semaphore_type_t *semaphore);
 
 /* Time management functions */
 
@@ -213,7 +204,6 @@ extern whd_result_t whd_rtos_deinit_semaphore(/*@special@*/ whd_semaphore_type_t
  *
  * @returns Time in milliseconds since the RTOS started.
  */
-/*@modifies internalState@*/
 extern whd_time_t whd_rtos_get_time(void);
 
 /**

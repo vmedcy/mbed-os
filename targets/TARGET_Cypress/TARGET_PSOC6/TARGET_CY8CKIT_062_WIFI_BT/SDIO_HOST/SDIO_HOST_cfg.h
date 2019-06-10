@@ -9,6 +9,12 @@
 #include "cy_sysclk.h"
 #include "cy_trigmux.h"
 
+#if defined(CY8C6247BZI_D54) /* Cypress ticket: BSP-525 */
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #define CYREG_PROT_SMPU_MS0_CTL 0x40240000u
 #define CYREG_PROT_SMPU_MS1_CTL 0x40240004u
 #define CYREG_PROT_SMPU_MS2_CTL 0x40240008u
@@ -20,7 +26,6 @@
 
 #define CYREG_UDB_UDBPAIR0_UDBSNG0_RC_CFG0 0x4034205cu
 #define CYREG_UDB_UDBPAIR0_UDBSNG1_RC_CFG0 0x403420dcu
-
 
 #define CYREG_UDB_UDBPAIR1_UDBSNG0_RC_CFG0 0x4034225cu
 #define CYREG_UDB_UDBPAIR1_UDBSNG1_RC_CFG0 0x403422dcu
@@ -878,5 +883,12 @@ void SDIO_Host_Config_UDBs(void);
 #define SDIO_HOST_Write_DMA_DW__CHANNEL_NUMBER 1u
 #define SDIO_HOST_Write_DMA_DW__TR_IN TRIG1_OUT_CPUSS_DW1_TR_IN1
 
-
+#if defined(__cplusplus)
+}
 #endif
+
+#endif /* defined(CY8C6247BZI_D54) */
+
+#endif /* !defined(CY_SDIO_CFG_H) */
+
+/* [] END OF FILE */

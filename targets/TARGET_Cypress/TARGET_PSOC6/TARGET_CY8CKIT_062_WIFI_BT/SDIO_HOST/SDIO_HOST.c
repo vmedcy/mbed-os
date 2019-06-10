@@ -14,9 +14,11 @@
 *******************************************************************************/
 #include "SDIO_HOST.h"
 
+#if defined(CY8C6247BZI_D54) /* Cypress ticket: BSP-525 */
 
-//#define SEMAPHORE
-
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
 /*Globals Needed for DMA */
 /*DMA channel structures*/
@@ -43,12 +45,8 @@ static uint8_t crcTable[256];
 static uint32_t yCountRemainder;
 static uint32_t yCounts;
 
-/* declare a semaphore*/
-#ifdef SEMAPHORE
-    static osSemaphoreId_t        sdio_transfer_finished_semaphore;
-#endif
-
 static uint32_t udb_initialized = 0;
+
 
 /*******************************************************************************
 * Function Name: SDIO_Init
@@ -92,7 +90,6 @@ void SDIO_Init(stc_sdio_irq_cb_t* pfuCb)
     (* (reg32 *)CYREG_PROT_SMPU_MS0_CTL) |= 0x0200;
     (* (reg32 *)CYREG_PROT_SMPU_MS14_CTL) |= 0x0200;
 
-
     /*Setup callback for card interrupt*/
     gstcInternalData.pstcCallBacks.pfnCardIntCb = pfuCb->pfnCardIntCb;
 
@@ -120,21 +117,8 @@ void SDIO_Init(stc_sdio_irq_cb_t* pfuCb)
     SDIO_EnableIntClock();
     SDIO_EnableSdClk();
 
-#ifdef SEMAPHORE
-    /* Initialize the semaphore */
-    sdio_transfer_finished_semaphore = osSemaphoreNew(1, 1, NULL);
-    
-    if (!sdio_transfer_finished_semaphore)
-    {
-        while(1)
-        {
-            
-            
-            
-        }
-    }
-#endif
 }
+
 
 /*******************************************************************************
 * Function Name: SDIO_SendCommand
@@ -201,6 +185,7 @@ void SDIO_SendCommand(stc_sdio_cmd_config_t *pstcCmdConfig)
     /*Enable the channel*/
     Cy_DMA_Channel_Enable(SDIO_HOST_CMD_DMA_HW, SDIO_HOST_CMD_DMA_DW_CHANNEL );
 }
+
 
 /*******************************************************************************
 * Function Name: SDIO_GetResponse
@@ -291,6 +276,7 @@ en_sdio_result_t SDIO_GetResponse(uint8_t bCmdIndexCheck, uint8_t bCmdCrcCheck, 
     return enRet;
 }
 
+
 /*******************************************************************************
 * Function Name: SDIO_InitDataTransfer
 ****************************************************************************//**
@@ -305,7 +291,6 @@ en_sdio_result_t SDIO_GetResponse(uint8_t bCmdIndexCheck, uint8_t bCmdCrcCheck, 
 *******************************************************************************/
 void SDIO_InitDataTransfer(stc_sdio_data_config_t *pstcDataConfig)
 {
-
     /*hold size of entire transfer*/
     uint32_t dataSize;
 
@@ -319,7 +304,6 @@ void SDIO_InitDataTransfer(stc_sdio_data_config_t *pstcDataConfig)
     /*If we are reading data setup the DMA to receive read data*/
     if(pstcDataConfig->bRead == true)
     {
-
         /*First disable the write channel*/
         Cy_DMA_Channel_Disable(SDIO_HOST_Write_DMA_HW, SDIO_HOST_Write_DMA_DW_CHANNEL );
 
@@ -468,7 +452,6 @@ void SDIO_InitDataTransfer(stc_sdio_data_config_t *pstcDataConfig)
         writeDesr1.xCtl = _VAL2FLD(CY_DMA_CTL_COUNT, 1) |
                                 _VAL2FLD(CY_DMA_CTL_SRC_INCR, 1);
 
-
         if(dataSize <= 1024)
         {
             /*Setup one descriptor*/
@@ -545,34 +528,6 @@ void SDIO_InitDataTransfer(stc_sdio_data_config_t *pstcDataConfig)
     }
 }
 
-/*******************************************************************************
-* Function Name: SDIO_GetSemaphoreStatus
-****************************************************************************//**
-*
-* This function the current semaphore status
-*
-* \param status
-* Pointer to boolean where the semaphore status will be stored.
-* true if semaphore is acquired, false if semaphore is not acquired.
-*
-* \return
-* Error if semaphore was not initialized (SDIO_Init() was not called) 
-* \ref en_sdio_result_t
-*
-*******************************************************************************/
-en_sdio_result_t SDIO_GetSemaphoreStatus(bool* status)
-{
-    en_sdio_result_t retVal = Error;
-    
-#ifdef SEMAPHORE
-    if (!udb_initialized)
-    {
-        *status = (0 == osSemaphoreGetCount(&sdio_transfer_finished_semaphore));
-        retVal = Ok;
-    }
-#endif
-    return retVal;
-}
 
 /*******************************************************************************
 * Function Name: SDIO_SendCommandAndWait
@@ -583,7 +538,7 @@ en_sdio_result_t SDIO_GetSemaphoreStatus(bool* status)
 * will handle all of the data transfer and wait to return until it is done. 
 *
 * \param pstcCmd
-* Pointer command configuration strcuture see \ref stc_sdio_cmd_t.
+* Pointer command configuration structure see \ref stc_sdio_cmd_t.
 *
 * \return
 * \ref en_sdio_result_t
@@ -596,14 +551,9 @@ en_sdio_result_t SDIO_SendCommandAndWait(stc_sdio_cmd_t *pstcCmd)
     stc_sdio_data_config_t  stcDataConfig;
 
     /*variable used for holding timeout value*/
-#ifndef SEMAPHORE
     uint32_t    u32Timeout = 0;
-#endif
-
-#ifndef SEMAPHORE_CMD
     uint32_t u32CmdTimeout = 0;
-#endif
-    
+
     /*Returns from various function calls*/
     en_sdio_result_t enRet = Error;
     en_sdio_result_t enRetTmp = Ok;
@@ -623,8 +573,8 @@ en_sdio_result_t SDIO_SendCommandAndWait(stc_sdio_cmd_t *pstcCmd)
     stcCmdConfig.u32Argument =  pstcCmd->u32Arg;
     
     /*Determine the type of response and if we need to do any checks*/
-    /*Command 0 and 7 have no response, so don't wait for one*/
-    if(pstcCmd->u32CmdIdx == 0 || pstcCmd->u32CmdIdx == 7)
+    /*Command 0 and 8 have no response, so don't wait for one*/
+    if(pstcCmd->u32CmdIdx == 0 || pstcCmd->u32CmdIdx == 8)
     {
         bCmdIndexCheck        = false;
         bCmdCrcCheck          = false;
@@ -723,7 +673,6 @@ en_sdio_result_t SDIO_SendCommandAndWait(stc_sdio_cmd_t *pstcCmd)
                             SDIO_CONTROL_REG |= SDIO_CTRL_ENABLE_WRITE;
                         }
 
-            #ifndef SEMAPHORE
                          /*Wait for the transfer to finish*/
                         do
                         {
@@ -742,28 +691,6 @@ en_sdio_result_t SDIO_SendCommandAndWait(stc_sdio_cmd_t *pstcCmd)
                         }
 
                         if(u32Timeout == SDIO_DAT_TIMEOUT)
-
-            #else
-                        osStatus_t result;
-                        
-                    
-                        if (!sdio_transfer_finished_semaphore)
-                        {
-                            result = osSemaphoreAcquire(&sdio_transfer_finished_semaphore, 10);
-                        }
-                        
-                        enRetTmp = SDIO_CheckForEvent(SdCmdEventTransferDone);
-                        /*if it was a read it is possible there is still extra data hanging out, trigger the
-                           DMA again. This can result in extra data being transfered so the read buffer should be
-                           3 bytes bigger than needed*/
-                        if(pstcCmd->bRead == true)
-                        {
-                            Cy_TrigMux_SwTrigger((uint32_t)SDIO_HOST_Read_DMA_DW__TR_IN, 2);
-                        }
-
-
-                        if(result != osOK)
-            #endif
                         {
                             enRet |= DataTimeout;
                         }
@@ -778,16 +705,12 @@ en_sdio_result_t SDIO_SendCommandAndWait(stc_sdio_cmd_t *pstcCmd)
         } /*No Response Required, thus no CMD53*/
     } /*CMD Passed*/
 
+    u32Timeout = 0;
 
-#ifndef SEMAPHORE
-            u32Timeout = 0;
-#endif
-    
-    /*If ther were no errors then indicate transfer was okay*/
+    /*If there were no errors then indicate transfer was okay*/
     if(enRet == Error)
     {
         enRet = Ok;
-        
     }
 
     /*reset CmdTimeout value*/
@@ -804,6 +727,7 @@ en_sdio_result_t SDIO_SendCommandAndWait(stc_sdio_cmd_t *pstcCmd)
 
     return enRet;
 }
+
 
 /*******************************************************************************
 * Function Name: SDIO_CheckForEvent
@@ -860,6 +784,7 @@ en_sdio_result_t SDIO_CheckForEvent(en_sdio_event_t enEventType)
     return enRet;
 }
 
+
 /*******************************************************************************
 * Function Name: SDIO_CalculateCrc7
 ****************************************************************************//**
@@ -882,7 +807,6 @@ en_sdio_result_t SDIO_CheckForEvent(en_sdio_event_t enEventType)
 *******************************************************************************/
 uint8_t SDIO_CalculateCrc7(uint8_t* pu8Data, uint8_t u8Size)
 {
-
     uint8_t data;
     uint8_t remainder = 0;
     uint32_t byte;
@@ -894,14 +818,14 @@ uint8_t SDIO_CalculateCrc7(uint8_t* pu8Data, uint8_t u8Size)
     }
 
     return (remainder>>1);
-
 }
+
 
 /*******************************************************************************
 * Function Name: SDIO_Crc7Init
 ****************************************************************************//**
 *
-* Initalize 7-bit CRC Table
+* Initialize 7-bit CRC Table
 *
 * \note
 * This code was copied from
@@ -934,6 +858,7 @@ void SDIO_Crc7Init(void)
     }
 }
 
+
 /*******************************************************************************
 * Function Name: SDIO_SetBlockSize
 ****************************************************************************//**
@@ -948,6 +873,7 @@ void SDIO_SetBlockSize(uint8_t u8ByteCount)
 {
     SDIO_BYTE_COUNT_REG = u8ByteCount;
 }
+
 
 /*******************************************************************************
 * Function Name: SDIO_SetNumBlocks
@@ -968,6 +894,7 @@ void SDIO_SetNumBlocks(uint8_t u8BlockCount)
     SDIO_DATA_BLOCK_COUNTER_D1_REG = 1;
 }
 
+
 /*******************************************************************************
 * Function Name: SDIO_EnableIntClock
 ****************************************************************************//**
@@ -981,6 +908,7 @@ void SDIO_EnableIntClock(void)
     Cy_SysClk_PeriphEnableDivider(SDIO_HOST_Internal_Clock_DIV_TYPE, SDIO_HOST_Internal_Clock_DIV_NUM);
 }
 
+
 /*******************************************************************************
 * Function Name: SDIO_DisableIntClock
 ****************************************************************************//**
@@ -993,6 +921,7 @@ void SDIO_DisableIntClock(void)
     SDIO_CONTROL_REG &= ~SDIO_CTRL_INT_CLK;
     Cy_SysClk_PeriphDisableDivider(SDIO_HOST_Internal_Clock_DIV_TYPE, SDIO_HOST_Internal_Clock_DIV_NUM);
 }
+
 
 /*******************************************************************************
 * Function Name: SDIO_EnableSdClk
@@ -1018,6 +947,7 @@ void SDIO_DisableSdClk(void)
     SDIO_CONTROL_REG &= ~SDIO_CTRL_SD_CLK;
 }
 
+
 /*******************************************************************************
 * Function Name: SDIO_SetSdClkFrequency
 ****************************************************************************//**
@@ -1038,6 +968,7 @@ void SDIO_SetSdClkFrequency(uint32_t u32SdClkFreqHz)
     Cy_SysClk_PeriphSetDivider(SDIO_HOST_Internal_Clock_DIV_TYPE, SDIO_HOST_Internal_Clock_DIV_NUM, (u16Div-1));
 }
 
+
 /*******************************************************************************
 * Function Name: SDIO_SetupDMA
 ****************************************************************************//**
@@ -1048,109 +979,100 @@ void SDIO_SetSdClkFrequency(uint32_t u32SdClkFreqHz)
 void SDIO_SetupDMA(void)
 
 {
+    /*Set the number of bytes to send*/
+    SDIO_HOST_CMD_DMA_CMD_DMA_Desc_config.xCount = (SDIO_NUM_RESP_BYTES - 1);
+    /*Set the destination address*/
+    SDIO_HOST_CMD_DMA_CMD_DMA_Desc_config.dstAddress = (void*)SDIO_CMD_COMMAND_PTR;
 
-        /*Set the number of bytes to send*/
-        SDIO_HOST_CMD_DMA_CMD_DMA_Desc_config.xCount = (SDIO_NUM_RESP_BYTES - 1);
-        /*Set the destination address*/
-        SDIO_HOST_CMD_DMA_CMD_DMA_Desc_config.dstAddress = (void*)SDIO_CMD_COMMAND_PTR;
+    /*Initialize descriptor for cmd channel*/
+    Cy_DMA_Descriptor_Init(&cmdDesr, &SDIO_HOST_CMD_DMA_CMD_DMA_Desc_config);
 
-        /*Initialize descriptor for cmd channel*/
-        Cy_DMA_Descriptor_Init(&cmdDesr, &SDIO_HOST_CMD_DMA_CMD_DMA_Desc_config);
+    /*Set flag to disable descriptor when done*/
+    cmdDesr.ctl |= 0x01000000;
 
-        /*Set flag to disable descriptor when done*/
-        cmdDesr.ctl |= 0x01000000;
+    /*Configure channel*/
+    /*CMD channel can be preempted, and has lower priority*/
+    cmdChannelConfig.descriptor = &cmdDesr;
+    cmdChannelConfig.preemptable = 1;
+    cmdChannelConfig.priority    = 1;
+    cmdChannelConfig.enable      = 0u;
 
-        /*Configure channel*/
-        /*CMD channel can be preempted, and has lower priority*/
-        cmdChannelConfig.descriptor = &cmdDesr;
-        cmdChannelConfig.preemptable = 1;
-        cmdChannelConfig.priority    = 1;
-        cmdChannelConfig.enable      = 0u;
+    /*Configure Channel with initial Settings*/
+    Cy_DMA_Channel_Init(SDIO_HOST_CMD_DMA_HW, SDIO_HOST_CMD_DMA_DW_CHANNEL, &cmdChannelConfig);
 
-        /*Configure Channel with initial Settings*/
-        Cy_DMA_Channel_Init(SDIO_HOST_CMD_DMA_HW, SDIO_HOST_CMD_DMA_DW_CHANNEL, &cmdChannelConfig);
+    /*Enable DMA block*/
+    Cy_DMA_Enable(SDIO_HOST_CMD_DMA_HW);
 
-        /*Enable DMA block*/
-        Cy_DMA_Enable(SDIO_HOST_CMD_DMA_HW);
+    /*Set the number of bytes to receive*/
+    SDIO_HOST_Resp_DMA_Resp_DMA_Desc_config.xCount = SDIO_NUM_RESP_BYTES;
+    /*Set the source address*/
+    SDIO_HOST_Resp_DMA_Resp_DMA_Desc_config.srcAddress = (void*)SDIO_CMD_RESPONSE_PTR;
 
-/////////////////////////////////////////////////////////////////////////////////////////////////
+    /*Initialize descriptor for response channel*/
+    Cy_DMA_Descriptor_Init(&respDesr, &SDIO_HOST_Resp_DMA_Resp_DMA_Desc_config);
 
-        /*Set the number of bytes to receive*/
-        SDIO_HOST_Resp_DMA_Resp_DMA_Desc_config.xCount = SDIO_NUM_RESP_BYTES;
-        /*Set the source address*/
-        SDIO_HOST_Resp_DMA_Resp_DMA_Desc_config.srcAddress = (void*)SDIO_CMD_RESPONSE_PTR;
+    /*Set flag to disable descriptor when done*/
+    respDesr.ctl |= 0x01000000;
 
-        /*Initialize descriptor for response channel*/
-        Cy_DMA_Descriptor_Init(&respDesr, &SDIO_HOST_Resp_DMA_Resp_DMA_Desc_config);
+    /*Configure channel*/
+    /*response channel can be preempted, and has lower priority*/
+    respChannelConfig.descriptor = &respDesr;
+    respChannelConfig.preemptable = 1;
+    respChannelConfig.priority    = 1;
+    respChannelConfig.enable      = 0u;
 
-        /*Set flag to disable descriptor when done*/
-        respDesr.ctl |= 0x01000000;
+    /*Configure Channel with initial Settings*/
+    Cy_DMA_Channel_Init(SDIO_HOST_Resp_DMA_HW, SDIO_HOST_Resp_DMA_DW_CHANNEL, &respChannelConfig);
+    /*Enable DMA block*/
+    Cy_DMA_Enable(SDIO_HOST_Resp_DMA_HW);
 
-        /*Configure channel*/
-        /*response channel can be preempted, and has lower priority*/
-        respChannelConfig.descriptor = &respDesr;
-        respChannelConfig.preemptable = 1;
-        respChannelConfig.priority    = 1;
-        respChannelConfig.enable      = 0u;
+    /*Set the destination address*/
+    SDIO_HOST_Write_DMA_Write_DMA_Desc_config.dstAddress = (void*)SDIO_DAT_WRITE_PTR;
 
-        /*Configure Channel with initial Settings*/
-        Cy_DMA_Channel_Init(SDIO_HOST_Resp_DMA_HW, SDIO_HOST_Resp_DMA_DW_CHANNEL, &respChannelConfig);
-        /*Enable DMA block*/
-        Cy_DMA_Enable(SDIO_HOST_Resp_DMA_HW);
+    /*Initialize descriptor for write channel*/
+    Cy_DMA_Descriptor_Init(&writeDesr0, &SDIO_HOST_Write_DMA_Write_DMA_Desc_config);
+    Cy_DMA_Descriptor_Init(&writeDesr1, &SDIO_HOST_Write_DMA_Write_DMA_Desc_config);
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
+    /*Configure channel*/
+    /*write channel cannot be preempted, and has highest priority*/
+    writeChannelConfig.descriptor = &writeDesr0;
+    writeChannelConfig.preemptable = 0;
+    writeChannelConfig.priority    = 0;
+    writeChannelConfig.enable      = 0u;
 
-        /*Set the destination address*/
-        SDIO_HOST_Write_DMA_Write_DMA_Desc_config.dstAddress = (void*)SDIO_DAT_WRITE_PTR;
+    /*Configure Channel with initial Settings*/
+    Cy_DMA_Channel_Init(SDIO_HOST_Write_DMA_HW, SDIO_HOST_Write_DMA_DW_CHANNEL, &writeChannelConfig);
 
-        /*Initialize descriptor for write channel*/
-        Cy_DMA_Descriptor_Init(&writeDesr0, &SDIO_HOST_Write_DMA_Write_DMA_Desc_config);
-        Cy_DMA_Descriptor_Init(&writeDesr1, &SDIO_HOST_Write_DMA_Write_DMA_Desc_config);
+    /*Enable the interrupt*/
+    Cy_DMA_Channel_SetInterruptMask(SDIO_HOST_Write_DMA_HW, SDIO_HOST_Write_DMA_DW_CHANNEL,CY_DMA_INTR_MASK);
 
-        /*Configure channel*/
-        /*write channel cannot be preempted, and has highest priority*/
-        writeChannelConfig.descriptor = &writeDesr0;
-        writeChannelConfig.preemptable = 0;
-        writeChannelConfig.priority    = 0;
-        writeChannelConfig.enable      = 0u;
+    /*Enable DMA block*/
+    Cy_DMA_Enable(SDIO_HOST_Write_DMA_HW);
 
-        /*Configure Channel with initial Settings*/
-        Cy_DMA_Channel_Init(SDIO_HOST_Write_DMA_HW, SDIO_HOST_Write_DMA_DW_CHANNEL, &writeChannelConfig);
-        /*enable buffered writes*/
-        //SDIO_HOST_Write_DMA_HW->CH_STRUCT[SDIO_HOST_Write_DMA_DW_CHANNEL].CH_CTL |= 0x04;
-        /*enable the interrupt*/
-        Cy_DMA_Channel_SetInterruptMask(SDIO_HOST_Write_DMA_HW, SDIO_HOST_Write_DMA_DW_CHANNEL,CY_DMA_INTR_MASK);
+    /*Set the source address*/
+    SDIO_HOST_Read_DMA_Read_DMA_Desc_config.srcAddress = (void*)SDIO_DAT_READ_PTR;
+    /*Initialize descriptor for read channel*/
+    Cy_DMA_Descriptor_Init(&readDesr0, &SDIO_HOST_Read_DMA_Read_DMA_Desc_config);
+    Cy_DMA_Descriptor_Init(&readDesr1, &SDIO_HOST_Read_DMA_Read_DMA_Desc_config);
 
-        /*Enable DMA block*/
-        Cy_DMA_Enable(SDIO_HOST_Write_DMA_HW);
+    /*Configure channel*/
+    /*read channel cannot be preempted, and has highest priority*/
+    readChannelConfig.descriptor = &readDesr0;
+    readChannelConfig.preemptable = 0;
+    readChannelConfig.priority    = 0;
+    readChannelConfig.enable      = 0u;
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////
+    /*Configure Channel with initial Settings*/
+    Cy_DMA_Channel_Init(SDIO_HOST_Read_DMA_HW, SDIO_HOST_Read_DMA_DW_CHANNEL, &readChannelConfig);
 
-        /*Set the source address*/
-        SDIO_HOST_Read_DMA_Read_DMA_Desc_config.srcAddress = (void*)SDIO_DAT_READ_PTR;
-        /*Initialize descriptor for read channel*/
-        Cy_DMA_Descriptor_Init(&readDesr0, &SDIO_HOST_Read_DMA_Read_DMA_Desc_config);
-        Cy_DMA_Descriptor_Init(&readDesr1, &SDIO_HOST_Read_DMA_Read_DMA_Desc_config);
+    /*Enable the interrupt*/
+    Cy_DMA_Channel_SetInterruptMask(SDIO_HOST_Read_DMA_HW, SDIO_HOST_Read_DMA_DW_CHANNEL,CY_DMA_INTR_MASK);
 
-        /*Configure channel*/
-        /*read channel cannot be preempted, and has highest priority*/
-        readChannelConfig.descriptor = &readDesr0;
-        readChannelConfig.preemptable = 0;
-        readChannelConfig.priority    = 0;
-        readChannelConfig.enable      = 0u;
-
-
-        /*Configure Channel with initial Settings*/
-        Cy_DMA_Channel_Init(SDIO_HOST_Read_DMA_HW, SDIO_HOST_Read_DMA_DW_CHANNEL, &readChannelConfig);
-        /*enable buffered writes*/
-        //SDIO_HOST_Read_DMA_HW->CH_STRUCT[SDIO_HOST_Read_DMA_DW_CHANNEL].CH_CTL |= 0x04;
-        /*enable the interrupt*/
-        Cy_DMA_Channel_SetInterruptMask(SDIO_HOST_Read_DMA_HW, SDIO_HOST_Read_DMA_DW_CHANNEL,CY_DMA_INTR_MASK);
-
-        /*Enable DMA block*/
-        Cy_DMA_Enable(SDIO_HOST_Read_DMA_HW);
+    /*Enable DMA block*/
+    Cy_DMA_Enable(SDIO_HOST_Read_DMA_HW);
 
 }
+
 
 /*******************************************************************************
 * Function Name: SDIO_Reset
@@ -1165,6 +1087,7 @@ void SDIO_Reset(void)
     SDIO_CONTROL_REG |= (SDIO_CTRL_RESET_DP);
 }
 
+
 /*******************************************************************************
 * Function Name: SDIO_EnableChipInt
 ****************************************************************************//**
@@ -1177,6 +1100,7 @@ void SDIO_EnableChipInt(void)
     SDIO_STATUS_INT_MSK |= SDIO_STS_CARD_INT;
 }
 
+
 /*******************************************************************************
 * Function Name: SDIO_DisableChipInt
 ****************************************************************************//**
@@ -1188,6 +1112,7 @@ void SDIO_DisableChipInt(void)
 {
     SDIO_STATUS_INT_MSK &= ~SDIO_STS_CARD_INT;
 }
+
 
 /*******************************************************************************
 * Function Name: SDIO_IRQ
@@ -1232,11 +1157,8 @@ void SDIO_IRQ(void)
             gstcInternalData.stcEvents.u8CRCError++;
         }
         /*set the done flag*/
-#ifdef SEMAPHORE
-        osSemaphoreRelease(&sdio_transfer_finished_semaphore);
-#else
         gstcInternalData.stcEvents.u8TransComplete++;
-#endif
+
     }
 
     /*Check if a read is complete*/
@@ -1252,15 +1174,12 @@ void SDIO_IRQ(void)
             gstcInternalData.stcEvents.u8CRCError++;
         }
         /*Okay we're done so set the done flag*/
-#ifdef SEMAPHORE
-        osSemaphoreRelease(&sdio_transfer_finished_semaphore);
-#else
         gstcInternalData.stcEvents.u8TransComplete++;
-#endif
     }
 
     NVIC_ClearPendingIRQ(SDIO_HOST_sdio_int__INTC_NUMBER);
 }
+
 
 void SDIO_READ_DMA_IRQ(void)
 {
@@ -1295,7 +1214,7 @@ void SDIO_READ_DMA_IRQ(void)
     /*If the current descriptor is 1, then change descriptor 0*/
     if(Cy_DMA_Channel_GetCurrentDescriptor(SDIO_HOST_Read_DMA_HW, SDIO_HOST_Read_DMA_DW_CHANNEL) == &readDesr1)
     {
-        /*We need to increment the destination address everytime*/
+        /*We need to increment the destination address every-time*/
         readDesr0.dst += 2048;
 
         /*If this is the last descriptor*/
@@ -1322,8 +1241,8 @@ void SDIO_READ_DMA_IRQ(void)
     Cy_DMA_Channel_ClearInterrupt(SDIO_HOST_Read_DMA_HW,SDIO_HOST_Read_DMA_DW_CHANNEL);
     /*decrement y counts*/
     yCounts--;
-
 }
+
 
 void SDIO_WRITE_DMA_IRQ(void)
 {
@@ -1385,5 +1304,11 @@ void SDIO_WRITE_DMA_IRQ(void)
     Cy_DMA_Channel_ClearInterrupt(SDIO_HOST_Write_DMA_HW,SDIO_HOST_Write_DMA_DW_CHANNEL);
     yCounts--;
 }
+
+#endif /* defined(CY8C6247BZI_D54) */
+
+#if defined(__cplusplus)
+}
+#endif
 
 /* [] END OF FILE */

@@ -40,11 +40,26 @@ extern "C" {
 #endif
 
 /**
-* \addtogroup group_bsp_cy8cproto_062_4343w_enums
+* \addtogroup group_bsp_cy8cproto_062_4343w_macros
 * \{
 */
 
-//TODO: Pin names need to be defined here
+/** Pin: WIFI SDIO D0 */
+#define CYBSP_WIFI_SDIO_D0     P2_0
+/** Pin: WIFI SDIO D1 */
+#define CYBSP_WIFI_SDIO_D1     P2_1
+/** Pin: WIFI SDIO D2 */
+#define CYBSP_WIFI_SDIO_D2     P2_2
+/** Pin: WIFI SDIO D3 */
+#define CYBSP_WIFI_SDIO_D3     P2_3
+/** Pin: WIFI SDIO CMD */
+#define CYBSP_WIFI_SDIO_CMD    P2_4
+/** Pin: WIFI SDIO CLK */
+#define CYBSP_WIFI_SDIO_CLK    P2_5
+/** Pin: WIFI ON */
+#define CYBSP_WIFI_WL_REG_ON   P2_6
+/** Pin: WIFI Host Wakeup */
+#define CYBSP_WIFI_HOST_WAKE   P1_4
 
 /** \} group_bsp_cy8cproto_062_4343w_macros */
 
@@ -86,14 +101,10 @@ typedef enum
 
 /** \} group_bsp_cy8cproto_062_4343w_enums */
 
-#define CYBSP_WIFI_SDIO_D0     P2_0
-#define CYBSP_WIFI_SDIO_D1     P2_1
-#define CYBSP_WIFI_SDIO_D2     P2_2
-#define CYBSP_WIFI_SDIO_D3     P2_3
-#define CYBSP_WIFI_SDIO_CMD    P2_4
-#define CYBSP_WIFI_SDIO_CLK    P2_5
-#define CYBSP_WIFI_WL_REG_ON   P2_6
-#define CYBSP_WIFI_HOST_WAKE   P1_4
+/** Host-wake GPIO drive mode */
+#define CYBSP_WIFI_HOST_WAKE_GPIO_DM CYHAL_GPIO_DRIVE_ANALOG
+/** Host-wake IRQ event */
+#define CYBSP_WIFI_HOST_WAKE_IRQ_EVENT CYHAL_GPIO_IRQ_RISE
 
 #if defined(__cplusplus)
 }

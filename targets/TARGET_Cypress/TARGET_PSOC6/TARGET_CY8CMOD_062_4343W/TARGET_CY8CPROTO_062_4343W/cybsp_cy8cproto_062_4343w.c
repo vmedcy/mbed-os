@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include "cybsp_cy8cproto_062_4343w.h"
 #include "cycfg.h"
+#include "cyhal_implementation.h"
 
 
 #if defined(__cplusplus)
@@ -46,14 +47,14 @@ cy_rslt_t cybsp_led_init(cybsp_led_t which)
 {
     return cyhal_gpio_init((cyhal_gpio_t)which, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, CYBSP_LED_STATE_OFF);
 }
-cy_rslt_t cybsp_led_set_state(cybsp_led_t which, bool on)
+void cybsp_led_set_state(cybsp_led_t which, bool on)
 {
-    return cyhal_gpio_write((cyhal_gpio_t)which, on);
+    cyhal_gpio_write((cyhal_gpio_t)which, on);
 }
 
-cy_rslt_t cybsp_led_toggle(cybsp_led_t which)
+void cybsp_led_toggle(cybsp_led_t which)
 {
-    return cyhal_gpio_toggle((cyhal_gpio_t)which);
+    cyhal_gpio_toggle((cyhal_gpio_t)which);
 }
 
 cy_rslt_t cybsp_btn_init(cybsp_btn_t which)
@@ -61,9 +62,9 @@ cy_rslt_t cybsp_btn_init(cybsp_btn_t which)
     return cyhal_gpio_init((cyhal_gpio_t)which, CYHAL_GPIO_DIR_INPUT, CYHAL_GPIO_DRIVE_PULLUP, CYBSP_BTN_OFF);
 }
 
-cy_rslt_t cybsp_btn_get_state(cybsp_btn_t which, bool *state)
+bool cybsp_btn_get_state(cybsp_btn_t which)
 {
-    return cyhal_gpio_read((cyhal_gpio_t)which, state);
+    return cyhal_gpio_read((cyhal_gpio_t)which);
 }
 
 static void (*btn_interrupt_call_back) (void);
@@ -75,15 +76,11 @@ static void gpio_call_back_wrapper(void *handler_arg, cyhal_gpio_irq_event_t eve
     }
 }
 
-cy_rslt_t cybsp_btn_set_interrupt(cybsp_btn_t which, cyhal_gpio_irq_event_t type, void (*callback)(void))
+void cybsp_btn_set_interrupt(cybsp_btn_t which, cyhal_gpio_irq_event_t type, void (*callback)(void))
 {
     btn_interrupt_call_back = callback;
-    cy_rslt_t result = cyhal_gpio_register_irq((cyhal_gpio_t)which, 7, &gpio_call_back_wrapper, NULL);
-    if (result == CY_RSLT_SUCCESS)
-    {
-        result = cyhal_gpio_irq_enable((cyhal_gpio_t)which, type, 1);
-    }
-    return result;
+    cyhal_gpio_register_irq((cyhal_gpio_t)which, 7, &gpio_call_back_wrapper, NULL);
+	cyhal_gpio_irq_enable((cyhal_gpio_t)which, type, 1);
 }
 
 #if defined(__cplusplus)

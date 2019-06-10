@@ -1,9 +1,9 @@
 /***************************************************************************//**
-* \file cybsp_cy8ckit_062_wifi_bt.c
+* \file cybsp_cy8ckit_062_ble.c
 *
 * Description:
 * Provides APIs for interacting with the hardware contained on the Cypress
-* CY8CKIT-062-WIFI-BT pioneer kit.
+* CY8CKIT-062-BLE pioneer kit.
 *
 ********************************************************************************
 * \copyright
@@ -24,8 +24,7 @@
 *******************************************************************************/
 
 #include <stdlib.h>
-#include "cybsp_cy8ckit_062_wifi_bt.h"
-#include "cyhal_utils.h"
+#include "cybsp_cy8ckit_062_ble.h"
 #include "cycfg.h"
 #include "cyhal_implementation.h"
 
@@ -34,7 +33,6 @@ extern "C" {
 #endif
 
 cyhal_qspi_t cybsp_qspi;
-cyhal_uart_t cybsp_bt_uart;
 cyhal_uart_t cybsp_uart;
 cyhal_i2c_t cybsp_i2c;
 cyhal_rtc_t cybsp_rtc;
@@ -45,16 +43,6 @@ static cy_rslt_t init_peripherals(void)
             NC, NC, NC, NC, CYBSP_QSPI_SCK, CYBSP_QSPI_SS, 50000000U, 0);
 
     result = cyhal_uart_init(&cybsp_uart, CYBSP_UART_TX, CYBSP_UART_RX, NULL, NULL);
-    if (result != CY_RSLT_SUCCESS)
-    {
-        return result;
-    }
-    result = cyhal_uart_init(&cybsp_bt_uart, CYBSP_BT_UART_TX, CYBSP_BT_UART_RX, NULL, NULL);
-    if (result != CY_RSLT_SUCCESS)
-    {
-        return result;
-    }
-    result = cyhal_uart_set_flow_control(&cybsp_bt_uart, CYBSP_BT_UART_CTS, CYBSP_BT_UART_RTS);
     if (result != CY_RSLT_SUCCESS)
     {
         return result;
@@ -87,21 +75,6 @@ static cy_rslt_t reserve_pins(void)
         return result;
     }
     result = reserve_pin((cyhal_gpio_t)CYBSP_USER_BTN0);
-    if (result != CY_RSLT_SUCCESS)
-    {
-        return result;
-    }
-    result = reserve_pin(CYBSP_BT_POWER);
-    if (result != CY_RSLT_SUCCESS)
-    {
-        return result;
-    }
-    result = reserve_pin(CYBSP_BT_HOST_WAKE);
-    if (result != CY_RSLT_SUCCESS)
-    {
-        return result;
-    }
-    result = reserve_pin(CYBSP_BT_DEVICE_WAKE);
     if (result != CY_RSLT_SUCCESS)
     {
         return result;
@@ -223,7 +196,7 @@ void cybsp_btn_set_interrupt(cybsp_btn_t which, cyhal_gpio_irq_event_t type, voi
 {
     btn_interrupt_call_back = callback;
     cyhal_gpio_register_irq((cyhal_gpio_t)which, 7, &gpio_call_back_wrapper, NULL);
-	cyhal_gpio_irq_enable((cyhal_gpio_t)which, type, 1);
+    cyhal_gpio_irq_enable((cyhal_gpio_t)which, type, 1);
 }
 
 #if defined(__cplusplus)

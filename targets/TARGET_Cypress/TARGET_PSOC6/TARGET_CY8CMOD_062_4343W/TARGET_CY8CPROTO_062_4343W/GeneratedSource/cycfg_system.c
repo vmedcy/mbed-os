@@ -2,7 +2,7 @@
 * File Name: cycfg_system.c
 *
 * Description:
-* System configuration
+* Peripheral Hardware Block configuration
 * This file was automatically generated and should not be modified.
 * 
 ********************************************************************************
@@ -29,7 +29,6 @@
 #define CY_CFG_SYSCLK_PLL_ERROR 3
 #define CY_CFG_SYSCLK_FLL_ERROR 4
 #define CY_CFG_SYSCLK_WCO_ERROR 5
-#define CY_CFG_SYSCLK_PLL1_AVAILABLE 1
 #define CY_CFG_SYSCLK_CLKBAK_ENABLED 1
 #define CY_CFG_SYSCLK_CLKFAST_ENABLED 1
 #define CY_CFG_SYSCLK_FLL_ENABLED 1
@@ -55,14 +54,15 @@
 #define CY_CFG_SYSCLK_CLKPATH3_SOURCE CY_SYSCLK_CLKPATH_IN_IMO
 #define CY_CFG_SYSCLK_CLKPATH4_ENABLED 1
 #define CY_CFG_SYSCLK_CLKPATH4_SOURCE CY_SYSCLK_CLKPATH_IN_IMO
+#define CY_CFG_SYSCLK_CLKPATH5_ENABLED 1
+#define CY_CFG_SYSCLK_CLKPATH5_SOURCE CY_SYSCLK_CLKPATH_IN_IMO
 #define CY_CFG_SYSCLK_CLKPERI_ENABLED 1
 #define CY_CFG_SYSCLK_CLKSLOW_ENABLED 1
 #define CY_CFG_SYSCLK_WCO_ENABLED 1
 #define CY_CFG_PWR_ENABLED 1
 #define CY_CFG_PWR_INIT 1
-#define CY_CFG_PWR_USING_LDO 1
 #define CY_CFG_PWR_USING_PMIC 0
-#define CY_CFG_PWR_VBAC_SUPPLY CY_SYSPM_VDDBACKUP_DEFAULT
+#define CY_CFG_PWR_VBACKUP_USING_VDDD 1
 #define CY_CFG_PWR_LDO_VOLTAGE CY_SYSPM_LDO_VOLTAGE_LP
 #define CY_CFG_PWR_USING_ULP 0
 
@@ -152,6 +152,10 @@ __STATIC_INLINE void Cy_SysClk_ClkPath4Init()
 {
     Cy_SysClk_ClkPathSetSource(4U, CY_CFG_SYSCLK_CLKPATH4_SOURCE);
 }
+__STATIC_INLINE void Cy_SysClk_ClkPath5Init()
+{
+    Cy_SysClk_ClkPathSetSource(5U, CY_CFG_SYSCLK_CLKPATH5_SOURCE);
+}
 __STATIC_INLINE void Cy_SysClk_ClkPeriInit()
 {
     Cy_SysClk_ClkPeriSetDivider(1U);
@@ -169,17 +173,20 @@ __STATIC_INLINE void Cy_SysClk_WcoInit()
         cycfg_ClockStartupError(CY_CFG_SYSCLK_WCO_ERROR);
     }
 }
-__STATIC_INLINE void Cy_Power_Init()
+__STATIC_INLINE void init_cycfg_power(void)
 {
      /* Reset the Backup domain on POR, XRES, BOD only if Backup domain is supplied by VDDD */
-     #if (CY_CFG_PWR_VBAC_SUPPLY == CY_SYSPM_VDDBACKUP_DEFAULT)
+     #if (CY_CFG_PWR_VBACKUP_USING_VDDD)
      if (0u == Cy_SysLib_GetResetReason() /* POR, XRES, or BOD */)
      {
          Cy_SysLib_ResetBackupDomain();
          Cy_SysClk_IloDisable();
          Cy_SysClk_IloInit();
      }
-     #endif /* CY_CFG_PWR_VBAC_SUPPLY == CY_SYSPM_VDDBACKUP_DEFAULT */
+     #else /* Dedicated Supply */
+     Cy_SysPm_BackupSetSupply(CY_SYSPM_VDDBACKUP_VBACKUP);
+     #endif /* CY_CFG_PWR_VBACKUP_USING_VDDD */
+
      /* Configure core regulator */
      #if CY_CFG_PWR_USING_LDO
      Cy_SysPm_LdoSetVoltage(CY_SYSPM_LDO_VOLTAGE_LP);
@@ -201,36 +208,23 @@ void init_cycfg_system(void)
 {
 	/* Set worst case memory wait states (! ultra low power, 150 MHz), will update at the end */
 	Cy_SysLib_SetWaitStates(false, 150UL);
-	#if (CY_CFG_PWR_VBAC_SUPPLY == CY_CFG_PWR_VBAC_SUPPLY_VDD)
-	if (0u == Cy_SysLib_GetResetReason() /* POR, XRES, or BOD */)
-	{
-	    Cy_SysLib_ResetBackupDomain();
-	    Cy_SysClk_IloDisable();
-	    Cy_SysClk_IloInit();
-	}
-	#endif
 	#ifdef CY_CFG_PWR_ENABLED
-	/* Configure power mode */
-	#if CY_CFG_PWR_USING_LDO
-	Cy_SysPm_LdoSetVoltage(CY_CFG_PWR_LDO_VOLTAGE);
-	#else
-	Cy_SysPm_BuckEnable(CY_CFG_PWR_BUCK_VOLTAGE);
-	#endif
-	/* Configure PMIC */
-	Cy_SysPm_UnlockPmic();
-	#if CY_CFG_PWR_USING_PMIC
-	Cy_SysPm_PmicEnableOutput();
-	#else
-	Cy_SysPm_PmicDisableOutput();
-	#endif
-	#endif
+	    #ifdef CY_CFG_PWR_INIT
+	    init_cycfg_power();
+	    #else
+	    #warning Power system will not be configured. Update power personality to v1.20 or later.
+	    #endif /* CY_CFG_PWR_INIT */
+	#endif /* CY_CFG_PWR_ENABLED */
 	
 	/* Reset the core clock path to default and disable all the FLLs/PLLs */
 	Cy_SysClk_ClkHfSetDivider(0U, CY_SYSCLK_CLKHF_NO_DIVIDE);
 	Cy_SysClk_ClkFastSetDivider(0U);
 	Cy_SysClk_ClkPeriSetDivider(1U);
 	Cy_SysClk_ClkSlowSetDivider(0U);
-	Cy_SysClk_PllDisable(CY_SYSCLK_CLKHF_IN_CLKPATH1);
+	for (uint32_t pll = CY_SRSS_NUM_PLL; pll > 0UL; --pll) /* PLL 1 is the first PLL. 0 is invalid. */
+	{
+	    (void)Cy_SysClk_PllDisable(pll);
+	}
 	Cy_SysClk_ClkPathSetSource(CY_SYSCLK_CLKHF_IN_CLKPATH1, CY_SYSCLK_CLKPATH_IN_IMO);
 	
 	if ((CY_SYSCLK_CLKHF_IN_CLKPATH0 == Cy_SysClk_ClkHfGetSource(0UL)) &&
@@ -246,61 +240,6 @@ void init_cycfg_system(void)
 	(void)Cy_BLE_EcoReset();
 	#endif
 	
-	#ifdef CY_CFG_SYSCLK_PLL1_AVAILABLE
-	(void)Cy_SysClk_PllDisable(CY_SYSCLK_CLKHF_IN_CLKPATH2);
-	#endif
-	
-	#ifdef CY_CFG_SYSCLK_PLL2_AVAILABLE
-	(void)Cy_SysClk_PllDisable(CY_SYSCLK_CLKHF_IN_CLKPATH3);
-	#endif
-	
-	#ifdef CY_CFG_SYSCLK_PLL3_AVAILABLE
-	(void)Cy_SysClk_PllDisable(CY_SYSCLK_CLKHF_IN_CLKPATH4);
-	#endif
-	
-	#ifdef CY_CFG_SYSCLK_PLL4_AVAILABLE
-	(void)Cy_SysClk_PllDisable(CY_SYSCLK_CLKHF_IN_CLKPATH5);
-	#endif
-	
-	#ifdef CY_CFG_SYSCLK_PLL5_AVAILABLE
-	(void)Cy_SysClk_PllDisable(CY_SYSCLK_CLKHF_IN_CLKPATH6);
-	#endif
-	
-	#ifdef CY_CFG_SYSCLK_PLL6_AVAILABLE
-	(void)Cy_SysClk_PllDisable(CY_SYSCLK_CLKHF_IN_CLKPATH7);
-	#endif
-	
-	#ifdef CY_CFG_SYSCLK_PLL7_AVAILABLE
-	(void)Cy_SysClk_PllDisable(CY_SYSCLK_CLKHF_IN_CLKPATH8);
-	#endif
-	
-	#ifdef CY_CFG_SYSCLK_PLL8_AVAILABLE
-	(void)Cy_SysClk_PllDisable(CY_SYSCLK_CLKHF_IN_CLKPATH9);
-	#endif
-	
-	#ifdef CY_CFG_SYSCLK_PLL9_AVAILABLE
-	(void)Cy_SysClk_PllDisable(CY_SYSCLK_CLKHF_IN_CLKPATH10);
-	#endif
-	
-	#ifdef CY_CFG_SYSCLK_PLL10_AVAILABLE
-	(void)Cy_SysClk_PllDisable(CY_SYSCLK_CLKHF_IN_CLKPATH11);
-	#endif
-	
-	#ifdef CY_CFG_SYSCLK_PLL11_AVAILABLE
-	(void)Cy_SysClk_PllDisable(CY_SYSCLK_CLKHF_IN_CLKPATH12);
-	#endif
-	
-	#ifdef CY_CFG_SYSCLK_PLL12_AVAILABLE
-	(void)Cy_SysClk_PllDisable(CY_SYSCLK_CLKHF_IN_CLKPATH13);
-	#endif
-	
-	#ifdef CY_CFG_SYSCLK_PLL13_AVAILABLE
-	(void)Cy_SysClk_PllDisable(CY_SYSCLK_CLKHF_IN_CLKPATH14);
-	#endif
-	
-	#ifdef CY_CFG_SYSCLK_PLL14_AVAILABLE
-	(void)Cy_SysClk_PllDisable(CY_SYSCLK_CLKHF_IN_CLKPATH15);
-	#endif
 	
 	/* Enable all source clocks */
 	#ifdef CY_CFG_SYSCLK_PILO_ENABLED
@@ -531,6 +470,14 @@ void init_cycfg_system(void)
 	
 	#ifndef CY_CFG_SYSCLK_IMO_ENABLED
 	#error the IMO must be enabled for proper chip operation
+	#endif
+	
+	#ifdef CY_CFG_SYSCLK_MFO_ENABLED
+	Cy_SysClk_MfoInit();
+	#endif
+	
+	#ifdef CY_CFG_SYSCLK_CLKMF_ENABLED
+	Cy_SysClk_ClkMfInit();
 	#endif
 	
 	/* Set accurate flash wait states */

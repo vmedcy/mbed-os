@@ -32,12 +32,19 @@
 extern "C" {
 #endif
 
+#define peri_0_div_16_0_ENABLED 1U
+#define peri_0_div_16_0_HW CY_SYSCLK_DIV_16_BIT
+#define peri_0_div_16_0_NUM 0U
+#define peri_0_div_8_0_ENABLED 1U
 #define peri_0_div_8_0_HW CY_SYSCLK_DIV_8_BIT
 #define peri_0_div_8_0_NUM 0U
+#define peri_0_div_8_1_ENABLED 1U
 #define peri_0_div_8_1_HW CY_SYSCLK_DIV_8_BIT
 #define peri_0_div_8_1_NUM 1U
+#define peri_0_div_8_2_ENABLED 1U
 #define peri_0_div_8_2_HW CY_SYSCLK_DIV_8_BIT
 #define peri_0_div_8_2_NUM 2U
+#define peri_0_div_8_3_ENABLED 1U
 #define peri_0_div_8_3_HW CY_SYSCLK_DIV_8_BIT
 #define peri_0_div_8_3_NUM 3U
 

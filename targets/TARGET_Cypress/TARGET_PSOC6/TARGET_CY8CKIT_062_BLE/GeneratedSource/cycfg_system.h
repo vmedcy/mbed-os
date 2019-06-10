@@ -27,6 +27,7 @@
 
 #include "cycfg_notices.h"
 #include "cy_sysclk.h"
+#include "cy_ble_clk.h"
 #include "cy_systick.h"
 #include "cy_gpio.h"
 #include "cy_syspm.h"
@@ -35,7 +36,35 @@
 extern "C" {
 #endif
 
+#define cpuss_0_dap_0_ENABLED 1U
+#define srss_0_clock_0_ENABLED 1U
+#define srss_0_clock_0_altsystickclk_0_ENABLED 1U
+#define srss_0_clock_0_bakclk_0_ENABLED 1U
+#define srss_0_clock_0_fastclk_0_ENABLED 1U
+#define srss_0_clock_0_fll_0_ENABLED 1U
+#define srss_0_clock_0_hfclk_0_ENABLED 1U
+#define CY_CFG_SYSCLK_CLKHF0 0UL
+#define srss_0_clock_0_hfclk_1_ENABLED 1U
+#define CY_CFG_SYSCLK_CLKHF1 1UL
+#define srss_0_clock_0_hfclk_2_ENABLED 1U
+#define CY_CFG_SYSCLK_CLKHF2 2UL
+#define srss_0_clock_0_hfclk_3_ENABLED 1U
+#define CY_CFG_SYSCLK_CLKHF3 3UL
+#define srss_0_clock_0_ilo_0_ENABLED 1U
+#define srss_0_clock_0_imo_0_ENABLED 1U
+#define srss_0_clock_0_lfclk_0_ENABLED 1U
 #define CY_CFG_SYSCLK_CLKLF_FREQ_HZ 32768
+#define srss_0_clock_0_pathmux_0_ENABLED 1U
+#define srss_0_clock_0_pathmux_1_ENABLED 1U
+#define srss_0_clock_0_pathmux_2_ENABLED 1U
+#define srss_0_clock_0_pathmux_3_ENABLED 1U
+#define srss_0_clock_0_pathmux_4_ENABLED 1U
+#define srss_0_clock_0_periclk_0_ENABLED 1U
+#define srss_0_clock_0_pll_0_ENABLED 1U
+#define srss_0_clock_0_slowclk_0_ENABLED 1U
+#define srss_0_clock_0_timerclk_0_ENABLED 1U
+#define srss_0_clock_0_wco_0_ENABLED 1U
+#define srss_0_power_0_ENABLED 1U
 #define CY_CFG_PWR_MODE_LP 0x01UL
 #define CY_CFG_PWR_MODE_ULP 0x02UL
 #define CY_CFG_PWR_MODE_ACTIVE 0x04UL

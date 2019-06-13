@@ -8339,7 +8339,6 @@
         "inherits": ["NSPE_Target", "CY8CKIT_062_WIFI_BT"],
         "extra_labels_add": ["PSA", "MBED_SPM"],
         "components_add": ["SPM_MAILBOX", "FLASHIAP"],
-        "components_remove": ["CM0P_SLEEP"],
         "device_has_remove": ["CRC"],
         "macros_add": ["MBEDTLS_PSA_CRYPTO_C"],
         "hex_filename": "psa_release_1.0.hex",

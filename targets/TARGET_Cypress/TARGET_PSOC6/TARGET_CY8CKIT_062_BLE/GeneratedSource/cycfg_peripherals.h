@@ -52,7 +52,7 @@ extern "C" {
 #define CY_CAPSENSE_PERI_CLK 100000000u
 #define CY_CAPSENSE_VDDA_MV 3300u
 #define CY_CAPSENSE_PERI_DIV_TYPE CY_SYSCLK_DIV_8_BIT
-#define CY_CAPSENSE_PERI_DIV_INDEX 3u
+#define CY_CAPSENSE_PERI_DIV_INDEX 0u
 #define Cmod_PORT GPIO_PRT7
 #define CintA_PORT GPIO_PRT7
 #define CintB_PORT GPIO_PRT7
@@ -82,12 +82,12 @@ extern "C" {
 #define CintB_PORT_NUM 7u
 #define CYBSP_CSD_HW CSD0
 #define CYBSP_CSD_IRQ csd_interrupt_IRQn
-#define CYBSP_I2C_ENABLED 1U
-#define CYBSP_I2C_HW SCB3
-#define CYBSP_I2C_IRQ scb_3_interrupt_IRQn
-#define CYBSP_UART_ENABLED 1U
-#define CYBSP_UART_HW SCB5
-#define CYBSP_UART_IRQ scb_5_interrupt_IRQn
+#define CYBSP_CSD_COMM_ENABLED 1U
+#define CYBSP_CSD_COMM_HW SCB3
+#define CYBSP_CSD_COMM_IRQ scb_3_interrupt_IRQn
+#define CYBSP_DEBUG_UART_ENABLED 1U
+#define CYBSP_DEBUG_UART_HW SCB5
+#define CYBSP_DEBUG_UART_IRQ scb_5_interrupt_IRQn
 #define CYBSP_QSPI_ENABLED 1U
 #define CYBSP_QSPI_HW SMIF0
 #define CYBSP_QSPI_IRQ smif_interrupt_IRQn
@@ -119,8 +119,8 @@ extern "C" {
 #define CYBSP_RTC_YEAR_OFFSET (0U)
 
 extern cy_stc_csd_context_t cy_csd_0_context;
-extern const cy_stc_scb_ezi2c_config_t CYBSP_I2C_config;
-extern const cy_stc_scb_uart_config_t CYBSP_UART_config;
+extern const cy_stc_scb_ezi2c_config_t CYBSP_CSD_COMM_config;
+extern const cy_stc_scb_uart_config_t CYBSP_DEBUG_UART_config;
 extern const cy_stc_smif_config_t CYBSP_QSPI_config;
 extern const cy_stc_mcwdt_config_t CYBSP_MCWDT0_config;
 extern const cy_stc_rtc_config_t CYBSP_RTC_config;

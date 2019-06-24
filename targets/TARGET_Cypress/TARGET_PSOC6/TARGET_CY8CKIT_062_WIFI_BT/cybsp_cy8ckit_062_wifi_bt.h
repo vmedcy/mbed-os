@@ -24,7 +24,7 @@
 *******************************************************************************/
 
 /**
-* \addtogroup group_bsp_cy8kit_062_wifi_bt CY8CKIT-062-WIFI-BT
+* \addtogroup group_bsp_cy8ckit_062_wifi_bt CY8CKIT-062-WIFI-BT
 * \ingroup group_bsp
 * \{
 * The PSoC 6 WiFi-BT Pioneer Kit is a low-cost hardware platform
@@ -46,17 +46,16 @@
 * <li>USB cable</li>
 * </ul>
 *
-* \defgroup group_bsp_cy8kit_062_wifi_bt_macros Macros
-* \defgroup group_bsp_cy8kit_062_wifi_bt_functions Functions
-* \defgroup group_bsp_cy8kit_062_wifi_bt_enums Enumerated Types
+* \defgroup group_bsp_cy8ckit_062_wifi_bt_macros Macros
+* \defgroup group_bsp_cy8ckit_062_wifi_bt_functions Functions
+* \defgroup group_bsp_cy8ckit_062_wifi_bt_enums Enumerated Types
 */
 
 #pragma once
 
+#include "cybsp_api_core.h"
 #ifdef MBED
 #include "cybsp_api_wifi.h"
-#else
-#include "cybsp_api_core.h"
 #endif /* MBED */
 
 #if defined(__cplusplus)
@@ -68,7 +67,7 @@ extern "C" {
 // HAL HW configuration data
 extern cyhal_qspi_t cybsp_qspi;
 extern cyhal_uart_t cybsp_bt_uart;
-extern cyhal_uart_t cybsp_uart;
+extern cyhal_uart_t cybsp_debug_uart;
 extern cyhal_i2c_t cybsp_i2c;
 extern cyhal_rtc_t cybsp_rtc;
 
@@ -78,4 +77,4 @@ extern cyhal_rtc_t cybsp_rtc;
 }
 #endif
 
-/** \} group_bsp_cy8kit_062_wifi_bt */
+/** \} group_bsp_cy8ckit_062_wifi_bt */

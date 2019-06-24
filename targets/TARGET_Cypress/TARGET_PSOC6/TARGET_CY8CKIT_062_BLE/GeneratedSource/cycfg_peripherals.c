@@ -28,7 +28,7 @@ cy_stc_csd_context_t cy_csd_0_context =
 {
 	.lockKey = CY_CSD_NONE_KEY,
 };
-const cy_stc_scb_ezi2c_config_t CYBSP_I2C_config = 
+const cy_stc_scb_ezi2c_config_t CYBSP_CSD_COMM_config = 
 {
 	.numberOfAddresses = CY_SCB_EZI2C_ONE_ADDRESS,
 	.slaveAddress1 = 8U,
@@ -36,7 +36,7 @@ const cy_stc_scb_ezi2c_config_t CYBSP_I2C_config =
 	.subAddressSize = CY_SCB_EZI2C_SUB_ADDR16_BITS,
 	.enableWakeFromSleep = false,
 };
-const cy_stc_scb_uart_config_t CYBSP_UART_config = 
+const cy_stc_scb_uart_config_t CYBSP_DEBUG_UART_config = 
 {
 	.uartMode = CY_SCB_UART_STANDARD,
 	.enableMutliProcessorMode = false,
@@ -100,7 +100,7 @@ const cy_stc_rtc_config_t CYBSP_RTC_config =
 
 void init_cycfg_peripherals(void)
 {
-	Cy_SysClk_PeriphAssignDivider(PCLK_CSD_CLOCK, CY_SYSCLK_DIV_8_BIT, 3U);
+	Cy_SysClk_PeriphAssignDivider(PCLK_CSD_CLOCK, CY_SYSCLK_DIV_8_BIT, 0U);
 
 	Cy_SysClk_PeriphAssignDivider(PCLK_SCB3_CLOCK, CY_SYSCLK_DIV_8_BIT, 1U);
 

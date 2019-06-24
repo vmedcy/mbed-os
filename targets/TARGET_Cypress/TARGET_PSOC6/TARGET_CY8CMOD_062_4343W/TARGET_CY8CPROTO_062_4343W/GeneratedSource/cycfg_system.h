@@ -2,7 +2,7 @@
 * File Name: cycfg_system.h
 *
 * Description:
-* Peripheral Hardware Block configuration
+* System configuration
 * This file was automatically generated and should not be modified.
 * 
 ********************************************************************************
@@ -34,7 +34,31 @@
 extern "C" {
 #endif
 
+#define cpuss_0_dap_0_ENABLED 1U
+#define srss_0_clock_0_ENABLED 1U
+#define srss_0_clock_0_bakclk_0_ENABLED 1U
+#define srss_0_clock_0_fastclk_0_ENABLED 1U
+#define srss_0_clock_0_fll_0_ENABLED 1U
+#define srss_0_clock_0_hfclk_0_ENABLED 1U
+#define CY_CFG_SYSCLK_CLKHF0 0UL
+#define srss_0_clock_0_hfclk_2_ENABLED 1U
+#define CY_CFG_SYSCLK_CLKHF2 2UL
+#define srss_0_clock_0_hfclk_4_ENABLED 1U
+#define CY_CFG_SYSCLK_CLKHF4 4UL
+#define srss_0_clock_0_ilo_0_ENABLED 1U
+#define srss_0_clock_0_imo_0_ENABLED 1U
+#define srss_0_clock_0_lfclk_0_ENABLED 1U
 #define CY_CFG_SYSCLK_CLKLF_FREQ_HZ 32768
+#define srss_0_clock_0_pathmux_0_ENABLED 1U
+#define srss_0_clock_0_pathmux_1_ENABLED 1U
+#define srss_0_clock_0_pathmux_2_ENABLED 1U
+#define srss_0_clock_0_pathmux_3_ENABLED 1U
+#define srss_0_clock_0_pathmux_4_ENABLED 1U
+#define srss_0_clock_0_pathmux_5_ENABLED 1U
+#define srss_0_clock_0_periclk_0_ENABLED 1U
+#define srss_0_clock_0_slowclk_0_ENABLED 1U
+#define srss_0_clock_0_wco_0_ENABLED 1U
+#define srss_0_power_0_ENABLED 1U
 #define CY_CFG_PWR_MODE_LP 0x01UL
 #define CY_CFG_PWR_MODE_ULP 0x02UL
 #define CY_CFG_PWR_MODE_ACTIVE 0x04UL

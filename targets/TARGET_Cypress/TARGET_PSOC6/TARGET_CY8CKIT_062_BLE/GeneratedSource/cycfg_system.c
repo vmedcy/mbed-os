@@ -2,7 +2,7 @@
 * File Name: cycfg_system.c
 *
 * Description:
-* Peripheral Hardware Block configuration
+* System configuration
 * This file was automatically generated and should not be modified.
 * 
 ********************************************************************************

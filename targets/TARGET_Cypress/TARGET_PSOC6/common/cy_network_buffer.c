@@ -18,23 +18,29 @@
 #include "cy_network_buffer.h"
 #include "cy_utils.h"
 #include "memp.h"
+#define  SDIO_BLOCK_SIZE (64U)
 
-cy_rslt_t cy_host_buffer_get(whd_buffer_t *buffer, whd_buffer_dir_t direction, uint16_t size, uint32_t timeout_ms)
+whd_result_t cy_host_buffer_get(whd_buffer_t *buffer, whd_buffer_dir_t direction, unsigned short size, unsigned long timeout_ms)
 {
     UNUSED_PARAMETER( direction );
     struct pbuf *p = NULL;
-    if ( direction == WHD_NETWORK_TX)
+    if ( ( direction == WHD_NETWORK_TX) && ( size <= PBUF_POOL_BUFSIZE ) )
     {
     	p = pbuf_alloc(PBUF_RAW, size, PBUF_POOL);
     }
     else
     {
-    	p = pbuf_alloc(PBUF_RAW, size, PBUF_RAM);
+    	p = pbuf_alloc(PBUF_RAW, size+SDIO_BLOCK_SIZE, PBUF_RAM);
+        if ( p != NULL )
+        {
+            p->len = size;
+            p->tot_len -=  SDIO_BLOCK_SIZE;
+    	}
     }
     if (p != NULL )
     {
         *buffer = p;
-    	return CY_RSLT_SUCCESS;
+    	return WHD_SUCCESS;
     }
     else
     {
@@ -62,7 +68,7 @@ uint16_t cy_buffer_get_current_piece_size(whd_buffer_t buffer)
     return (uint16_t) pbuffer->len;
 }
 
-cy_rslt_t cy_buffer_set_size(whd_buffer_t buffer, uint16_t size)
+whd_result_t cy_buffer_set_size(whd_buffer_t buffer, unsigned short size)
 {
     CY_ASSERT(buffer != NULL);
     struct pbuf * pbuffer = (struct pbuf *) buffer;
@@ -78,7 +84,7 @@ cy_rslt_t cy_buffer_set_size(whd_buffer_t buffer, uint16_t size)
     return CY_RSLT_SUCCESS;
 }
 
-cy_rslt_t cy_buffer_add_remove_at_front(whd_buffer_t *buffer, int32_t add_remove_amount)
+whd_result_t cy_buffer_add_remove_at_front(whd_buffer_t *buffer, int32_t add_remove_amount)
 {
     CY_ASSERT(buffer != NULL);
     struct pbuf **pbuffer = (struct pbuf**) buffer;
@@ -88,7 +94,7 @@ cy_rslt_t cy_buffer_add_remove_at_front(whd_buffer_t *buffer, int32_t add_remove
         return WHD_PMK_WRONG_LENGTH;
     }
 
-    return CY_RSLT_SUCCESS;
+    return WHD_SUCCESS;
 }
 
 #endif /* defined(TARGET_WHD) */

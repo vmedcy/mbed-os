@@ -24,7 +24,7 @@
 *******************************************************************************/
 
 /**
-* \addtogroup group_bsp_cy8kit_062_ble CY8CKIT-062-BLE
+* \addtogroup group_bsp_cy8ckit_062_ble CY8CKIT-062-BLE
 * \ingroup group_bsp
 * \{
 * The PSoC 6 BLE Pioneer Kit is a low-cost hardware platform
@@ -45,9 +45,9 @@
 * <li>USB cable</li>
 * </ul>
 *
-* \defgroup group_bsp_cy8kit_062_ble_macros Macros
-* \defgroup group_bsp_cy8kit_062_ble_functions Functions
-* \defgroup group_bsp_cy8kit_062_ble_enums Enumerated Types
+* \defgroup group_bsp_cy8ckit_062_ble_macros Macros
+* \defgroup group_bsp_cy8ckit_062_ble_functions Functions
+* \defgroup group_bsp_cy8ckit_062_ble_enums Enumerated Types
 */
 
 #pragma once
@@ -73,4 +73,4 @@ extern cyhal_rtc_t cybsp_rtc;
 }
 #endif
 
-/** \} group_bsp_cy8kit_062_ble */
+/** \} group_bsp_cy8ckit_062_ble */

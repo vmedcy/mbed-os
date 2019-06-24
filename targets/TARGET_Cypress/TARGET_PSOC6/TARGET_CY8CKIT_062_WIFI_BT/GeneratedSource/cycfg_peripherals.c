@@ -24,13 +24,13 @@
 
 #include "cycfg_peripherals.h"
 
-#define CYBSP_USBUART_INTR_LVL_SEL (CY_USBFS_DEV_DRV_SET_SOF_LVL(0x2U) | \
+#define CYBSP_USBUART_INTR_LVL_SEL (CY_USBFS_DEV_DRV_SET_SOF_LVL(0x1U) | \
                  CY_USBFS_DEV_DRV_SET_BUS_RESET_LVL(0x2U) | \
                  CY_USBFS_DEV_DRV_SET_EP0_LVL(0x2U) | \
                  CY_USBFS_DEV_DRV_SET_LPM_LVL(0x0U) | \
                  CY_USBFS_DEV_DRV_SET_ARB_EP_LVL(0x0U) | \
-                 CY_USBFS_DEV_DRV_SET_EP1_LVL(0x2U) | \
-                 CY_USBFS_DEV_DRV_SET_EP2_LVL(0x2U) | \
+                 CY_USBFS_DEV_DRV_SET_EP1_LVL(0x1U) | \
+                 CY_USBFS_DEV_DRV_SET_EP2_LVL(0x1U) | \
                  CY_USBFS_DEV_DRV_SET_EP3_LVL(0x1U) | \
                  CY_USBFS_DEV_DRV_SET_EP4_LVL(0x1U) | \
                  CY_USBFS_DEV_DRV_SET_EP5_LVL(0x1U) | \
@@ -70,7 +70,7 @@ const cy_stc_scb_uart_config_t CYBSP_BT_UART_config =
 	.txFifoTriggerLevel = 63UL,
 	.txFifoIntEnableMask = 0UL,
 };
-const cy_stc_scb_ezi2c_config_t CYBSP_I2C_config = 
+const cy_stc_scb_ezi2c_config_t CYBSP_CSD_COMM_config = 
 {
 	.numberOfAddresses = CY_SCB_EZI2C_ONE_ADDRESS,
 	.slaveAddress1 = 8U,
@@ -78,7 +78,7 @@ const cy_stc_scb_ezi2c_config_t CYBSP_I2C_config =
 	.subAddressSize = CY_SCB_EZI2C_SUB_ADDR16_BITS,
 	.enableWakeFromSleep = false,
 };
-const cy_stc_scb_uart_config_t CYBSP_UART_config = 
+const cy_stc_scb_uart_config_t CYBSP_DEBUG_UART_config = 
 {
 	.uartMode = CY_SCB_UART_STANDARD,
 	.enableMutliProcessorMode = false,

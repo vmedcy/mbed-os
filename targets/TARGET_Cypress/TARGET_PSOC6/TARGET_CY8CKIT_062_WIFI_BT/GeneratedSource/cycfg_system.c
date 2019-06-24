@@ -2,7 +2,7 @@
 * File Name: cycfg_system.c
 *
 * Description:
-* Peripheral Hardware Block configuration
+* System configuration
 * This file was automatically generated and should not be modified.
 * 
 ********************************************************************************
@@ -127,21 +127,21 @@ __STATIC_INLINE void Cy_SysClk_ClkHf0Init()
 }
 __STATIC_INLINE void Cy_SysClk_ClkHf1Init()
 {
-    Cy_SysClk_ClkHfSetSource(1U, CY_CFG_SYSCLK_CLKHF1_CLKPATH);
-    Cy_SysClk_ClkHfSetDivider(1U, CY_SYSCLK_CLKHF_NO_DIVIDE);
-    Cy_SysClk_ClkHfEnable(1U);
+    Cy_SysClk_ClkHfSetSource(CY_CFG_SYSCLK_CLKHF1, CY_CFG_SYSCLK_CLKHF1_CLKPATH);
+    Cy_SysClk_ClkHfSetDivider(CY_CFG_SYSCLK_CLKHF1, CY_SYSCLK_CLKHF_NO_DIVIDE);
+    Cy_SysClk_ClkHfEnable(CY_CFG_SYSCLK_CLKHF1);
 }
 __STATIC_INLINE void Cy_SysClk_ClkHf2Init()
 {
-    Cy_SysClk_ClkHfSetSource(2U, CY_CFG_SYSCLK_CLKHF2_CLKPATH);
-    Cy_SysClk_ClkHfSetDivider(2U, CY_SYSCLK_CLKHF_DIVIDE_BY_2);
-    Cy_SysClk_ClkHfEnable(2U);
+    Cy_SysClk_ClkHfSetSource(CY_CFG_SYSCLK_CLKHF2, CY_CFG_SYSCLK_CLKHF2_CLKPATH);
+    Cy_SysClk_ClkHfSetDivider(CY_CFG_SYSCLK_CLKHF2, CY_SYSCLK_CLKHF_DIVIDE_BY_2);
+    Cy_SysClk_ClkHfEnable(CY_CFG_SYSCLK_CLKHF2);
 }
 __STATIC_INLINE void Cy_SysClk_ClkHf3Init()
 {
-    Cy_SysClk_ClkHfSetSource(3U, CY_CFG_SYSCLK_CLKHF3_CLKPATH);
-    Cy_SysClk_ClkHfSetDivider(3U, CY_SYSCLK_CLKHF_NO_DIVIDE);
-    Cy_SysClk_ClkHfEnable(3U);
+    Cy_SysClk_ClkHfSetSource(CY_CFG_SYSCLK_CLKHF3, CY_CFG_SYSCLK_CLKHF3_CLKPATH);
+    Cy_SysClk_ClkHfSetDivider(CY_CFG_SYSCLK_CLKHF3, CY_SYSCLK_CLKHF_NO_DIVIDE);
+    Cy_SysClk_ClkHfEnable(CY_CFG_SYSCLK_CLKHF3);
 }
 __STATIC_INLINE void Cy_SysClk_IloInit()
 {

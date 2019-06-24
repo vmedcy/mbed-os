@@ -31,7 +31,6 @@
 #include "cy_scb_uart.h"
 #include "cy_scb_ezi2c.h"
 #include "cy_smif.h"
-#include "cycfg_qspi_memslot.h"
 #include "cy_mcwdt.h"
 #include "cy_rtc.h"
 #include "cy_usbfs_dev_drv.h"
@@ -40,6 +39,7 @@
 extern "C" {
 #endif
 
+#define CYBSP_CSD_ENABLED 1U
 #define CY_CAPSENSE_CORE 4u
 #define CY_CAPSENSE_CPU_CLK 100000000u
 #define CY_CAPSENSE_PERI_CLK 100000000u
@@ -75,12 +75,16 @@ extern "C" {
 #define CintB_PORT_NUM 7u
 #define CYBSP_CSD_HW CSD0
 #define CYBSP_CSD_IRQ csd_interrupt_IRQn
+#define CYBSP_BT_UART_ENABLED 1U
 #define CYBSP_BT_UART_HW SCB2
 #define CYBSP_BT_UART_IRQ scb_2_interrupt_IRQn
-#define CYBSP_I2C_HW SCB3
-#define CYBSP_I2C_IRQ scb_3_interrupt_IRQn
-#define CYBSP_UART_HW SCB5
-#define CYBSP_UART_IRQ scb_5_interrupt_IRQn
+#define CYBSP_CSD_COMM_ENABLED 1U
+#define CYBSP_CSD_COMM_HW SCB3
+#define CYBSP_CSD_COMM_IRQ scb_3_interrupt_IRQn
+#define CYBSP_DEBUG_UART_ENABLED 1U
+#define CYBSP_DEBUG_UART_HW SCB5
+#define CYBSP_DEBUG_UART_IRQ scb_5_interrupt_IRQn
+#define CYBSP_QSPI_ENABLED 1U
 #define CYBSP_QSPI_HW SMIF0
 #define CYBSP_QSPI_IRQ smif_interrupt_IRQn
 #define CYBSP_QSPI_MEMORY_MODE_ALIGMENT_ERROR (0UL)
@@ -98,7 +102,9 @@ extern "C" {
 #define CYBSP_QSPI_SS2 (0UL)
 #define CYBSP_QSPI_SS3 (0UL)
 #define CYBSP_QSPI_DESELECT_DELAY 7
+#define CYBSP_MCWDT0_ENABLED 1U
 #define CYBSP_MCWDT0_HW MCWDT_STRUCT0
+#define CYBSP_RTC_ENABLED 1U
 #define CYBSP_RTC_10_MONTH_OFFSET (28U)
 #define CYBSP_RTC_MONTH_OFFSET (24U)
 #define CYBSP_RTC_10_DAY_OFFSET (20U)
@@ -107,8 +113,10 @@ extern "C" {
 #define CYBSP_RTC_100_YEAR_OFFSET (8U)
 #define CYBSP_RTC_10_YEAR_OFFSET (4U)
 #define CYBSP_RTC_YEAR_OFFSET (0U)
-#define CYBSP_USBUART_ACTIVE_ENDPOINTS_MASK 7U
-#define CYBSP_USBUART_ENDPOINTS_BUFFER_SIZE 140U
+#define CYBSP_SDIO_ENABLED 1U
+#define CYBSP_USBUART_ENABLED 1U
+#define CYBSP_USBUART_ACTIVE_ENDPOINTS_MASK 0U
+#define CYBSP_USBUART_ENDPOINTS_BUFFER_SIZE 512U
 #define CYBSP_USBUART_ENDPOINTS_ACCESS_TYPE 0U
 #define CYBSP_USBUART_USB_CORE 4U
 #define CYBSP_USBUART_HW USBFS0
@@ -118,8 +126,8 @@ extern "C" {
 
 extern cy_stc_csd_context_t cy_csd_0_context;
 extern const cy_stc_scb_uart_config_t CYBSP_BT_UART_config;
-extern const cy_stc_scb_ezi2c_config_t CYBSP_I2C_config;
-extern const cy_stc_scb_uart_config_t CYBSP_UART_config;
+extern const cy_stc_scb_ezi2c_config_t CYBSP_CSD_COMM_config;
+extern const cy_stc_scb_uart_config_t CYBSP_DEBUG_UART_config;
 extern const cy_stc_smif_config_t CYBSP_QSPI_config;
 extern const cy_stc_mcwdt_config_t CYBSP_MCWDT0_config;
 extern const cy_stc_rtc_config_t CYBSP_RTC_config;

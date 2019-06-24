@@ -84,9 +84,9 @@ extern "C" {
 #define CYBSP_BT_DEVICE_WAKE   P4_0
 
 /** Pin: UART RX */
-#define CYBSP_UART_RX          P5_0
+#define CYBSP_DEBUG_UART_RX    P5_0
 /** Pin: UART TX */
-#define CYBSP_UART_TX          P5_1
+#define CYBSP_DEBUG_UART_TX    P5_1
 
 /** Pin: I2C SCL */
 #define CYBSP_I2C_SCL          P6_0
@@ -168,11 +168,14 @@ typedef enum
     CYBSP_LED9 = P13_7,
     CYBSP_LED8 = P1_5,
     CYBSP_LED_RGB_RED = P0_3,
-    CYBSP_LED_RGB_BLUE = P11_1,
     CYBSP_LED_RGB_GREEN = P1_1,
-    
+    CYBSP_LED_RGB_BLUE = P11_1,
+
     CYBSP_USER_LED0 = CYBSP_LED8,
     CYBSP_USER_LED1 = CYBSP_LED9,
+    CYBSP_USER_LED2 = CYBSP_LED_RGB_RED,
+    CYBSP_USER_LED3 = CYBSP_LED_RGB_GREEN,
+    CYBSP_USER_LED4 = CYBSP_LED_RGB_BLUE,
     CYBSP_USER_LED = CYBSP_USER_LED0,
 } cybsp_led_t;
 

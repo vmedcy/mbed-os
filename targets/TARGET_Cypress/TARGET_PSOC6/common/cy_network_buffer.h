@@ -59,7 +59,7 @@ extern "C" {
  *
  *  @return          : CY_RSLT_SUCCESS or WHD_BUFFER_ALLOC_FAIL if the buffer could not be allocated
  */
-cy_rslt_t cy_host_buffer_get(whd_buffer_t *buffer, whd_buffer_dir_t direction, uint16_t size, uint32_t timeout_ms);
+whd_result_t cy_host_buffer_get(whd_buffer_t *buffer, whd_buffer_dir_t direction, unsigned short size, unsigned long timeout_ms);
 
 /** Releases a packet buffer
  *
@@ -109,7 +109,7 @@ uint16_t cy_buffer_get_current_piece_size(whd_buffer_t buffer);
  *
  *  @return       : CY_RSLT_SUCCESS or WHD_PMK_WRONG_LENGTH if the requested size is not valid
  */
-cy_rslt_t cy_buffer_set_size(whd_buffer_t buffer, uint16_t size);
+whd_result_t cy_buffer_set_size(whd_buffer_t buffer, unsigned short size);
 
 /** Moves the current pointer of a packet buffer
  *
@@ -130,7 +130,7 @@ cy_rslt_t cy_buffer_set_size(whd_buffer_t buffer, uint16_t size);
  *  @return                  : CY_RSLT_SUCCESS or WHD_PMK_WRONG_LENGTH if the added amount is outside 
  *                             the size of the buffer
  */
-cy_rslt_t cy_buffer_add_remove_at_front(whd_buffer_t *buffer, int32_t add_remove_amount);
+whd_result_t cy_buffer_add_remove_at_front(whd_buffer_t *buffer, int32_t add_remove_amount);
 
 
 /** Called by WHD to pass received data to the network stack

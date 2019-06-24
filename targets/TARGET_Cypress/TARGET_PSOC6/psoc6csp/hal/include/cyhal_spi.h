@@ -42,7 +42,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cy_result.h"
-#include "cyhal_hw_types.h"
+#include "cyhal_implementation.h"
+#include "cyhal_hwmgr.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -55,11 +56,11 @@ extern "C" {
 */
 
 /** Bad argument */
-#define CYHAL_SPI_RSLT_BAD_ARGUMENT    (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_PWM, 0))
+#define CYHAL_SPI_RSLT_BAD_ARGUMENT    (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_SPI, 0))
 /** Failed to initialize SPI clock */
-#define CYHAL_SPI_RSLT_CLOCK_ERROR     (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_PWM, 1))
+#define CYHAL_SPI_RSLT_CLOCK_ERROR     (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_SPI, 1))
 /** Failed to Transfer SPI data */
-#define CYHAL_SPI_RSLT_TRANSFER_ERROR  (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_PWM, 2))
+#define CYHAL_SPI_RSLT_TRANSFER_ERROR  (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_SPI, 2))
 
 /** \} group_hal_spi_macros */
 

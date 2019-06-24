@@ -32,6 +32,8 @@
 #include "cyhal_wdt.h"
 #include "cyhal_hwmgr.h"
 
+#ifdef CY_IP_MXS40SRSS_MCWDT_INSTANCES
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -74,7 +76,7 @@ static void cyhal_wdt_dispatch(void)
 cy_rslt_t cyhal_wdt_init(cyhal_wdt_t *obj)
 {
     cy_rslt_t rslt;
-    obj->resource.block_num = CYHAL_RSC_INVALID;
+    obj->resource.type = CYHAL_RSC_INVALID;
     if (CY_RSLT_SUCCESS == (rslt = cyhal_hwmgr_allocate(CYHAL_RSC_WDT, &(obj->resource))))
     {
         obj->base = cyhal_wdt_base[obj->resource.block_num];
@@ -110,18 +112,20 @@ cy_rslt_t cyhal_wdt_init(cyhal_wdt_t *obj)
             }
         }
     }
+    
     if (CY_RSLT_SUCCESS != rslt)
         cyhal_wdt_free(obj);
+
     return rslt;
 }
 
 void cyhal_wdt_free(cyhal_wdt_t *obj)
 {
-    if (CYHAL_RSC_INVALID != obj->resource.block_num)
+    if (CYHAL_RSC_INVALID != obj->resource.type)
     {
         cyhal_hwmgr_set_unconfigured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num);
         cyhal_wdt_handlers[obj->resource.block_num].handler = NULL;
-        obj->resource.block_num = CYHAL_RSC_INVALID;
+        obj->resource.type = CYHAL_RSC_INVALID;
     }
     if (NULL != obj->base)
     {
@@ -182,3 +186,5 @@ void cyhal_wdt_irq_trigger(cyhal_wdt_t *obj)
 #if defined(__cplusplus)
 }
 #endif
+
+#endif /* CY_IP_MXS40SRSS_MCWDT_INSTANCES */

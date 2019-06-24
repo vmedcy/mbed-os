@@ -29,6 +29,8 @@
 #include "cyhal_interconnect.h"
 #include "cyhal_utils.h"
 
+#ifdef CY_IP_MXTCPWM
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -55,12 +57,13 @@ static const cyhal_internal_pwm_data_t cyhal_internal_pwm_data[] = {
 
 cy_rslt_t cyhal_pwm_init(cyhal_pwm_t *obj, cyhal_gpio_t pin, const cyhal_clock_divider_t *clk)
 {
-    if (NULL == obj)
-        return CYHAL_PWM_RSLT_BAD_ARGUMENT;
-    memset(obj, 0, sizeof(cyhal_pwm_t));
+    CY_ASSERT(NULL != obj);
+
+    /* Explicitly marked not allocated resources as invalid to prevent freeing them. */
     obj->resource.type = CYHAL_RSC_INVALID;
     obj->pin = CYHAL_NC_PIN_VALUE_GPIO_VALUE;
     obj->dedicated_clock = false;
+    
     cy_rslt_t result;
     const cyhal_resource_pin_mapping_t *map = CY_UTILS_GET_RESOURCE(pin, cyhal_pin_map_tcpwm_line);
     if (NULL == map)
@@ -233,3 +236,5 @@ cy_rslt_t cyhal_pwm_stop(cyhal_pwm_t *obj)
 #if defined(__cplusplus)
 }
 #endif
+
+#endif /* CY_IP_MXTCPWM */

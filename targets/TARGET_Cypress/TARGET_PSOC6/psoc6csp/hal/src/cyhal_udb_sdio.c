@@ -25,7 +25,7 @@
 
 #include "cyhal_hwmgr.h"
 
-#if defined(CY8C6247BZI_D54) /* Cypress ticket: BSP-525 */
+#if defined(CYHAL_UDB_SDIO)
 
 #include <stdlib.h>
 #include "SDIO_HOST_cfg.h"
@@ -52,9 +52,6 @@
 /* The 1 byte transition mode define */
 #define CY_HAL_SDIO_1B        (1u)
 
-/* Delay after command is done */
-#define OPERATION_CMPLT_DELAY_US   (30u)
-
 /*******************************************************************************
 *       (Internal) Configuration structures for SDIO pins
 *******************************************************************************/
@@ -62,7 +59,7 @@ const cy_stc_gpio_pin_config_t pin_cmd_config =
 {
     .outVal = 1,
     .driveMode = CY_GPIO_DM_STRONG,
-    .hsiom = P2_4_DSI_DSI, /* DSI controls 'out' and 'output enable' */
+    .hsiom = HSIOM_SEL_DSI_DSI, /* DSI controls 'out' and 'output enable' */
     .intEdge = CY_GPIO_INTR_DISABLE,
     .intMask = 0UL,
     .vtrip = CY_GPIO_VTRIP_CMOS,
@@ -79,7 +76,7 @@ const cy_stc_gpio_pin_config_t pin_data_config =
 {
     .outVal = 1,
     .driveMode = CY_GPIO_DM_STRONG,
-    .hsiom = P2_0_DSI_DSI, /* DSI controls 'out' and 'output enable' */
+    .hsiom = HSIOM_SEL_DSI_DSI, /* DSI controls 'out' and 'output enable' */
     .intEdge = CY_GPIO_INTR_DISABLE,
     .intMask = 0UL,
     .vtrip = CY_GPIO_VTRIP_CMOS,
@@ -96,7 +93,7 @@ const cy_stc_gpio_pin_config_t pin_clk_config =
 {
     .outVal = 1,
     .driveMode = CY_GPIO_DM_STRONG_IN_OFF,
-    .hsiom = P2_5_DSI_GPIO, /* DSI controls 'out', GPIO controls 'output enable' */
+    .hsiom = HSIOM_SEL_DSI_GPIO, /* DSI controls 'out', GPIO controls 'output enable' */
     .intEdge = CY_GPIO_INTR_DISABLE,
     .intMask = 0UL,
     .vtrip = CY_GPIO_VTRIP_CMOS,
@@ -181,14 +178,7 @@ static void cyhal_free_dmas(cyhal_sdio_t *obj)
 
 cy_rslt_t cyhal_sdio_init(cyhal_sdio_t *obj, cyhal_gpio_t cmd, cyhal_gpio_t clk, cyhal_gpio_t data0, cyhal_gpio_t data1, cyhal_gpio_t data2, cyhal_gpio_t data3)
 {
-    cy_rslt_t retVal = CY_RSLT_SUCCESS;
-
-    if (NULL == obj)
-    {
-        return CYHAL_SDIO_RSLT_ERR_BAD_PARAM;
-    }
-
-    memset(obj, 0, sizeof(cyhal_sdio_t));
+    CY_ASSERT(NULL != obj);
 
     /* If something go wrong, any resource not marked as invalid will be freed.
     *  Explicitly marked not allocated resources as invalid to prevent freeing
@@ -209,7 +199,9 @@ cy_rslt_t cyhal_sdio_init(cyhal_sdio_t *obj, cyhal_gpio_t cmd, cyhal_gpio_t clk,
     obj->dma0Ch1.resource.type = CYHAL_RSC_INVALID;
     obj->dma1Ch1.resource.type = CYHAL_RSC_INVALID;
     obj->dma1Ch3.resource.type = CYHAL_RSC_INVALID;
-    
+
+    cy_rslt_t retVal = CY_RSLT_SUCCESS;
+
     obj->clock.div_type = CY_HAL_SDIO_CLK_DIV_NC;
 
     /* Reserve clock */
@@ -401,6 +393,8 @@ cy_rslt_t cyhal_sdio_init(cyhal_sdio_t *obj, cyhal_gpio_t cmd, cyhal_gpio_t clk,
 
 void cyhal_sdio_free(cyhal_sdio_t *obj)
 {
+    CY_ASSERT(NULL != obj);
+
     cyhal_free_pins(obj);
     cyhal_free_clocks(obj);
     cyhal_free_dmas(obj);
@@ -408,10 +402,7 @@ void cyhal_sdio_free(cyhal_sdio_t *obj)
 
 cy_rslt_t cyhal_sdio_configure(cyhal_sdio_t *obj, const cyhal_sdio_cfg_t *config)
 {
-    if (NULL == obj)
-    {
-        return CYHAL_SDIO_RSLT_ERR_BAD_PARAM;
-    }
+    CY_ASSERT(NULL != obj);
 
     /* Do not change frequency if requested value is zero */
     if (config->frequencyhal_hz != 0)
@@ -432,7 +423,8 @@ cy_rslt_t cyhal_sdio_configure(cyhal_sdio_t *obj, const cyhal_sdio_cfg_t *config
 
 cy_rslt_t cyhal_sdio_send_cmd(const cyhal_sdio_t *obj, cyhal_transfer_t direction, cyhal_sdio_command_t command, uint32_t argument, uint32_t* response)
 {
-    if ((NULL == obj) && (command == CYHAL_SDIO_CMD_IO_RW_EXTENDED))
+    CY_ASSERT(NULL != obj);
+    if (command == CYHAL_SDIO_CMD_IO_RW_EXTENDED)
     {
         return CYHAL_SDIO_RSLT_ERR_BAD_PARAM;
     }
@@ -472,10 +464,7 @@ cy_rslt_t cyhal_sdio_send_cmd(const cyhal_sdio_t *obj, cyhal_transfer_t directio
 
 cy_rslt_t cyhal_sdio_bulk_transfer(cyhal_sdio_t *obj, cyhal_transfer_t direction, uint32_t argument, const uint32_t* data, uint16_t length, uint32_t* response)
 {
-    if (NULL == obj)
-    {
-        return CYHAL_SDIO_RSLT_ERR_BAD_PARAM;
-    }
+    CY_ASSERT(NULL != obj);
 
     stc_sdio_cmd_t cmd;
     en_sdio_result_t status;
@@ -519,12 +508,6 @@ cy_rslt_t cyhal_sdio_bulk_transfer(cyhal_sdio_t *obj, cyhal_transfer_t direction
     }
 
     status = SDIO_SendCommandAndWait(&cmd);
-    Cy_SysLib_DelayUs(30);
-    __DSB();
-
-    /* Wait until operation is complete on both sides */
-    Cy_SysLib_DelayUs(OPERATION_CMPLT_DELAY_US);
-    __DSB();
 
     if (Ok != status)
     {
@@ -534,11 +517,6 @@ cy_rslt_t cyhal_sdio_bulk_transfer(cyhal_sdio_t *obj, cyhal_transfer_t direction
     if(retVal == CY_RSLT_SUCCESS && length >= obj->block_size && cmd.bRead)
     {
         memcpy((uint8_t *)data, tempBuffer, (size_t)length);
-    }
-    
-    if (tempBuffer != NULL)
-    {
-        free(tempBuffer);
     }
 
     if (response != NULL)
@@ -617,5 +595,4 @@ void cyhal_sdio_irq_enable(cyhal_sdio_t *obj, cyhal_sdio_irq_event_t event, bool
     }
 }
 
-
-#endif /* defined(CY8C6247BZI_D54) */
+#endif /* defined(CYHAL_UDB_SDIO) */

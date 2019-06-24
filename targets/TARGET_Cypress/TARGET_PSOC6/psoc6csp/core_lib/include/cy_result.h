@@ -49,7 +49,7 @@ extern "C" {
 */
 
 /** Mask for the bit at position "x" */
-#define CY_BIT_MASK(x)                     ((1U << (x)) - 1)
+#define CY_BIT_MASK(x)                     ((1U << (x)) - 1U)
 
 /** Bit position of the result code */
 #define CY_RSLT_CODE_POSITION              (0U)
@@ -72,13 +72,13 @@ extern "C" {
 #define CY_RSLT_TYPE_MASK                  CY_BIT_MASK(CY_RSLT_TYPE_WIDTH)
 
 /** Informational-only result status */
-#define CY_RSLT_TYPE_INFO                  (0)
+#define CY_RSLT_TYPE_INFO                  (0U)
 /** Warning result */
-#define CY_RSLT_TYPE_WARNING               (1)
+#define CY_RSLT_TYPE_WARNING               (1U)
 /** Error result */
-#define CY_RSLT_TYPE_ERROR                 (2)
+#define CY_RSLT_TYPE_ERROR                 (2U)
 /** Fatal error result */
-#define CY_RSLT_TYPE_FATAL                 (3)
+#define CY_RSLT_TYPE_FATAL                 (3U)
 
 /** Get the value of the result code field */
 #define CY_RSLT_GET_CODE(x)                (((x) >> CY_RSLT_CODE_POSITION) & CY_RSLT_CODE_MASK)
@@ -90,27 +90,26 @@ extern "C" {
 
 /**** DRIVER Module codes: 0x0000 - 0x00FF ****/
 /** Base identifier for peripheral driver library */
-#define CY_RSLT_MODULE_DRIVERS_PDL_BASE           (0x0000)
+#define CY_RSLT_MODULE_DRIVERS_PDL_BASE           (0x0000U)
 /** Base identifier for peripheral driver library */
-#define CY_RSLT_MODULE_DRIVERS_WHD_BASE           (0x0080)
+#define CY_RSLT_MODULE_DRIVERS_WHD_BASE           (0x0080U)
 
 /**** ABSTRACTION Module codes: 0x0100 - 0x01FF ****/
 /** Base identifier for chip support modules */
-#define CY_RSLT_MODULE_ABSTRACTION_HAL_BASE       (0x0100)
+#define CY_RSLT_MODULE_ABSTRACTION_HAL_BASE       (0x0100U)
 /** Base identifier for board support modules */
-#define CY_RSLT_MODULE_ABSTRACTION_BSP            (0x0180)
+#define CY_RSLT_MODULE_ABSTRACTION_BSP            (0x0180U)
 /** Base identifier for board support modules */
-#define CY_RSLT_MODULE_ABSTRACTION_FS             (0x0181)
+#define CY_RSLT_MODULE_ABSTRACTION_FS             (0x0181U)
 /** Base identifier for board support modules */
-#define CY_RSLT_MODULE_ABSTRACTION_RESOURCE       (0x0182)
+#define CY_RSLT_MODULE_ABSTRACTION_RESOURCE       (0x0182U)
 /** Base identifier for board support modules */
-#define CY_RSLT_MODULE_ABSTRACTION_BUFFER         (0x0183)
+#define CY_RSLT_MODULE_ABSTRACTION_OS             (0x0183U)
 /** Base identifier for board support modules */
-#define CY_RSLT_MODULE_ABSTRACTION_OS             (0x0184)
-/** Base identifier for board support modules */
-#define CY_RSLT_MODULE_ABSTRACTION_ENV            (0x0185)
+#define CY_RSLT_MODULE_ABSTRACTION_ENV            (0x0184U)
 
-/**** Middleware Module codes: 0x0100 - 0x01FF ****/
+/**** Middleware Module codes: 0x0200 - 0x02FF ****/
+#define CY_RSLT_MODULE_MIDDLEWARE_BASE            (0x0200U)
 
 
 
@@ -118,7 +117,7 @@ extern "C" {
 typedef uint32_t cy_rslt_t;
 
 /** Result value indicating success */
-#define CY_RSLT_SUCCESS                    ((cy_rslt_t)0x00000000)
+#define CY_RSLT_SUCCESS                    ((cy_rslt_t)0x00000000U)
 
 /** Create a result value from the specified type, module, and result code */
 #define CY_RSLT_CREATE(type, module, code) \

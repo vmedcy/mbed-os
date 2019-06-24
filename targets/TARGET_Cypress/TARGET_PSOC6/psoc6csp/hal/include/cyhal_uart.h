@@ -59,9 +59,12 @@ extern "C" {
 #define CYHAL_UART_RSLT_ERR_PM_CALLBACK (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_UART, 1))
 /** The getc call timed out with no received data */
 #define CY_RSLT_ERR_CSP_UART_GETC_TIMEOUT (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_UART, 2))
+/** The actual baud rate is greater than 10% off the requested baud rate */
+#define CY_RSLT_WRN_CSP_UART_BAUD_TOLERANCE (CY_RSLT_CREATE(CY_RSLT_TYPE_WARNING, CYHAL_RSLT_MODULE_UART, 3))
 /** The baud rate to set to if no clock is specfied in the init function */
 #define CYHAL_UART_DEFAULT_BAUD 115200
-
+/** The maximum allowable difference between baud requested and actual baud **/
+#define CYHAL_UART_MAX_BAUD_PERCENT_DIFFERENCE 10
 /** \} group_hal_uart_macros */
 
 
@@ -88,6 +91,8 @@ typedef enum
     CYHAL_UART_IRQ_RX_FULL             = 1 << 4, //!< The rx software buffer is full, additional data are store into fifo buffer.
     CYHAL_UART_IRQ_RX_DONE             = 1 << 5, //!< All rx data has been received
     CYHAL_UART_IRQ_RX_ERROR            = 1 << 6, //!< An error occurred in rx
+    CYHAL_UART_IRQ_RX_NOT_EMPTY        = 1 << 7, //!< The rx hardware buffer is not empty
+    CYHAL_UART_IRQ_TX_EMPTY            = 1 << 8, //!< The tx hardware buffer is empty 
 } cyhal_uart_irq_event_t;
 
 /** \} group_hal_uart_enums */
@@ -123,8 +128,8 @@ typedef void (*cyhal_uart_irq_handler_t)(void *handler_arg, cyhal_uart_irq_event
  *  peripheral, and configures its specifieds pins.
  *
  * @param[out] obj The uart object
- * @param[in]  tx  The TX pin name
- * @param[in]  rx  The RX pin name
+ * @param[in]  tx  The TX pin name, if no TX pin use NC
+ * @param[in]  rx  The RX pin name, if no RX pin use NC
  * @param[in]  clk The clock to use can be shared, if not provided a new clock will be,
  *                  allocated and the default baud rate set
  * @param[in]  cfg The uart configuration data for data bits, stop bits and parity,
@@ -144,9 +149,10 @@ void cyhal_uart_free(cyhal_uart_t *obj);
  *
  * @param[in,out] obj      The uart object
  * @param[in]     baudrate The baud rate to be configured
+ * @param[out]    actualbaud The actual baud rate to be configured, if non NULL
  * @return The status of the baud request
  */
-cy_rslt_t cyhal_uart_baud(cyhal_uart_t *obj, uint32_t baudrate);
+cy_rslt_t cyhal_uart_baud(cyhal_uart_t *obj, uint32_t baudrate, uint32_t *actualbaud);
 
 /** Get character. This is a blocking call, waiting for a character
  *
@@ -218,25 +224,27 @@ cy_rslt_t cyhal_uart_tx(cyhal_uart_t *obj, void *tx, size_t *tx_length);
  */
 cy_rslt_t cyhal_uart_rx(cyhal_uart_t *obj, void *rx, size_t *rx_length);
 
-/** Begin asynchronous TX transfer. The used buffer is specified in the uart object,
- *  tx_buff
+/** Begin asynchronous TX transfer. The transmit buffer is a user defined buffer that will be
+ *  sent on the uart.  The user must call cyhal_uart_irq_enable prior to this. If enabled
+ *  the transmit done callback is triggered on completion.
  *
  * @param[in] obj     The uart object
  * @param[in] tx      The transmit buffer
  * @param[in] length  The number of bytes to transmit
- * @return The status of the tx_asynch request
+ * @return The status of the tx_async request
  */
-cy_rslt_t cyhal_uart_tx_asynch(cyhal_uart_t *obj, void *tx, size_t length);
+cy_rslt_t cyhal_uart_tx_async(cyhal_uart_t *obj, void *tx, size_t length);
 
 /** Begin asynchronous RX transfer (enable interrupt for data collecting)
- *  The used buffer is specified in the uart object - rx_buff
+ *  Recevied data is placed in the user specified buffer, and if enabled
+ *  the receive done callback is triggered on completion.
  *
  * @param[in]  obj     The uart object
- * @param[out] rx      The receive buffer
+ * @param[out] rx      The user specified receive buffer
  * @param[in]  length  The number of bytes to receive
- * @return The status of the rx_asynch request
+ * @return The status of the rx_async request
  */
-cy_rslt_t cyhal_uart_rx_asynch(cyhal_uart_t *obj, void *rx, size_t length);
+cy_rslt_t cyhal_uart_rx_async(cyhal_uart_t *obj, void *rx, size_t length);
 
 /** Attempts to determine if the uart peripheral is already in use for TX
  *

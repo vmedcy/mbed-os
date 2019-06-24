@@ -27,6 +27,8 @@
 #include "cyhal_hwmgr.h"
 #include "cyhal_gpio_impl.h"
 
+#ifdef CY_IP_MXPERI
+
 /** Trigger type */
 typedef enum 
 {
@@ -137,3 +139,5 @@ cy_rslt_t cyhal_disconnect_pin(cyhal_gpio_t pin)
     Cy_GPIO_Pin_FastInit(port, CYHAL_GET_PIN(pin), CY_GPIO_DM_HIGHZ, 1, HSIOM_SEL_GPIO);
     return CY_RSLT_SUCCESS;
 }
+
+#endif /* CY_IP_MXPERI */

@@ -30,18 +30,14 @@
 #include "cy_result.h"
 #include "cyhal_hw_types.h"
 
+#if defined(CY_IP_MXCRYPTO)
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
 
 /** Block count for CRYPTO blocks */
-#if defined(CY_IP_MXCRYPTO_INSTANCES)
-    #define CYHAL_CRYPTO_INST_COUNT      CY_IP_MXCRYPTO_INSTANCES
-#elif defined(CPUSS_CRYPTO_PRESENT)
-    #define CYHAL_CRYPTO_INST_COUNT      1u
-#else
-    #define CYHAL_CRYPTO_INST_COUNT      0u
-#endif
+#define CYHAL_CRYPTO_INST_COUNT      CY_IP_MXCRYPTO_INSTANCES
 
 /** The start address of the CRYPTO blocks */
 extern CRYPTO_Type* cyhal_CRYPTO_BASE_ADDRESSES[CYHAL_CRYPTO_INST_COUNT];
@@ -64,3 +60,5 @@ void cyhal_crypto_free(CRYPTO_Type* base, const cyhal_resource_inst_t *resource)
 #if defined(__cplusplus)
 }
 #endif
+
+#endif /* defined(CY_IP_MXCRYPTO) */

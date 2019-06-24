@@ -57,6 +57,8 @@ extern "C" {
 #define CYHAL_I2C_RSLT_ERR_INVALID_PIN (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_I2C, 0))
 /** Can not reach desired data rate */
 #define CYHAL_I2C_RSLT_ERR_CAN_NOT_REACH_DR (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_I2C, 0))
+/** Address size is not correct, should be 1 or two */
+#define CYHAL_I2C_RSLT_ERR_INVALID_ADDRESS_SIZE (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_I2C, 0))
 
 /** \} group_hal_i2c_macros */
 
@@ -70,17 +72,17 @@ extern "C" {
 typedef enum
 {
     CYHAL_I2C_IRQ_NONE                 = 0,      //!< Disable all interrupt call backs
-    CYHAL_I2C_SLAVE_READ_EVENT         = 1 << 1,
-    CYHAL_I2C_SLAVE_WRITE_EVENT        = 1 << 2,
-    CYHAL_I2C_SLAVE_RD_IN_FIFO_EVENT   = 1 << 3,
-    CYHAL_I2C_SLAVE_RD_BUF_EMPTY_EVENT = 1 << 4,
-    CYHAL_I2C_SLAVE_RD_CMPLT_EVENT     = 1 << 5,
-    CYHAL_I2C_SLAVE_WR_CMPLT_EVENT     = 1 << 6,
-    CYHAL_I2C_SLAVE_ERR_EVENT          = 1 << 7,
-    CYHAL_I2C_MASTER_WR_IN_FIFO_EVENT  = 1 << 17,
-    CYHAL_I2C_MASTER_WR_CMPLT_EVENT    = 1 << 18,
-    CYHAL_I2C_MASTER_RD_CMPLT_EVENT    = 1 << 19,
-    CYHAL_I2C_MASTER_ERR_EVENT         = 1 << 20,
+    CYHAL_I2C_SLAVE_READ_EVENT         = 1 << 1,  /* Indicates that the slave was addressed and the master wants to read data. */
+    CYHAL_I2C_SLAVE_WRITE_EVENT        = 1 << 2,  /* Indicates that the slave was addressed and the master wants to write data. */
+    CYHAL_I2C_SLAVE_RD_IN_FIFO_EVENT   = 1 << 3,  /* All slave data from the configured Read buffer has been loaded into the TX FIFO. */
+    CYHAL_I2C_SLAVE_RD_BUF_EMPTY_EVENT = 1 << 4,  /* The master has read all data out of the configured Read buffer. */
+    CYHAL_I2C_SLAVE_RD_CMPLT_EVENT     = 1 << 5,  /* Indicates the master completed reading from the slave (set by the master NAK or Stop) */
+    CYHAL_I2C_SLAVE_WR_CMPLT_EVENT     = 1 << 6,  /* Indicates the master completed writing to the slave (set by the master Stop or Restart)*/
+    CYHAL_I2C_SLAVE_ERR_EVENT          = 1 << 7,  /* Indicates the I2C hardware detected an error. */
+    CYHAL_I2C_MASTER_WR_IN_FIFO_EVENT  = 1 << 17, /* All data specified by Cy_SCB_I2C_MasterWrite has been loaded into the TX FIFO. */
+    CYHAL_I2C_MASTER_WR_CMPLT_EVENT    = 1 << 18, /* The master write started by Cy_SCB_I2C_MasterWrite is complete.*/
+    CYHAL_I2C_MASTER_RD_CMPLT_EVENT    = 1 << 19, /* The master read started by Cy_SCB_I2C_MasterRead is complete.*/
+    CYHAL_I2C_MASTER_ERR_EVENT         = 1 << 20, /* Indicates the I2C hardware has detected an error. */
 } cyhal_i2c_irq_event_t;
 
 /** \} group_hal_i2c_enums */
@@ -91,8 +93,6 @@ typedef enum
 * \{
 */
 
-/** I2C callback function type */
-typedef void (*cyhal_i2c_irq_handler_t)(void *handler_arg, cyhal_i2c_irq_event_t event);
 
 /** Handler for I2C interrupts */
 typedef void (*cyhal_i2c_irq_handler)(void *handler_arg, cyhal_i2c_irq_event_t event);
@@ -100,9 +100,9 @@ typedef void (*cyhal_i2c_irq_handler)(void *handler_arg, cyhal_i2c_irq_event_t e
 /** Initial I2C configuration */
 typedef struct
 {
-    bool is_slave; //!< I2C mode, is the device a master or slave
-    uint16_t address; //!< Address of this device
-    uint32_t frequencyhal_hz; //!< Frequency that the I2C bus runs at
+    bool is_slave;            /* I2C mode, is the device a master or slave */
+    uint16_t address;         /* Address of this slave device (7-bit), should be set to 0 for master */
+    uint32_t frequencyhal_hz; /* Frequency that the I2C bus runs at */
 } cyhal_i2c_cfg_t;
 
 /** \} group_hal_i2c_data_structures */
@@ -113,8 +113,11 @@ typedef struct
 * \{
 */
 
-/** Initialize the I2C peripheral. It sets the default parameters for I2C
- *  peripheral, and configures its specifieds pins.
+/** Initialize the I2C peripheral, and configures its specifieds pins. By default
+ * it is setup as a Master running at 400kHz. This can be changed by calling 
+ * cyhal_i2c_set_config().
+ * NOTE: Master/Slave specific functions only work when the block is configured 
+ * to be in that mode.
  *
  * @param[out] obj The I2C object
  * @param[in]  sda The sda pin
@@ -166,6 +169,7 @@ cy_rslt_t cyhal_i2c_master_recv(cyhal_i2c_t *obj, uint16_t dev_addr, uint8_t *da
 
 /**
  * I2C slave send
+ * The user needs to setup a new buffer every time (i.e. call slave_send and slave_recv every time the buffer has been used up)
  *
  * @param[in]  obj      The I2C object
  * @param[in]  data     i2c slave send data
@@ -178,6 +182,7 @@ cy_rslt_t cyhal_i2c_slave_send(cyhal_i2c_t *obj, const uint8_t *data, uint16_t s
 
 /**
  * I2C slave receive
+ * The user needs to setup a new buffer every time (i.e. call slave_send and slave_recv every time the buffer has been used up)
  *
  * @param[in]   obj      The I2C object
  * @param[out]  data     i2c slave receive data
@@ -221,7 +226,7 @@ cy_rslt_t cyhal_i2c_mem_read(cyhal_i2c_t *obj, uint16_t address, uint16_t mem_ad
  * @param[in]  tx_size  The number of bytes to transmit
  * @param[out] rx       The receive buffer
  * @param[in]  rx_size  The number of bytes to receive
- * @param[in]  address  The address to be set - 7bit or 9bit
+ * @param[in]  address  The address to be set - 7bit
  * @return The status of the transfer_async request
  */
 cy_rslt_t cyhal_i2c_transfer_async(cyhal_i2c_t *obj, const void *tx, size_t tx_size, void *rx, size_t rx_size, uint16_t address);
@@ -242,7 +247,7 @@ cy_rslt_t cyhal_i2c_abort_async(cyhal_i2c_t *obj);
  */
 void cyhal_i2c_register_irq(cyhal_i2c_t *obj, cyhal_i2c_irq_handler handler, void *handler_arg);
 
-/** Configure I2C interrupt enablement.
+/** Configure and Enable or Disable I2C Interrupt.
  *
  * @param[in] obj      The I2C object
  * @param[in] event    The I2C IRQ type

@@ -56,6 +56,7 @@ extern "C" {
 enum cyhal_rslt_module_chip
 {
     CYHAL_RSLT_MODULE_CHIP_HWMGR = CY_RSLT_MODULE_ABSTRACTION_HAL_BASE, //!< An error occurred in hardware management module
+    CYHAL_RSLT_MODULE_ADC,                                              //!< An error occurred in ADC module
     CYHAL_RSLT_MODULE_COMP,                                             //!< An error occurred in comparator module
     CYHAL_RSLT_MODULE_CRC,                                              //!< An error occurred in crypto CRC module
     CYHAL_RSLT_MODULE_DAC,                                              //!< An error occurred in DAC module
@@ -65,19 +66,17 @@ enum cyhal_rslt_module_chip
     CYHAL_RSLT_MODULE_I2C,                                              //!< An error occurred in I2C module
     CYHAL_RSLT_MODULE_I2S,                                              //!< An error occurred in I2S module
     CYHAL_RSLT_MODULE_INTERCONNECT,                                     //!< An error occurred in Interconnct module
-    CYHAL_RSLT_MODULE_LPCOMP,                                           //!< An error occurred in LPComp module
     CYHAL_RSLT_MODULE_OPAMP,                                            //!< An error occurred in OpAmp module
     CYHAL_RSLT_MODULE_PDMPCM,                                           //!< An error occurred in PDM/PCM module
     CYHAL_RSLT_MODULE_PWM,                                              //!< An error occurred in PWM module
     CYHAL_RSLT_MODULE_QSPI,                                             //!< An error occurred in QSPI module
-    CYHAL_RSLT_MODULE_TRNG,                                             //!< An error occurred in RNG module
     CYHAL_RSLT_MODULE_RTC,                                              //!< An error occurred in RTC module
     CYHAL_RSLT_MODULE_SDHC,                                             //!< An error occurred in SDHC module
     CYHAL_RSLT_MODULE_SDIO,                                             //!< An error occurred in SDIO module
-    CYHAL_RSLT_MODULE_SMARTIO,                                          //!< An error occurred in SmartIO module
     CYHAL_RSLT_MODULE_SPI,                                              //!< An error occurred in SPI module
     CYHAL_RSLT_MODULE_SYSTEM,                                           //!< An error occurred in System module
     CYHAL_RSLT_MODULE_TIMER,                                            //!< An error occurred in Timer module
+    CYHAL_RSLT_MODULE_TRNG,                                             //!< An error occurred in RNG module
     CYHAL_RSLT_MODULE_UART,                                             //!< An error occurred in UART module
     CYHAL_RSLT_MODULE_USB,                                              //!< An error occurred in USB module
     CYHAL_RSLT_MODULE_WDT,                                              //!< An error occurred in WDT module

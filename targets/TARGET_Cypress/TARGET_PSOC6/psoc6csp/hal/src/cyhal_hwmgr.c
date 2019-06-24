@@ -24,10 +24,8 @@
 * limitations under the License.
 *******************************************************************************/
 
-#include "cmsis_compiler.h"
 #include "cyhal_implementation.h"
-#include "cyhal_hwmgr.h"
-#include "cyhal_system.h"
+#include "cmsis_compiler.h"
 
 /*******************************************************************************
 *       Defines
@@ -242,9 +240,9 @@
 
 #define CY_OFFSET_ADC      0
 #define CY_SIZE_ADC        CY_BLOCK_COUNT_ADC
-#define CY_OFFSET_BLE      (CY_OFFSET_ADC + CY_BLOCK_COUNT_ADC)
+#define CY_OFFSET_BLE      (CY_OFFSET_ADC + CY_SIZE_ADC)
 #define CY_SIZE_BLE        CY_BLOCK_COUNT_BLE
-#define CY_OFFSET_CAN      (CY_OFFSET_BLE + CY_BLOCK_COUNT_BLE)
+#define CY_OFFSET_CAN      (CY_OFFSET_BLE + CY_SIZE_BLE)
 #define CY_SIZE_CAN        CY_CHANNEL_COUNT_CAN
 #define CY_OFFSET_CLK_PATH (CY_OFFSET_CAN + CY_SIZE_CAN)
 #define CY_SIZE_CLK_PATH   (CY_BLOCK_COUNT_CLK_PATH)

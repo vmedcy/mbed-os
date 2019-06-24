@@ -26,7 +26,11 @@
 #include <stdlib.h>
 #include "cyhal_implementation.h"
 
-#define UART_OVERSAMPLE                 12
+#ifdef CY_IP_MXSCB
+
+#define UART_OVERSAMPLE                 12UL
+#define UART_OVERSAMPLE_MIN             8UL
+#define UART_OVERSAMPLE_MAX             16UL
 
 /* Default UART configuration */
 static const cy_stc_scb_uart_config_t default_uart_config = {
@@ -500,10 +504,17 @@ static cy_en_scb_uart_stop_bits_t convert_stopbits(uint8_t stopbits)
 
 cy_rslt_t cyhal_uart_init(cyhal_uart_t *obj, cyhal_gpio_t tx, cyhal_gpio_t rx, const cyhal_clock_divider_t *clk, const cyhal_uart_cfg_t *cfg)
 {
-    cy_rslt_t result = CY_RSLT_SUCCESS;
-    // If something go wrong, any resource not marked as invalid will be freed.
+    CY_ASSERT(NULL != obj);
+
     // Explicitly marked not allocated resources as invalid to prevent freeing them.
-    memset(obj, 0, sizeof(cyhal_uart_t));
+    obj->resource.type = CYHAL_RSC_INVALID;
+    obj->is_user_clock = true;
+    obj->pin_rx = CYHAL_NC_PIN_VALUE;
+    obj->pin_tx = CYHAL_NC_PIN_VALUE;
+    obj->pin_cts = CYHAL_NC_PIN_VALUE;
+    obj->pin_rts = CYHAL_NC_PIN_VALUE;
+
+    cy_rslt_t result = CY_RSLT_SUCCESS;
     cyhal_resource_inst_t pin_rsc;
 
     // Reserve the UART
@@ -514,11 +525,11 @@ cy_rslt_t cyhal_uart_init(cyhal_uart_t *obj, cyhal_gpio_t tx, cyhal_gpio_t rx, c
         return CYHAL_UART_RSLT_ERR_INVALID_PIN;
     }
 
-    obj->resource = *rx_map->inst;
-    
-
-    if (CY_RSLT_SUCCESS != (result = cyhal_hwmgr_reserve(&obj->resource)))
+    cyhal_resource_inst_t rsc = *rx_map->inst;
+    if (CY_RSLT_SUCCESS != (result = cyhal_hwmgr_reserve(&rsc)))
         return result;
+
+    obj->resource = rsc;
 
     // reserve the TX pin
     pin_rsc = cyhal_utils_get_gpio_resource(tx);
@@ -539,9 +550,6 @@ cy_rslt_t cyhal_uart_init(cyhal_uart_t *obj, cyhal_gpio_t tx, cyhal_gpio_t rx, c
         }
     }
     
-    obj->pin_cts = NC;
-    obj->pin_rts = NC;
-
     obj->base = CY_SCB_BASE_ADDRESSES[obj->resource.block_num];
 
     if (result == CY_RSLT_SUCCESS)
@@ -575,33 +583,35 @@ cy_rslt_t cyhal_uart_init(cyhal_uart_t *obj, cyhal_gpio_t tx, cyhal_gpio_t rx, c
     bool configured = cyhal_hwmgr_is_configured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num);
     if (result == CY_RSLT_SUCCESS && !configured)
     {
+        obj->config = default_uart_config;
+
         if (cfg == NULL)
         {
-            Cy_SCB_UART_Init(obj->base, &default_uart_config, &(obj->context));
+            Cy_SCB_UART_Init(obj->base, &(obj->config), &(obj->context));
         }
         else
         {
-            cy_stc_scb_uart_config_t config_structure = default_uart_config;
-            config_structure.dataWidth = cfg->data_bits;
-            config_structure.stopBits = convert_stopbits(cfg->stop_bits);
-            config_structure.parity = convert_parity(cfg->parity);
-            Cy_SCB_UART_Init(obj->base, &config_structure, &(obj->context));
+            obj->config.dataWidth = cfg->data_bits;
+            obj->config.stopBits = convert_stopbits(cfg->stop_bits);
+            obj->config.parity = convert_parity(cfg->parity);
+            Cy_SCB_UART_Init(obj->base, &(obj->config), &(obj->context));
             if (cfg->rx_buffer != NULL)
             {
                 Cy_SCB_UART_StartRingBuffer(obj->base, cfg->rx_buffer, cfg->rx_buffer_size, &(obj->context));
             }
-
-            obj->pm_params.base = obj->base;
-            obj->pm_params.context = obj;
-            obj->pm_callback.callback = &cyhal_uart_pm_callback;
-            obj->pm_callback.type = CY_SYSPM_DEEPSLEEP;
-            obj->pm_callback.skipMode = 0;
-            obj->pm_callback.callbackParams = &(obj->pm_params);
-            obj->pm_callback.prevItm = NULL;
-            obj->pm_callback.nextItm = NULL;
-            if (!Cy_SysPm_RegisterCallback(&(obj->pm_callback)))
-                result = CYHAL_UART_RSLT_ERR_PM_CALLBACK;
         }        
+
+        obj->pm_params.base = obj->base;
+        obj->pm_params.context = obj;
+        obj->pm_callback.callback = &cyhal_uart_pm_callback;
+        obj->pm_callback.type = CY_SYSPM_DEEPSLEEP;
+        obj->pm_callback.skipMode = 0;
+        obj->pm_callback.callbackParams = &(obj->pm_params);
+        obj->pm_callback.prevItm = NULL;
+        obj->pm_callback.nextItm = NULL;
+        if (!Cy_SysPm_RegisterCallback(&(obj->pm_callback)))
+            result = CYHAL_UART_RSLT_ERR_PM_CALLBACK;
+
         cyhal_hwmgr_set_configured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num);
     }
 
@@ -613,7 +623,7 @@ cy_rslt_t cyhal_uart_init(cyhal_uart_t *obj, cyhal_gpio_t tx, cyhal_gpio_t rx, c
         }
         else
         {
-            result = cyhal_uart_baud(obj, CYHAL_UART_DEFAULT_BAUD);
+            result = cyhal_uart_baud(obj, CYHAL_UART_DEFAULT_BAUD, NULL);
         }
     }
 
@@ -626,10 +636,14 @@ cy_rslt_t cyhal_uart_init(cyhal_uart_t *obj, cyhal_gpio_t tx, cyhal_gpio_t rx, c
 
 void cyhal_uart_free(cyhal_uart_t *obj)
 {
+    CY_ASSERT(NULL != obj);
+
+
     if (obj->resource.type != CYHAL_RSC_INVALID)
     {
         cyhal_hwmgr_set_unconfigured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num);
         cyhal_hwmgr_free(&(obj->resource));
+        Cy_SysPm_UnregisterCallback(&(obj->pm_callback));
     }
     if (CYHAL_NC_PIN_VALUE != obj->pin_rx)
     {
@@ -653,40 +667,103 @@ void cyhal_uart_free(cyhal_uart_t *obj)
     }
 }
 
-#define FRACT_DIV_INT(divider)      (((divider) >> 5U) - 1U)
-#define FRACT_DIV_FARCT(divider)    ((divider) & 0x1FU)
+static uint32_t cyhal_uart_actual_baud(uint32_t divider, uint32_t oversample)
+{
+    return cy_PeriClkFreqHz / ((divider +  1) * oversample);
+}
 
-static uint32_t cyhal_divider_value(uint32_t frequency, uint32_t frac_bits)
+static uint32_t cyhal_uart_baud_perdif(uint32_t desired_baud, uint32_t actual_baud)
+{
+    uint32_t perdif;
+    if(actual_baud > desired_baud)
+    {
+        perdif = ((actual_baud * 100) - (desired_baud * 100)) / desired_baud;
+    }
+    else
+    {
+        perdif = ((desired_baud * 100) - (actual_baud * 100)) / desired_baud;
+    }
+    
+    return perdif;
+}
+
+static uint32_t cyhal_divider_value(uint32_t frequency)
 {
     CY_ASSERT(frequency != 0);
     /* UARTs use peripheral clock */
-    return ((cy_PeriClkFreqHz * (1 << frac_bits)) + (frequency / 2)) / frequency;
+    return (((cy_PeriClkFreqHz) + (frequency / 2)) / frequency) - 1;
 }
 
-cy_rslt_t cyhal_uart_baud(cyhal_uart_t *obj, uint32_t baudrate)
+static uint8_t cyhal_uart_best_oversample(uint32_t baudrate)
 {
-    Cy_SCB_UART_Disable(obj->base, NULL);
-    cy_en_sysclk_status_t status;
+    uint8_t differences[UART_OVERSAMPLE_MAX + 1];
+    uint8_t index;
+    uint32_t divider;
 
-    Cy_SysClk_PeriphDisableDivider(obj->clock.div_type, obj->clock.div_num);
-
-    /* Set baud rate */
-    if ((obj->clock.div_type == CY_SYSCLK_DIV_16_5_BIT) || (obj->clock.div_type == CY_SYSCLK_DIV_24_5_BIT)) {
-        /* Get fractional divider */
-        uint32_t divider = cyhal_divider_value(baudrate * UART_OVERSAMPLE, 5U);
-
-        status = Cy_SysClk_PeriphSetFracDivider(obj->clock.div_type,
-                                                obj->clock.div_num,
-                                                FRACT_DIV_INT(divider),
-                                                FRACT_DIV_FARCT(divider));
-    } else {
-        /* Get integer divider */
-        status = Cy_SysClk_PeriphSetDivider(obj->clock.div_type,
-                                            obj->clock.div_num,
-                                            cyhal_divider_value(baudrate * UART_OVERSAMPLE, 0));
+    for(index = UART_OVERSAMPLE_MIN; index < UART_OVERSAMPLE_MAX + 1; index++)
+    {
+        divider = cyhal_divider_value(baudrate * index);
+        differences[index] = cyhal_uart_baud_perdif(baudrate, cyhal_uart_actual_baud(divider, index));
     }
 
+    uint8_t best_oversample = UART_OVERSAMPLE_MIN;
+    uint8_t best_difference = differences[UART_OVERSAMPLE_MIN];
+
+    for(index = UART_OVERSAMPLE_MIN; index < UART_OVERSAMPLE_MAX + 1; index++)
+    {
+        if(differences[index] < best_difference)
+        {
+            best_difference = differences[index];
+            best_oversample = index;
+        }
+    }
+
+    return best_oversample;
+}
+
+cy_rslt_t cyhal_uart_baud(cyhal_uart_t *obj, uint32_t baudrate, uint32_t *actualbaud)
+{
+    cy_rslt_t status;
+    uint8_t oversample_value;
+    uint32_t calculated_baud;
+    uint32_t divider;
+
+    Cy_SCB_UART_Disable(obj->base, NULL);
+    Cy_SysClk_PeriphDisableDivider(obj->clock.div_type, obj->clock.div_num);
+
+    oversample_value = cyhal_uart_best_oversample(baudrate);
+    obj->config.oversample = oversample_value;
+
+    divider = cyhal_divider_value(baudrate * oversample_value);
+
+    /* Set baud rate */
+    if ((obj->clock.div_type == CY_SYSCLK_DIV_16_5_BIT) || (obj->clock.div_type == CY_SYSCLK_DIV_24_5_BIT)) 
+    {
+        status = (cy_rslt_t) Cy_SysClk_PeriphSetFracDivider(obj->clock.div_type,
+                                                obj->clock.div_num,
+                                                divider, 0U);
+
+    } 
+    else 
+    {
+        status = (cy_rslt_t) Cy_SysClk_PeriphSetDivider(obj->clock.div_type,
+                                            obj->clock.div_num,
+                                            divider);
+    }
+
+    calculated_baud = cyhal_uart_actual_baud(divider, oversample_value);
+
+    if(actualbaud != NULL) *actualbaud = calculated_baud;
+    uint32_t baud_difference = cyhal_uart_baud_perdif(baudrate, calculated_baud);
+    if(baud_difference > CYHAL_UART_MAX_BAUD_PERCENT_DIFFERENCE) status = CY_RSLT_WRN_CSP_UART_BAUD_TOLERANCE;
+
     Cy_SysClk_PeriphEnableDivider(obj->clock.div_type, obj->clock.div_num);
+
+    /* Configure the UART interface */
+    SCB_CTRL(obj->base) = _BOOL2FLD(SCB_CTRL_ADDR_ACCEPT, obj->config.acceptAddrInFifo)       |
+                 _BOOL2FLD(SCB_CTRL_BYTE_MODE, (obj->config.dataWidth <= CY_SCB_BYTE_WIDTH))  |
+                 _VAL2FLD(SCB_CTRL_OVS, oversample_value - 1)                                 |
+                 _VAL2FLD(SCB_CTRL_MODE, CY_SCB_CTRL_MODE_UART);
 
     Cy_SCB_UART_Enable(obj->base);
     return status;
@@ -849,7 +926,7 @@ cy_rslt_t cyhal_uart_rx(cyhal_uart_t *obj, void *rx, size_t *rx_length)
     return CY_RSLT_SUCCESS;
 }
 
-cy_rslt_t cyhal_uart_tx_asynch(cyhal_uart_t *obj, void *tx, size_t length)
+cy_rslt_t cyhal_uart_tx_async(cyhal_uart_t *obj, void *tx, size_t length)
 {
     cy_en_scb_uart_status_t uart_status = Cy_SCB_UART_Transmit(obj->base, tx, length, &(obj->context));
     return uart_status == CY_SCB_UART_SUCCESS
@@ -857,7 +934,7 @@ cy_rslt_t cyhal_uart_tx_asynch(cyhal_uart_t *obj, void *tx, size_t length)
         : CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_UART, 0);
 }
 
-cy_rslt_t cyhal_uart_rx_asynch(cyhal_uart_t *obj, void *rx, size_t length)
+cy_rslt_t cyhal_uart_rx_async(cyhal_uart_t *obj, void *rx, size_t length)
 {
     cy_en_scb_uart_status_t uart_status = Cy_SCB_UART_Receive(obj->base, rx, length, &(obj->context));
     return uart_status == CY_SCB_UART_SUCCESS
@@ -910,6 +987,12 @@ static cyhal_uart_irq_event_t cyhal_convert_interrupt_cause(uint32_t pdl_cause)
         case CY_SCB_UART_TRANSMIT_ERR_EVENT:
             cause = CYHAL_UART_IRQ_TX_ERROR;
             break;
+        case CY_SCB_UART_RECEIVE_NOT_EMTPY:
+            cause = CYHAL_UART_IRQ_RX_NOT_EMPTY;
+            break;
+        case CY_SCB_UART_TRANSMIT_EMTPY:
+            cause = CYHAL_UART_IRQ_TX_EMPTY;
+            break;
         default:
             cause = CYHAL_UART_IRQ_NONE;
             break;
@@ -939,9 +1022,27 @@ void cyhal_uart_irq_enable(cyhal_uart_t *obj, cyhal_uart_irq_event_t event, bool
     if (enable)
     {
         obj->irq_cause |= event;
+        if (event & CYHAL_UART_IRQ_RX_NOT_EMPTY)
+        {
+            Cy_SCB_SetRxInterruptMask(obj->base, Cy_SCB_GetRxInterruptMask(obj->base) | CY_SCB_RX_INTR_NOT_EMPTY);
+        }
+        if (event & CYHAL_UART_IRQ_TX_EMPTY)
+        {
+            Cy_SCB_SetTxInterruptMask(obj->base, Cy_SCB_GetTxInterruptMask(obj->base) | CY_SCB_UART_TX_EMPTY);
+        }
     }
     else
     {
         obj->irq_cause &= ~event;
+        if (event & CYHAL_UART_IRQ_RX_NOT_EMPTY)
+        {
+            Cy_SCB_SetRxInterruptMask(obj->base, Cy_SCB_GetRxInterruptMask(obj->base) & ~CY_SCB_RX_INTR_NOT_EMPTY);
+        }
+        if (event & CYHAL_UART_IRQ_TX_EMPTY)
+        {
+            Cy_SCB_SetTxInterruptMask(obj->base, Cy_SCB_GetTxInterruptMask(obj->base) & ~CY_SCB_UART_TX_EMPTY);
+        }
     }
 }
+
+#endif /* CY_IP_MXSCB */

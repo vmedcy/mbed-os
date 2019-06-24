@@ -5,7 +5,7 @@
 * PSoC6_02 device GPIO HAL header for 68-QFN package
 *
 * \note
-* Generator version: 1.4.7093.26167
+* Generator version: 1.4.7107.26790
 *
 ********************************************************************************
 * \copyright
@@ -26,15 +26,17 @@
 *******************************************************************************/
 
 #include "cy_device_headers.h"
+#include "cyhal_hw_types.h"
 
 #if defined(_GPIO_PSOC6_02_68_QFN_H_)
-#include "cyhal_hw_types.h"
 #include "pin_packages/cyhal_psoc6_02_68_qfn.h"
 
 /* Hardware Blocks */
 static const cyhal_resource_inst_t CYHAL_I2S_0 = { CYHAL_RSC_I2S, 0, 0 };
 static const cyhal_resource_inst_t CYHAL_PDM_0 = { CYHAL_RSC_PDM, 0, 0 };
 static const cyhal_resource_inst_t CYHAL_I2S_1 = { CYHAL_RSC_I2S, 1, 0 };
+static const cyhal_resource_inst_t CYHAL_LPCOMP_0_0 = { CYHAL_RSC_LPCOMP, 0, 0 };
+static const cyhal_resource_inst_t CYHAL_ADC_0 = { CYHAL_RSC_ADC, 0, 0 };
 static const cyhal_resource_inst_t CYHAL_SCB_0 = { CYHAL_RSC_SCB, 0, 0 };
 static const cyhal_resource_inst_t CYHAL_SCB_1 = { CYHAL_RSC_SCB, 1, 0 };
 static const cyhal_resource_inst_t CYHAL_SCB_10 = { CYHAL_RSC_SCB, 10, 0 };
@@ -131,6 +133,36 @@ const cyhal_resource_pin_mapping_t cyhal_pin_map_audioss_tx_ws[2] = {
     {P11_2, &CYHAL_I2S_1, CYHAL_PIN_OUT_FUNCTION(P11_2_AUDIOSS1_TX_WS)},
 };
 
+/* Connections for: lpcomp_inn_comp0 */
+const cyhal_resource_pin_mapping_t cyhal_pin_map_lpcomp_inn_comp0[1] = {
+    {P5_7, &CYHAL_LPCOMP_0_0, CYHAL_PIN_ANALOG_FUNCTION(P5_7_LPCOMP_INN_COMP0)},
+};
+
+/* Connections for: lpcomp_inn_comp1 */
+const cyhal_resource_pin_mapping_t cyhal_pin_map_lpcomp_inn_comp1[1] = {
+    {P6_3, &CYHAL_LPCOMP_0_0, CYHAL_PIN_ANALOG_FUNCTION(P6_3_LPCOMP_INN_COMP1)},
+};
+
+/* Connections for: lpcomp_inp_comp0 */
+const cyhal_resource_pin_mapping_t cyhal_pin_map_lpcomp_inp_comp0[1] = {
+    {P5_6, &CYHAL_LPCOMP_0_0, CYHAL_PIN_ANALOG_FUNCTION(P5_6_LPCOMP_INP_COMP0)},
+};
+
+/* Connections for: lpcomp_inp_comp1 */
+const cyhal_resource_pin_mapping_t cyhal_pin_map_lpcomp_inp_comp1[1] = {
+    {P6_2, &CYHAL_LPCOMP_0_0, CYHAL_PIN_ANALOG_FUNCTION(P6_2_LPCOMP_INP_COMP1)},
+};
+
+/* Connections for: pass_sarmux_pads */
+const cyhal_resource_pin_mapping_t cyhal_pin_map_pass_sarmux_pads[6] = {
+    {P10_0, &CYHAL_ADC_0, CYHAL_PIN_ANALOG_FUNCTION(P10_0_PASS_SARMUX_PADS0)},
+    {P10_1, &CYHAL_ADC_0, CYHAL_PIN_ANALOG_FUNCTION(P10_1_PASS_SARMUX_PADS1)},
+    {P10_2, &CYHAL_ADC_0, CYHAL_PIN_ANALOG_FUNCTION(P10_2_PASS_SARMUX_PADS2)},
+    {P10_3, &CYHAL_ADC_0, CYHAL_PIN_ANALOG_FUNCTION(P10_3_PASS_SARMUX_PADS3)},
+    {P10_4, &CYHAL_ADC_0, CYHAL_PIN_ANALOG_FUNCTION(P10_4_PASS_SARMUX_PADS4)},
+    {P10_5, &CYHAL_ADC_0, CYHAL_PIN_ANALOG_FUNCTION(P10_5_PASS_SARMUX_PADS5)},
+};
+
 /* Connections for: scb_i2c_scl */
 const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_i2c_scl[12] = {
     {P0_2, &CYHAL_SCB_0, CYHAL_PIN_OD_FUNCTION(P0_2_SCB0_I2C_SCL)},
@@ -163,8 +195,8 @@ const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_i2c_sda[12] = {
     {P11_1, &CYHAL_SCB_5, CYHAL_PIN_OD_FUNCTION(P11_1_SCB5_I2C_SDA)},
 };
 
-/* Connections for: scb_spi_clk */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_clk[10] = {
+/* Connections for: scb_spi_m_clk */
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_m_clk[10] = {
     {P0_4, &CYHAL_SCB_0, CYHAL_PIN_OUT_FUNCTION(P0_4_SCB0_SPI_CLK)},
     {P2_2, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P2_2_SCB1_SPI_CLK)},
     {P6_2, &CYHAL_SCB_3, CYHAL_PIN_OUT_FUNCTION(P6_2_SCB3_SPI_CLK)},
@@ -177,8 +209,8 @@ const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_clk[10] = {
     {P11_2, &CYHAL_SCB_5, CYHAL_PIN_OUT_FUNCTION(P11_2_SCB5_SPI_CLK)},
 };
 
-/* Connections for: scb_spi_miso */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_miso[11] = {
+/* Connections for: scb_spi_m_miso */
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_m_miso[11] = {
     {P0_3, &CYHAL_SCB_0, CYHAL_PIN_IN_FUNCTION(P0_3_SCB0_SPI_MISO)},
     {P2_1, &CYHAL_SCB_1, CYHAL_PIN_IN_FUNCTION(P2_1_SCB1_SPI_MISO)},
     {P3_1, &CYHAL_SCB_2, CYHAL_PIN_IN_FUNCTION(P3_1_SCB2_SPI_MISO)},
@@ -192,8 +224,8 @@ const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_miso[11] = {
     {P11_1, &CYHAL_SCB_5, CYHAL_PIN_IN_FUNCTION(P11_1_SCB5_SPI_MISO)},
 };
 
-/* Connections for: scb_spi_mosi */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_mosi[11] = {
+/* Connections for: scb_spi_m_mosi */
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_m_mosi[11] = {
     {P0_2, &CYHAL_SCB_0, CYHAL_PIN_OUT_FUNCTION(P0_2_SCB0_SPI_MOSI)},
     {P2_0, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P2_0_SCB1_SPI_MOSI)},
     {P3_0, &CYHAL_SCB_2, CYHAL_PIN_OUT_FUNCTION(P3_0_SCB2_SPI_MOSI)},
@@ -207,8 +239,8 @@ const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_mosi[11] = {
     {P11_0, &CYHAL_SCB_5, CYHAL_PIN_OUT_FUNCTION(P11_0_SCB5_SPI_MOSI)},
 };
 
-/* Connections for: scb_spi_select0 */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_select0[10] = {
+/* Connections for: scb_spi_m_select0 */
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_m_select0[10] = {
     {P0_5, &CYHAL_SCB_0, CYHAL_PIN_OUT_FUNCTION(P0_5_SCB0_SPI_SELECT0)},
     {P2_3, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P2_3_SCB1_SPI_SELECT0)},
     {P6_3, &CYHAL_SCB_3, CYHAL_PIN_OUT_FUNCTION(P6_3_SCB3_SPI_SELECT0)},
@@ -221,8 +253,8 @@ const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_select0[10] = {
     {P11_3, &CYHAL_SCB_5, CYHAL_PIN_OUT_FUNCTION(P11_3_SCB5_SPI_SELECT0)},
 };
 
-/* Connections for: scb_spi_select1 */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_select1[5] = {
+/* Connections for: scb_spi_m_select1 */
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_m_select1[5] = {
     {P0_0, &CYHAL_SCB_0, CYHAL_PIN_OUT_FUNCTION(P0_0_SCB0_SPI_SELECT1)},
     {P2_4, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P2_4_SCB1_SPI_SELECT1)},
     {P7_7, &CYHAL_SCB_3, CYHAL_PIN_OUT_FUNCTION(P7_7_SCB3_SPI_SELECT1)},
@@ -230,21 +262,105 @@ const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_select1[5] = {
     {P11_4, &CYHAL_SCB_5, CYHAL_PIN_OUT_FUNCTION(P11_4_SCB5_SPI_SELECT1)},
 };
 
-/* Connections for: scb_spi_select2 */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_select2[4] = {
+/* Connections for: scb_spi_m_select2 */
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_m_select2[4] = {
     {P0_1, &CYHAL_SCB_0, CYHAL_PIN_OUT_FUNCTION(P0_1_SCB0_SPI_SELECT2)},
     {P2_5, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P2_5_SCB1_SPI_SELECT2)},
     {P10_5, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P10_5_SCB1_SPI_SELECT2)},
     {P11_5, &CYHAL_SCB_5, CYHAL_PIN_OUT_FUNCTION(P11_5_SCB5_SPI_SELECT2)},
 };
 
-/* Connections for: scb_spi_select3 */
-const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_select3[5] = {
+/* Connections for: scb_spi_m_select3 */
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_m_select3[5] = {
     {P2_6, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P2_6_SCB1_SPI_SELECT3)},
     {P5_6, &CYHAL_SCB_5, CYHAL_PIN_OUT_FUNCTION(P5_6_SCB5_SPI_SELECT3)},
     {P5_7, &CYHAL_SCB_3, CYHAL_PIN_OUT_FUNCTION(P5_7_SCB3_SPI_SELECT3)},
     {P11_6, &CYHAL_SCB_5, CYHAL_PIN_OUT_FUNCTION(P11_6_SCB5_SPI_SELECT3)},
     {P12_6, &CYHAL_SCB_6, CYHAL_PIN_OUT_FUNCTION(P12_6_SCB6_SPI_SELECT3)},
+};
+
+/* Connections for: scb_spi_s_clk */
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_s_clk[10] = {
+    {P0_4, &CYHAL_SCB_0, CYHAL_PIN_IN_FUNCTION(P0_4_SCB0_SPI_CLK)},
+    {P2_2, &CYHAL_SCB_1, CYHAL_PIN_IN_FUNCTION(P2_2_SCB1_SPI_CLK)},
+    {P6_2, &CYHAL_SCB_3, CYHAL_PIN_IN_FUNCTION(P6_2_SCB3_SPI_CLK)},
+    {P6_2, &CYHAL_SCB_8, CYHAL_PIN_IN_FUNCTION(P6_2_SCB8_SPI_CLK)},
+    {P6_6, &CYHAL_SCB_6, CYHAL_PIN_IN_FUNCTION(P6_6_SCB6_SPI_CLK)},
+    {P6_6, &CYHAL_SCB_8, CYHAL_PIN_IN_FUNCTION(P6_6_SCB8_SPI_CLK)},
+    {P7_2, &CYHAL_SCB_4, CYHAL_PIN_IN_FUNCTION(P7_2_SCB4_SPI_CLK)},
+    {P9_2, &CYHAL_SCB_2, CYHAL_PIN_IN_FUNCTION(P9_2_SCB2_SPI_CLK)},
+    {P10_2, &CYHAL_SCB_1, CYHAL_PIN_IN_FUNCTION(P10_2_SCB1_SPI_CLK)},
+    {P11_2, &CYHAL_SCB_5, CYHAL_PIN_IN_FUNCTION(P11_2_SCB5_SPI_CLK)},
+};
+
+/* Connections for: scb_spi_s_miso */
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_s_miso[11] = {
+    {P0_3, &CYHAL_SCB_0, CYHAL_PIN_OUT_FUNCTION(P0_3_SCB0_SPI_MISO)},
+    {P2_1, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P2_1_SCB1_SPI_MISO)},
+    {P3_1, &CYHAL_SCB_2, CYHAL_PIN_OUT_FUNCTION(P3_1_SCB2_SPI_MISO)},
+    {P5_1, &CYHAL_SCB_5, CYHAL_PIN_OUT_FUNCTION(P5_1_SCB5_SPI_MISO)},
+    {P6_5, &CYHAL_SCB_6, CYHAL_PIN_OUT_FUNCTION(P6_5_SCB6_SPI_MISO)},
+    {P6_5, &CYHAL_SCB_8, CYHAL_PIN_OUT_FUNCTION(P6_5_SCB8_SPI_MISO)},
+    {P7_1, &CYHAL_SCB_4, CYHAL_PIN_OUT_FUNCTION(P7_1_SCB4_SPI_MISO)},
+    {P8_1, &CYHAL_SCB_4, CYHAL_PIN_OUT_FUNCTION(P8_1_SCB4_SPI_MISO)},
+    {P9_1, &CYHAL_SCB_2, CYHAL_PIN_OUT_FUNCTION(P9_1_SCB2_SPI_MISO)},
+    {P10_1, &CYHAL_SCB_1, CYHAL_PIN_OUT_FUNCTION(P10_1_SCB1_SPI_MISO)},
+    {P11_1, &CYHAL_SCB_5, CYHAL_PIN_OUT_FUNCTION(P11_1_SCB5_SPI_MISO)},
+};
+
+/* Connections for: scb_spi_s_mosi */
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_s_mosi[11] = {
+    {P0_2, &CYHAL_SCB_0, CYHAL_PIN_IN_FUNCTION(P0_2_SCB0_SPI_MOSI)},
+    {P2_0, &CYHAL_SCB_1, CYHAL_PIN_IN_FUNCTION(P2_0_SCB1_SPI_MOSI)},
+    {P3_0, &CYHAL_SCB_2, CYHAL_PIN_IN_FUNCTION(P3_0_SCB2_SPI_MOSI)},
+    {P5_0, &CYHAL_SCB_5, CYHAL_PIN_IN_FUNCTION(P5_0_SCB5_SPI_MOSI)},
+    {P6_4, &CYHAL_SCB_6, CYHAL_PIN_IN_FUNCTION(P6_4_SCB6_SPI_MOSI)},
+    {P6_4, &CYHAL_SCB_8, CYHAL_PIN_IN_FUNCTION(P6_4_SCB8_SPI_MOSI)},
+    {P7_0, &CYHAL_SCB_4, CYHAL_PIN_IN_FUNCTION(P7_0_SCB4_SPI_MOSI)},
+    {P8_0, &CYHAL_SCB_4, CYHAL_PIN_IN_FUNCTION(P8_0_SCB4_SPI_MOSI)},
+    {P9_0, &CYHAL_SCB_2, CYHAL_PIN_IN_FUNCTION(P9_0_SCB2_SPI_MOSI)},
+    {P10_0, &CYHAL_SCB_1, CYHAL_PIN_IN_FUNCTION(P10_0_SCB1_SPI_MOSI)},
+    {P11_0, &CYHAL_SCB_5, CYHAL_PIN_IN_FUNCTION(P11_0_SCB5_SPI_MOSI)},
+};
+
+/* Connections for: scb_spi_s_select0 */
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_s_select0[10] = {
+    {P0_5, &CYHAL_SCB_0, CYHAL_PIN_IN_FUNCTION(P0_5_SCB0_SPI_SELECT0)},
+    {P2_3, &CYHAL_SCB_1, CYHAL_PIN_IN_FUNCTION(P2_3_SCB1_SPI_SELECT0)},
+    {P6_3, &CYHAL_SCB_3, CYHAL_PIN_IN_FUNCTION(P6_3_SCB3_SPI_SELECT0)},
+    {P6_3, &CYHAL_SCB_8, CYHAL_PIN_IN_FUNCTION(P6_3_SCB8_SPI_SELECT0)},
+    {P6_7, &CYHAL_SCB_6, CYHAL_PIN_IN_FUNCTION(P6_7_SCB6_SPI_SELECT0)},
+    {P6_7, &CYHAL_SCB_8, CYHAL_PIN_IN_FUNCTION(P6_7_SCB8_SPI_SELECT0)},
+    {P7_3, &CYHAL_SCB_4, CYHAL_PIN_IN_FUNCTION(P7_3_SCB4_SPI_SELECT0)},
+    {P9_3, &CYHAL_SCB_2, CYHAL_PIN_IN_FUNCTION(P9_3_SCB2_SPI_SELECT0)},
+    {P10_3, &CYHAL_SCB_1, CYHAL_PIN_IN_FUNCTION(P10_3_SCB1_SPI_SELECT0)},
+    {P11_3, &CYHAL_SCB_5, CYHAL_PIN_IN_FUNCTION(P11_3_SCB5_SPI_SELECT0)},
+};
+
+/* Connections for: scb_spi_s_select1 */
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_s_select1[5] = {
+    {P0_0, &CYHAL_SCB_0, CYHAL_PIN_IN_FUNCTION(P0_0_SCB0_SPI_SELECT1)},
+    {P2_4, &CYHAL_SCB_1, CYHAL_PIN_IN_FUNCTION(P2_4_SCB1_SPI_SELECT1)},
+    {P7_7, &CYHAL_SCB_3, CYHAL_PIN_IN_FUNCTION(P7_7_SCB3_SPI_SELECT1)},
+    {P10_4, &CYHAL_SCB_1, CYHAL_PIN_IN_FUNCTION(P10_4_SCB1_SPI_SELECT1)},
+    {P11_4, &CYHAL_SCB_5, CYHAL_PIN_IN_FUNCTION(P11_4_SCB5_SPI_SELECT1)},
+};
+
+/* Connections for: scb_spi_s_select2 */
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_s_select2[4] = {
+    {P0_1, &CYHAL_SCB_0, CYHAL_PIN_IN_FUNCTION(P0_1_SCB0_SPI_SELECT2)},
+    {P2_5, &CYHAL_SCB_1, CYHAL_PIN_IN_FUNCTION(P2_5_SCB1_SPI_SELECT2)},
+    {P10_5, &CYHAL_SCB_1, CYHAL_PIN_IN_FUNCTION(P10_5_SCB1_SPI_SELECT2)},
+    {P11_5, &CYHAL_SCB_5, CYHAL_PIN_IN_FUNCTION(P11_5_SCB5_SPI_SELECT2)},
+};
+
+/* Connections for: scb_spi_s_select3 */
+const cyhal_resource_pin_mapping_t cyhal_pin_map_scb_spi_s_select3[5] = {
+    {P2_6, &CYHAL_SCB_1, CYHAL_PIN_IN_FUNCTION(P2_6_SCB1_SPI_SELECT3)},
+    {P5_6, &CYHAL_SCB_5, CYHAL_PIN_IN_FUNCTION(P5_6_SCB5_SPI_SELECT3)},
+    {P5_7, &CYHAL_SCB_3, CYHAL_PIN_IN_FUNCTION(P5_7_SCB3_SPI_SELECT3)},
+    {P11_6, &CYHAL_SCB_5, CYHAL_PIN_IN_FUNCTION(P11_6_SCB5_SPI_SELECT3)},
+    {P12_6, &CYHAL_SCB_6, CYHAL_PIN_IN_FUNCTION(P12_6_SCB6_SPI_SELECT3)},
 };
 
 /* Connections for: scb_uart_cts */

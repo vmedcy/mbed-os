@@ -1,8 +1,9 @@
 /***************************************************************************//**
-* \file cyhal_trng_impl.h
+* \file cyhal_analog_common.h
 *
 * \brief
-* Provides an implementation of the Cypress TRNG HAL API.
+* Provides common functionality that needs to be shared among all drivers that
+* interact with the Programmable Analog Subsystem.
 *
 ********************************************************************************
 * \copyright
@@ -24,36 +25,22 @@
 
 #pragma once
 
-#include "cyhal_trng.h"
-
-#if defined(CY_IP_MXCRYPTO)
-
 #if defined(__cplusplus)
 extern "C" {
-#endif /* __cplusplus */
+#endif
 
-/* Initialization polynomial values for True Random Number Generator */
-#define CYHAL_GARO31_INITSTATE          (0x04c11db7UL)
-#define CYHAL_FIRO31_INITSTATE          (0x04c11db7UL)
+/** 
+ * Initialize the programmable analog. This utilizes reference counting to avoid
+ * repeatedly initializing the analog subsystem when multiple analog blocks are in use
+ * */
+void cyhal_analog_init();
 
-#define MAX_TRNG_BIT_SIZE               (32UL)
-
-static inline uint32_t cyhal_trng_generate_internal(const cyhal_trng_t *obj)
-{
-    CY_ASSERT(NULL != obj);
-    uint32_t value;
-    cy_en_crypto_status_t status = Cy_Crypto_Core_Trng(
-        obj->base, CYHAL_GARO31_INITSTATE, CYHAL_FIRO31_INITSTATE, MAX_TRNG_BIT_SIZE, &value);
-    (void)status;
-    CY_ASSERT(CY_CRYPTO_SUCCESS == status);
-    return value;
-}
-
-#define cyhal_trng_generate(obj) cyhal_trng_generate_internal(obj)
-
+/** 
+ * Uninitialize the programmable analog. This utilizes reference counting to avoid
+ * disabling the analog subsystem until all blocks which require it have been freed.
+ */
+void cyhal_analog_free();
 
 #if defined(__cplusplus)
 }
-#endif /* __cplusplus */
-
-#endif /* defined(CY_IP_MXCRYPTO) */
+#endif

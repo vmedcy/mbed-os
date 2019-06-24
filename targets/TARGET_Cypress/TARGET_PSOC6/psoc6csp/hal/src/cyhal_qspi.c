@@ -23,12 +23,15 @@
 * limitations under the License.
 *******************************************************************************/
 
+#include <string.h>
 #include "cy_smif.h"
 #include "cyhal_utils.h"
 #include "cyhal_qspi.h"
 #include "cyhal_hwmgr.h"
 #include "cyhal_gpio.h"
 #include "cyhal_interconnect.h"
+
+#ifdef CY_IP_MXSMIF
 
 #if defined(__cplusplus)
 extern "C" {
@@ -572,6 +575,10 @@ cy_rslt_t cyhal_qspi_init(
 {
     /* mode (CPOL and CPHA) is not supported in PSoC 6 */
     (void)mode;
+
+    CY_ASSERT(NULL != obj);
+
+    /* Explicitly marked not allocated resources as invalid to prevent freeing them. */
     memset(obj, 0, sizeof(cyhal_qspi_t));
     obj->resource.type = CYHAL_RSC_INVALID;
 
@@ -758,22 +765,21 @@ cy_rslt_t cyhal_qspi_init(
         }
     }
 
-    obj->resource = *sclk_map->inst;
-
     if (CY_RSLT_SUCCESS == result)
     {
         result = make_pin_reservations(obj);
     }
 
-    obj->base = smif_base_addresses[obj->resource.block_num];
-
     if (CY_RSLT_SUCCESS == result)
     {
-        result = cyhal_hwmgr_reserve(&(obj->resource));
+        obj->base = smif_base_addresses[obj->resource.block_num];
+        result = cyhal_hwmgr_reserve(sclk_map->inst);
     }
 
     if (CY_RSLT_SUCCESS == result)
     {
+        obj->resource = *sclk_map->inst;
+        
         result = cyhal_connect_pin(sclk_map);
         if (CY_RSLT_SUCCESS == result)
         {
@@ -1054,3 +1060,5 @@ void cyhal_qspi_irq_enable(cyhal_qspi_t *obj, cyhal_qspi_irq_event_t event, bool
 #if defined(__cplusplus)
 }
 #endif /* __cplusplus */
+
+#endif /* CY_IP_MXSMIF */

@@ -23,15 +23,53 @@
 * limitations under the License.
 *******************************************************************************/
 
-#if defined(__cplusplus)
-extern "C" {
-#endif /* __cplusplus */
-
 #include "cyhal_hwmgr.h"
 #include "cyhal_hw_types.h"
 #include "cyhal_flash.h"
 #include "cyhal_flash.h"
 #include <string.h>
+
+#ifdef CY_IP_MXS40SRSS
+
+#if defined(__cplusplus)
+extern "C" {
+#endif /* __cplusplus */
+
+typedef cy_en_flashdrv_status_t (*flash_operation)(uint32_t rowAddr, const uint32_t* data);
+
+static uint8_t writeBuf[CY_FLASH_SIZEOF_ROW];
+
+static inline bool is_in_flash(uint32_t address)
+{
+    return (CY_FLASH_BASE <= address) && (address < (CY_FLASH_BASE + CY_FLASH_SIZE));
+}
+static inline bool is_in_sram(uint32_t address)
+{
+    return (CY_SRAM_BASE <= address) && (address < (CY_SRAM_BASE + CY_SRAM_SIZE));
+}
+
+static cy_rslt_t run_flash_operation(
+    flash_operation operation, uint32_t address, const uint32_t* data, bool clearCache)
+{
+    const uint32_t* buffer;
+    if (is_in_sram((uint32_t)data))
+    {
+        buffer = data;
+    }
+    else
+    {
+        memcpy(writeBuf, (const void *)data, CY_FLASH_SIZEOF_ROW);
+        buffer = (const uint32_t*)writeBuf;
+    }
+
+    cy_en_flashdrv_status_t status =  operation(address, buffer);
+    if (clearCache)
+    {
+        Cy_SysLib_ClearFlashCacheAndBuffer();
+    }
+
+    return (cy_rslt_t)status;
+}
 
 cy_rslt_t cyhal_flash_init(cyhal_flash_t *obj)
 {
@@ -78,7 +116,7 @@ cy_rslt_t cyhal_flash_erase(cyhal_flash_t *obj, uint32_t address)
     CY_ASSERT(NULL != obj);
     cy_rslt_t status = CYHAL_FLASH_RSLT_ERR_ADDRESS;
 
-    if ((address >= CY_FLASH_BASE) && (address < (CY_FLASH_BASE + CY_FLASH_SIZE)))
+    if (is_in_flash(address))
     {
         status = Cy_Flash_EraseRow(address);
         Cy_SysLib_ClearFlashCacheAndBuffer();
@@ -90,18 +128,10 @@ cy_rslt_t cyhal_flash_erase(cyhal_flash_t *obj, uint32_t address)
 cy_rslt_t cyhal_flash_write(cyhal_flash_t *obj, uint32_t address, const uint32_t* data)
 {
     CY_ASSERT(NULL != obj);
-    cy_rslt_t status = CYHAL_FLASH_RSLT_ERR_ADDRESS;
 
-    if (((uint32_t)data) > CY_FLASH_BASE)
-    {
-        static uint8_t writeBuf[CY_FLASH_SIZEOF_ROW];
-        memcpy(writeBuf, (const void *)data, CY_FLASH_SIZEOF_ROW);
-        status = Cy_Flash_WriteRow(address, (const uint32_t *) writeBuf);
-    }
-    else
-    {
-        status = Cy_Flash_WriteRow(address, data);
-    }
+    cy_rslt_t status = is_in_flash(address)
+        ? run_flash_operation(Cy_Flash_WriteRow, address, data, true)
+        : CYHAL_FLASH_RSLT_ERR_ADDRESS;
 
     return (status);
 }
@@ -109,20 +139,10 @@ cy_rslt_t cyhal_flash_write(cyhal_flash_t *obj, uint32_t address, const uint32_t
 cy_rslt_t cyhal_flash_program(cyhal_flash_t *obj, uint32_t address, const uint32_t *data)
 {
     CY_ASSERT(NULL != obj);
-    cy_rslt_t status = CYHAL_FLASH_RSLT_ERR_ADDRESS;
 
-    if (((uint32_t)data) > CY_FLASH_BASE)
-    {
-        static uint8_t writeBuf[CY_FLASH_SIZEOF_ROW];
-        memcpy(writeBuf, (const void *)data, CY_FLASH_SIZEOF_ROW);
-        status = Cy_Flash_ProgramRow(address, (const uint32_t *) writeBuf);
-    }
-    else
-    {
-        status = Cy_Flash_ProgramRow(address, data);
-    }
-
-    Cy_SysLib_ClearFlashCacheAndBuffer();
+    cy_rslt_t status = is_in_flash(address)
+        ? run_flash_operation(Cy_Flash_ProgramRow, address, data, true)
+        : CYHAL_FLASH_RSLT_ERR_ADDRESS;
 
     return (status);
 }
@@ -130,12 +150,10 @@ cy_rslt_t cyhal_flash_program(cyhal_flash_t *obj, uint32_t address, const uint32
 cy_rslt_t cyhal_flash_start_erase(cyhal_flash_t *obj, uint32_t address)
 {
     CY_ASSERT(NULL != obj);
-    cy_rslt_t status = CYHAL_FLASH_RSLT_ERR_ADDRESS;
 
-    if ((address >= CY_FLASH_BASE) && (address < (CY_FLASH_BASE + CY_FLASH_SIZE)))
-    {
-        status = Cy_Flash_StartEraseRow(address);
-    }
+    cy_rslt_t status = is_in_flash(address)
+        ? Cy_Flash_StartEraseRow(address)
+        : CYHAL_FLASH_RSLT_ERR_ADDRESS;
 
     return (status);
 }
@@ -143,20 +161,10 @@ cy_rslt_t cyhal_flash_start_erase(cyhal_flash_t *obj, uint32_t address)
 cy_rslt_t cyhal_flash_start_write(cyhal_flash_t *obj, uint32_t address, const uint32_t* data)
 {
     CY_ASSERT(NULL != obj);
-    cy_rslt_t status = CYHAL_FLASH_RSLT_ERR_ADDRESS;
 
-    uint32_t srcAddrStart = (uint32_t)data;
-    uint32_t srcAddrEnd = srcAddrStart + CY_FLASH_SIZEOF_ROW;
-    if (srcAddrEnd > CY_FLASH_BASE && srcAddrStart < (CY_FLASH_BASE + CY_FLASH_SIZE))
-    {
-        static uint8_t writeBuf[CY_FLASH_SIZEOF_ROW];
-        memcpy(writeBuf, (const void *)data, CY_FLASH_SIZEOF_ROW);
-        status = Cy_Flash_StartWrite(address, (const uint32_t *) writeBuf);
-    }
-    else
-    {
-      status = Cy_Flash_StartWrite(address, data);
-    }
+    cy_rslt_t status = is_in_flash(address)
+        ? run_flash_operation(Cy_Flash_StartWrite, address, data, false)
+        : CYHAL_FLASH_RSLT_ERR_ADDRESS;
 
     return (status);
 }
@@ -164,20 +172,10 @@ cy_rslt_t cyhal_flash_start_write(cyhal_flash_t *obj, uint32_t address, const ui
 cy_rslt_t cyhal_flash_start_program(cyhal_flash_t *obj, uint32_t address, const uint32_t* data)
 {
     CY_ASSERT(NULL != obj);
-    cy_rslt_t status = CYHAL_FLASH_RSLT_ERR_ADDRESS;
-
-    uint32_t srcAddrStart = (uint32_t)data;
-    uint32_t srcAddrEnd = srcAddrStart + CY_FLASH_SIZEOF_ROW;
-    if (srcAddrEnd > CY_FLASH_BASE && srcAddrStart < (CY_FLASH_BASE + CY_FLASH_SIZE))
-    {
-        static uint8_t writeBuf[CY_FLASH_SIZEOF_ROW];
-        memcpy(writeBuf, (const void *)data, CY_FLASH_SIZEOF_ROW);
-        status = Cy_Flash_StartProgram(address, (const uint32_t *) writeBuf);
-    }
-    else
-    {
-      status = Cy_Flash_StartProgram(address, data);
-    }
+    
+    cy_rslt_t status = is_in_flash(address)
+        ? run_flash_operation(Cy_Flash_StartProgram, address, data, false)
+        : CYHAL_FLASH_RSLT_ERR_ADDRESS;
 
     return (status);
 }
@@ -185,11 +183,9 @@ cy_rslt_t cyhal_flash_start_program(cyhal_flash_t *obj, uint32_t address, const 
 bool cyhal_flash_is_operation_complete(cyhal_flash_t *obj)
 {
     CY_ASSERT(NULL != obj);
-    cy_rslt_t status = CYHAL_FLASH_RSLT_ERR_ADDRESS;
-
-    status = Cy_Flash_IsOperationComplete();
 
     bool complete;
+    cy_rslt_t status = Cy_Flash_IsOperationComplete();
     if (CY_FLASH_DRV_SUCCESS == status)
     {
         Cy_SysLib_ClearFlashCacheAndBuffer();
@@ -206,3 +202,5 @@ bool cyhal_flash_is_operation_complete(cyhal_flash_t *obj)
 #if defined(__cplusplus)
 }
 #endif /* __cplusplus */
+
+#endif /* CY_IP_MXS40SRSS */

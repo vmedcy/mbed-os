@@ -34,47 +34,6 @@ uint8_t* cyhal_source_count_per_mux;
 cyhal_source_t** cyhal_mux_to_sources;
 cyhal_dest_t* cyhal_intra_trigger_source;
 
-cy_rslt_t cyhal_adc_init(cyhal_adc_t *obj, cyhal_gpio_t pin)
-{
-    return CY_RSLT_SUCCESS;
-}
-
-void cyhal_adc_free(cyhal_adc_t *obj)
-{
-}
-
-uint16_t cyhal_adc_read_u16(const cyhal_adc_t *obj)
-{
-    return 0;
-}
-
-
-
-cy_rslt_t cyhal_dac_init(cyhal_dac_t *obj, cyhal_gpio_t pin)
-{
-    return CY_RSLT_SUCCESS;
-}
-
-void cyhal_dac_free(cyhal_dac_t *obj)
-{
-}
-
-uint16_t cyhal_dac_get_max(cyhal_dac_t *obj)
-{
-    return 0;
-}
-
-void cyhal_dac_write(const cyhal_dac_t *obj, uint16_t millivolts)
-{
-}
-
-uint16_t cyhal_dac_read(cyhal_dac_t *obj)
-{
-    return 0;
-}
-
-
-
 cy_rslt_t cyhal_dma_init(cyhal_dma_t *obj, uint8_t priority, cyhal_dma_direction_t direction)
 {
     return CY_RSLT_SUCCESS;

@@ -41,9 +41,9 @@
 #include "cyhal_pin_package.h"
 #include <stdbool.h>
 
-#if defined(CY8C6247BZI_D54) /* TODO: BSP-525 */
+#if defined(CYHAL_UDB_SDIO)
     #include "SDIO_HOST.h"
-#endif /* defined(CY8C6247BZI_D54) */
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -72,10 +72,26 @@ typedef struct {
 #ifdef CY_IP_MXS40PASS_SAR
     SAR_Type*                   base;
     cyhal_resource_inst_t       resource;
-    cyhal_gpio_t                pin;
     cyhal_clock_divider_t       clock;
+    bool                        dedicated_clock;
+    // channel_used is a bit field. The maximum channel count 
+    // supported by the SAR IP is 16
+    uint16_t                    channel_used; 
+#else
+    void *empty;
 #endif
 } cyhal_adc_t;
+
+/** ADC channel object */
+typedef struct {
+#ifdef CY_IP_MXS40PASS_SAR
+    cyhal_adc_t*                adc;
+    cyhal_gpio_t                pin;
+    uint8_t                     channel_idx;
+#else
+    void *empty;
+#endif
+} cyhal_adc_channel_t;
 
 /** Comparator object */
 typedef struct {
@@ -102,7 +118,6 @@ typedef struct {
     CTDAC_Type*                 base;
     cyhal_resource_inst_t       resource;
     cyhal_gpio_t                pin;
-    cyhal_clock_divider_t       clock;
 #else
     void *empty;
 #endif
@@ -279,8 +294,7 @@ typedef struct {
     uint32_t                    frequencyhal_hz;
     uint16_t                    block_size;
     uint32_t                    irq_cause;
-
-#elif defined(CY8C6247BZI_D54) /* TODO: BSP-525 */
+#elif defined(CYHAL_UDB_SDIO)
     cyhal_resource_inst_t       resource;
     cyhal_gpio_t                pin_clk;
     cyhal_gpio_t                pin_cmd;
@@ -319,6 +333,7 @@ typedef struct {
     cy_en_scb_spi_mode_t        ms_mode;
     cy_en_scb_spi_sclk_mode_t   clk_mode;
     uint8_t                     data_bits;
+    bool                        is_slave;
     cy_stc_scb_spi_context_t    context;
     uint32_t                    irq_cause;
     uint16_t                    pending;
@@ -326,6 +341,7 @@ typedef struct {
     uint32_t                    rx_buffer_size;
     void                        *tx_buffer;
     uint32_t                    tx_buffer_size;
+    bool                        is_async;
 #else
     void *empty;
 #endif
@@ -334,17 +350,8 @@ typedef struct {
 /** Callbacks for Sleep and Deepsleep APIs */
 #define cyhal_system_call_back_t cy_stc_syspm_callback_t
 
-/** Divider for HFCLK. Support values { 1, 2, 4, 8 } */
-typedef enum
-{
-    CYHAL_SYSTEM_CM4_DIVIDER_1 = 1,
-    CYHAL_SYSTEM_CM4_DIVIDER_2 = 2,
-    CYHAL_SYSTEM_CM4_DIVIDER_4 = 4,
-    CYHAL_SYSTEM_CM4_DIVIDER_8 = 8,
-} cyhal_system_cm4_divider_t;
-
 /** Enum for clock type to configure. HFCLKs are configured using different APIs and does not using this enum */
-typedef enum cyhal_system_clock
+typedef enum
 {
     CYHAL_SYSTEM_CLOCK_CM4,
     CYHAL_SYSTEM_CLOCK_CM0,
@@ -382,6 +389,7 @@ typedef struct {
     bool                        is_user_clock;
     cyhal_clock_divider_t       clock;
     cy_stc_scb_uart_context_t   context;
+    cy_stc_scb_uart_config_t    config;
     uint32_t                    irq_cause;
     cy_stc_syspm_callback_params_t pm_params;
     cy_stc_syspm_callback_t     pm_callback;
@@ -409,9 +417,11 @@ typedef struct {
     USBFS_Type*                     base;
     cy_stc_usbfs_dev_drv_context_t  context;
     cyhal_resource_inst_t           resource;
-    cyhal_gpio_t                    pin_dp;
-    cyhal_gpio_t                    pin_dm;
+    cyhal_resource_inst_t           pll_resource;
     cyhal_clock_divider_t           clock;
+    bool                            shared_clock;
+    cyhal_gpio_t                    pin_dp;
+    cyhal_gpio_t                    pin_dm;    
     uint8_t *rd_data[CY_USBFS_DEV_DRV_NUM_EPS_MAX];
     uint32_t rd_size[CY_USBFS_DEV_DRV_NUM_EPS_MAX];
 #else

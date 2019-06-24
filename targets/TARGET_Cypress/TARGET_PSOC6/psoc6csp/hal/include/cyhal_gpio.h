@@ -155,14 +155,14 @@ cy_rslt_t cyhal_gpio_direction(cyhal_gpio_t pin, cyhal_gpio_direction_t directio
  */
 cy_rslt_t cyhal_gpio_drivemode(cyhal_gpio_t pin, cyhal_gpio_drive_mode_t drvMode);
 
-/** Set the output value
+/** Set the output value for the pin. This only works for output & in_out pins.
  *
  * @param[in] pin   The GPIO object
  * @param[in] value The value to be set (high = true, low = false)
  */
 void cyhal_gpio_write(cyhal_gpio_t pin, bool value);
 
-/** Read the input value
+/** Read the input value.  This only works for input & in_out pins.
  *
  * @param[in]  pin   The GPIO object
  * @return The value of the IO (true = high, false = low)

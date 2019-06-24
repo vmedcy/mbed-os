@@ -30,6 +30,8 @@
 #include "cyhal_utils.h"
 #include "cy_utils.h"
 
+#ifdef CY_IP_MXS40IOSS
+
 #if defined(__cplusplus)
 extern "C" {
 #endif /* __cplusplus */
@@ -67,3 +69,5 @@ __STATIC_INLINE void cyhal_gpio_toggle_internal(cyhal_gpio_t pin)
 #if defined(__cplusplus)
 }
 #endif /* __cplusplus */
+
+#endif /* CY_IP_MXS40IOSS */

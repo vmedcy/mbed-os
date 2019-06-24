@@ -63,6 +63,7 @@
 #include "cyhal_timer.h"
 #include "cyhal_trng.h"
 #include "cyhal_uart.h"
+#include "cyhal_usb_dev.h"
 #include "cyhal_wdt.h"
 
 /** \} group_hal */

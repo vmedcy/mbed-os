@@ -53,13 +53,6 @@ extern "C" {
 * \{
 */
 
-/** Transfer mode for bulk transfer API */
-typedef enum
-{
-    CYHAL_SDIO_BLOCK_MODE = ( 0 << 2 ),
-    CYHAL_SDIO_BYTE_MODE  = ( 1 << 2 )
-} cyhal_sdio_transfer_mode_t;
-
 /** Card types */
 typedef enum
 {

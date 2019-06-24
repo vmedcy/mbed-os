@@ -29,6 +29,8 @@
 #include "cyhal_hwmgr.h"
 #include "cy_utils.h"
 
+#if defined(CY_IP_MXCRYPTO)
+
 #if defined(__cplusplus)
 extern "C" {
 #endif /* __cplusplus */
@@ -74,3 +76,5 @@ __STATIC_INLINE cy_rslt_t cyhal_crc_finish_internal(const cyhal_crc_t *obj, uint
 #if defined(__cplusplus)
 }
 #endif /* __cplusplus */
+
+#endif /* defined(CY_IP_MXCRYPTO) */

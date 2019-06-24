@@ -43,10 +43,24 @@
 #include <stdbool.h>
 #include "cy_result.h"
 #include "cyhal_hw_types.h"
+#include "cyhal_hwmgr.h"
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
+
+/**
+* \addtogroup group_hal_dac_macros
+* \{
+*/
+
+/** Bad argument */
+#define CYHAL_DAC_RSLT_BAD_ARGUMENT (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_DAC, 0))
+/** Failed to initialize DAC */
+#define CYHAL_DAC_RSLT_FAILED_INIT (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_DAC, 1))
+
+/** \} group_hal_adc_macros */
+
 
 /**
 * \addtogroup group_hal_dac_functions
@@ -68,24 +82,21 @@ cy_rslt_t cyhal_dac_init(cyhal_dac_t *obj, cyhal_gpio_t pin);
  */
 void cyhal_dac_free(cyhal_dac_t *obj);
 
-/** Read the current voltage value on the pin, as a normalized unsigned 16bit value
+/** Set the output voltage, as a normalized unsigned 16-bit value
+ * (where 0 is the lowest value the DAC can output and 0xFFFF
+ * is the highest)
  *
- * @param[in]  obj        The analogin object
- * @return The maximum output voltage in terms of the number of milivolts
+ * @param[in] obj        The dac object
+ * @param[in] value The 16-bit output value to set
  */
-uint16_t cyhal_dac_get_max(cyhal_dac_t *obj);
+void cyhal_dac_write(const cyhal_dac_t *obj, uint16_t value);
 
-/** Set the output voltage, specified as unsigned 16-bit millivolts
+/** Read the current voltage value on the pin, as a normalized unsigned 
+ * 16-bit value (where 0 is the lowest value the DAC can output and 0xFFFF
+ * is the highest)
  *
- * @param[in] obj        The analogin object
- * @param[in] millivolts The unsigned 16-bit output voltage to be set
- */
-void cyhal_dac_write(const cyhal_dac_t *obj, uint16_t millivolts);
-
-/** Read the current voltage value on the pin, as a normalized unsigned 16bit value
- *
- * @param[in]  obj        The analogin object
- * @return The output voltage in terms of the number of milivolts
+ * @param[in]  obj        The dac object
+ * @return The 16-bit output value
  */
 uint16_t cyhal_dac_read(cyhal_dac_t *obj);
 

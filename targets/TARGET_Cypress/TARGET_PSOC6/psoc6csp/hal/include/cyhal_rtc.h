@@ -70,6 +70,17 @@ typedef enum {
 * \{
 */
 
+/** Defines which fields should be active for the alarm. */
+typedef struct
+{
+    uint8_t en_sec : 1; /** !< Enable match of seconds */
+    uint8_t en_min : 1; /** !< Enable match of minutes */
+    uint8_t en_hour : 1; /** !< Enable match of hours */
+    uint8_t en_day : 1; /** !< Enable match of day of week */
+    uint8_t en_date : 1; /** !< Enable match of date in month */
+    uint8_t en_month : 1; /** !< Enable match of month */
+} cyhal_alarm_active_t;
+
 /** Handler for RTC interrupts */
 typedef void (*cyhal_rtc_irq_handler)(void *handler_arg, cyhal_rtc_irq_event_t event);
 
@@ -85,7 +96,10 @@ typedef void (*cyhal_rtc_irq_handler)(void *handler_arg, cyhal_rtc_irq_event_t e
  *
  * Powerup the RTC in perpetration for access. This function must be called
  * before any other RTC functions ares called. This does not change the state
- * of the RTC. It just enables access to it.
+ * of the RTC. It just enables access to it. 
+ * NOTE: Before calling this, make sure all necessary System Clocks are setup 
+ * correctly. Generally this means making sure the RTC has access to a Crystal
+ * for optimal accuracy and operation in low power.
  *
  * @param[out] obj RTC object
  * @return The status of the init request
@@ -113,7 +127,7 @@ bool cyhal_rtc_is_enabled(cyhal_rtc_t *obj);
 /** Get the current time from the RTC peripheral
  *
  * @param[in]  obj RTC object
- * @param[out] time The current time
+ * @param[out] time The current time (see: https://en.cppreference.com/w/cpp/chrono/c/tm)
  * @return The status of the read request
  */
 cy_rslt_t cyhal_rtc_read(cyhal_rtc_t *obj, struct tm *time);
@@ -121,18 +135,19 @@ cy_rslt_t cyhal_rtc_read(cyhal_rtc_t *obj, struct tm *time);
 /** Write the current time in seconds to the RTC peripheral
  *
  * @param[in] obj  RTC object
- * @param[in] time The time to be set
+ * @param[in] time The time to be set (see: https://en.cppreference.com/w/cpp/chrono/c/tm)
  * @return The status of the write request
  */
 cy_rslt_t cyhal_rtc_write(cyhal_rtc_t *obj, const struct tm *time);
 
 /** Set an alarm for the specified time in seconds to the RTC peripheral
  *
- * @param[in] obj  RTC object
- * @param[in] time The alarm time to be set
+ * @param[in] obj    RTC object
+ * @param[in] time   The alarm time to be set (see: https://en.cppreference.com/w/cpp/chrono/c/tm)
+ * @param[in] active The set of fields that are checked to trigger the alarm
  * @return The status of the alarm request
  */
-cy_rslt_t cyhal_rtc_alarm(cyhal_rtc_t *obj, const struct tm *time);
+cy_rslt_t cyhal_rtc_alarm(cyhal_rtc_t *obj, const struct tm *time, cyhal_alarm_active_t active);
 
 /** The RTC alarm interrupt handler registration
  *

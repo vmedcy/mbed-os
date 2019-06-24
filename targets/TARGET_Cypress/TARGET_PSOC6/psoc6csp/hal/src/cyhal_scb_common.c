@@ -24,6 +24,8 @@
 
 #include "cyhal_scb_common.h"
 
+#ifdef CY_IP_MXSCB
+
 CySCB_Type* CY_SCB_BASE_ADDRESSES[CY_IP_MXSCB_INSTANCES] =
 {
 #ifdef SCB0
@@ -127,3 +129,5 @@ IRQn_Type CY_SCB_IRQ_N[CY_IP_MXSCB_INSTANCES] =
     scb_15_interrupt_IRQn,
 #endif
 };
+
+#endif /* CY_IP_MXSCB */

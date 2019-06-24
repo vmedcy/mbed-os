@@ -664,15 +664,11 @@ static inline uint32_t convert_direction(cyhal_timer_direction_t direction)
 
 cy_rslt_t cyhal_timer_init(cyhal_timer_t *obj, cyhal_gpio_t pin, const cyhal_clock_divider_t *clk)
 {
-    if (NULL == obj)
-        return CYHAL_TIMER_RSLT_ERR_BAD_ARGUMENT;
+    CY_ASSERT(NULL != obj);
+
     //TODO: Handle Trigger mux pin assignments
     if (CYHAL_NC_PIN_VALUE != pin)
         return CYHAL_TIMER_RSLT_ERR_BAD_ARGUMENT;
-
-    memset(obj, 0, sizeof(cyhal_timer_t));
-    obj->pin = pin;
-    obj->clock.div_num = CYHAL_RSC_INVALID;
 
     cy_rslt_t result = cyhal_hwmgr_allocate(CYHAL_RSC_TCPWM, &obj->resource);
     if (CY_RSLT_SUCCESS == result)
@@ -731,6 +727,8 @@ cy_rslt_t cyhal_timer_init(cyhal_timer_t *obj, cyhal_gpio_t pin, const cyhal_clo
 
 void cyhal_timer_free(cyhal_timer_t *obj)
 {
+    CY_ASSERT(NULL != obj);
+
     if (NULL != obj && NULL != obj->base)
     {
         cyhal_hwmgr_free(&obj->resource);

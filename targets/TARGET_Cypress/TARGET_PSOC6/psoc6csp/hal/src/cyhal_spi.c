@@ -24,7 +24,10 @@
 *******************************************************************************/
 
 #include <stdlib.h>
+#include <string.h>
 #include "cyhal_implementation.h"
+
+#ifdef CY_IP_MXSCB
 
 #define SPI_DEFAULT_SPEED               100000
 #define NUM_SPI_PORTS                   8
@@ -108,6 +111,10 @@ static void cyhal_spi_16_irq_handler(void) __attribute__((unused));
 static void cyhal_spi_17_irq_handler(void) __attribute__((unused));
 static void cyhal_spi_18_irq_handler(void) __attribute__((unused));
 static void cyhal_spi_19_irq_handler(void) __attribute__((unused));
+
+static cy_rslt_t cyhal_int_spi_frequency(cyhal_spi_t *obj, uint32_t hz);
+static void cyhal_set_ssel(cyhal_spi_t *obj);
+static void cyhal_reset_ssel(cyhal_spi_t *obj);
 
 static cyhal_spi_irq_event_t cyhal_convert_interrupt_cause(uint32_t pdl_cause)
 {
@@ -297,11 +304,9 @@ static void cyhal_spi_interrupts_dispatcher_IRQHandler(uint32_t spi_num)
 
     Cy_SCB_SPI_Interrupt(obj->base, &(obj->context));
 
-    if (PENDING_NONE == obj->pending)
-    {
-        /* Possibily Synchronous API */
+    if (!obj->is_async)
         return;
-    }
+
     if (0 == (Cy_SCB_SPI_GetTransferStatus(obj->base,  &obj->context) & CY_SCB_SPI_TRANSFER_ACTIVE))
     {
        if (obj->tx_buffer)
@@ -324,6 +329,8 @@ static void cyhal_spi_interrupts_dispatcher_IRQHandler(uint32_t spi_num)
        {
            /* Finish Async Transfer */
            obj->pending = PENDING_NONE;
+           obj->is_async = false;
+           cyhal_reset_ssel(obj);
        }
     }
 }
@@ -474,7 +481,7 @@ static void (*cyhal_spi_interrupts_dispatcher_table[CY_IP_MXSCB_INSTANCES])(void
 #endif
 };
 
-static void cyhal_spi_install_irq(cyhal_spi_t *obj)
+static cy_rslt_t cyhal_spi_install_irq(cyhal_spi_t *obj)
 {
     uint8_t idx = obj->resource.block_num;
     // default interrupt priority of SPI_DEFAULT_IRQ_PRIORITY (lowest possible priority).
@@ -482,6 +489,80 @@ static void cyhal_spi_install_irq(cyhal_spi_t *obj)
 
     Cy_SysInt_Init(&irqCfg, cyhal_spi_interrupts_dispatcher_table[idx]);
     NVIC_EnableIRQ(CY_SCB_IRQ_N[idx]);
+    cyhal_spi_config_structs[idx] = obj;
+
+    return CY_RSLT_SUCCESS;
+}
+
+static cy_rslt_t cyhal_free_resources(cyhal_spi_t *obj)
+{
+    cy_rslt_t error_accum = CY_RSLT_SUCCESS;
+    cy_rslt_t error;
+
+    if (NULL == obj)
+        return CYHAL_SPI_RSLT_BAD_ARGUMENT;
+
+    if (obj->resource.type != CYHAL_RSC_INVALID)
+    {
+        cyhal_hwmgr_free(&(obj->resource));
+    }
+    if (obj->pin_miso != NC)
+    {
+        error = cyhal_disconnect_pin(obj->pin_miso);
+        if (error == CY_RSLT_SUCCESS)
+        {
+            cyhal_resource_inst_t rsc = cyhal_utils_get_gpio_resource(obj->pin_miso);
+            cyhal_hwmgr_free(&rsc);
+        }
+        if (error != CY_RSLT_SUCCESS && error_accum == CY_RSLT_SUCCESS)
+        {
+            error_accum = error;
+        }
+    }
+    if (obj->pin_mosi != NC)
+    {
+        error = cyhal_disconnect_pin(obj->pin_mosi);
+        if (error == CY_RSLT_SUCCESS)
+        {
+            cyhal_resource_inst_t rsc = cyhal_utils_get_gpio_resource(obj->pin_mosi);
+            cyhal_hwmgr_free(&rsc);
+        }
+        if (error != CY_RSLT_SUCCESS && error_accum == CY_RSLT_SUCCESS)
+        {
+            error_accum = error;
+        }
+    }
+    if (obj->pin_sclk != NC)
+    {
+        error = cyhal_disconnect_pin(obj->pin_sclk);
+        if (error == CY_RSLT_SUCCESS)
+        {
+            cyhal_resource_inst_t rsc = cyhal_utils_get_gpio_resource(obj->pin_sclk);
+            cyhal_hwmgr_free(&rsc);
+        }
+        if (error != CY_RSLT_SUCCESS && error_accum == CY_RSLT_SUCCESS)
+        {
+            error_accum = error;
+        }
+    }
+    if (obj->pin_ssel != NC)
+    {
+        if (obj->is_slave) {
+            error = cyhal_disconnect_pin(obj->pin_ssel);
+            if (error == CY_RSLT_SUCCESS)
+            {
+                cyhal_resource_inst_t rsc = cyhal_utils_get_gpio_resource(obj->pin_ssel);
+                cyhal_hwmgr_free(&rsc);
+            }
+            if (error != CY_RSLT_SUCCESS && error_accum == CY_RSLT_SUCCESS)
+            {
+                error_accum = error;
+            }
+        } else {
+            cyhal_gpio_free(obj->pin_ssel);
+        }
+    }
+    return error_accum;
 }
 
 static cy_en_scb_spi_sclk_mode_t cyhal_convert_mode_sclk(cyhal_spi_mode_t mode)
@@ -526,26 +607,50 @@ static bool is_cyhal_mode_msb(cyhal_spi_mode_t mode)
 cy_rslt_t cyhal_spi_init(cyhal_spi_t *obj, cyhal_gpio_t mosi, cyhal_gpio_t miso, cyhal_gpio_t sclk, cyhal_gpio_t ssel, const cyhal_clock_divider_t *clk,
                         uint8_t bits, cyhal_spi_mode_t mode, bool is_slave)
 {
+    CY_ASSERT(NULL != obj);
+
     cy_rslt_t result = CY_RSLT_SUCCESS;
     cyhal_resource_inst_t pin_rsc;
 
-    if (NULL == obj)
-        return CYHAL_SPI_RSLT_BAD_ARGUMENT;
-
-    // If something go wrong, any resource not marked as invalid will be freed.
     // Explicitly marked not allocated resources as invalid to prevent freeing them.
-    memset(obj, 0, sizeof(cyhal_spi_t));
-
+    obj->resource.type = CYHAL_RSC_INVALID;
+    obj->pin_miso = CYHAL_NC_PIN_VALUE;
+    obj->pin_mosi = CYHAL_NC_PIN_VALUE;
+    obj->pin_sclk = CYHAL_NC_PIN_VALUE;
+    obj->pin_ssel = CYHAL_NC_PIN_VALUE;
+    
+    const cyhal_resource_pin_mapping_t *mosi_map;
+    const cyhal_resource_pin_mapping_t *miso_map;
+    const cyhal_resource_pin_mapping_t *sclk_map;
+    const cyhal_resource_pin_mapping_t *ssel_map;
+    
     // Reserve the SPI
-    const cyhal_resource_pin_mapping_t *mosi_map = CY_UTILS_GET_RESOURCE(mosi, cyhal_pin_map_scb_spi_mosi);
-    const cyhal_resource_pin_mapping_t *miso_map = CY_UTILS_GET_RESOURCE(miso, cyhal_pin_map_scb_spi_miso);
-    const cyhal_resource_pin_mapping_t *sclk_map = CY_UTILS_GET_RESOURCE(sclk, cyhal_pin_map_scb_spi_clk);
-    const cyhal_resource_pin_mapping_t *ssel_map = CY_UTILS_GET_RESOURCE(ssel, cyhal_pin_map_scb_spi_select0);
+    if (is_slave)
+    {
+        mosi_map = CY_UTILS_GET_RESOURCE(mosi, cyhal_pin_map_scb_spi_s_mosi);
+        miso_map = CY_UTILS_GET_RESOURCE(miso, cyhal_pin_map_scb_spi_s_miso);
+        sclk_map = CY_UTILS_GET_RESOURCE(sclk, cyhal_pin_map_scb_spi_s_clk);
+        ssel_map = CY_UTILS_GET_RESOURCE(ssel, cyhal_pin_map_scb_spi_s_select0);
+    }
+    else
+    {
+        mosi_map = CY_UTILS_GET_RESOURCE(mosi, cyhal_pin_map_scb_spi_m_mosi);
+        miso_map = CY_UTILS_GET_RESOURCE(miso, cyhal_pin_map_scb_spi_m_miso);
+        sclk_map = CY_UTILS_GET_RESOURCE(sclk, cyhal_pin_map_scb_spi_m_clk);
+        ssel_map = CY_UTILS_GET_RESOURCE(ssel, cyhal_pin_map_scb_spi_m_select0);
+    }
+    
     if (NULL == mosi_map || NULL == miso_map || NULL == sclk_map || NULL == ssel_map ||
         mosi_map->inst->block_num != miso_map->inst->block_num)
     {
         return CYHAL_SPI_RSLT_ERR_INVALID_PIN;
     }
+
+    cyhal_resource_inst_t spi_inst = *mosi_map->inst;
+    if (CY_RSLT_SUCCESS != (result = cyhal_hwmgr_reserve(&spi_inst)))
+        return result;
+
+    obj->resource = spi_inst;
 
     // reserve the MOSI pin
     if (result == CY_RSLT_SUCCESS)
@@ -583,11 +688,15 @@ cy_rslt_t cyhal_spi_init(cyhal_spi_t *obj, cyhal_gpio_t mosi, cyhal_gpio_t miso,
     //reseve the SSEL pin
     if (result == CY_RSLT_SUCCESS)
     {
-        pin_rsc = cyhal_utils_get_gpio_resource(ssel);
-        result = cyhal_hwmgr_reserve(&pin_rsc);
+        if (is_slave)
+        {
+            pin_rsc = cyhal_utils_get_gpio_resource(ssel);
+            result = cyhal_hwmgr_reserve(&pin_rsc);
+        }
     }
     if (result == CY_RSLT_SUCCESS)
     {
+        obj->is_slave = is_slave;
         obj->pin_ssel = ssel;
     }
 
@@ -597,7 +706,7 @@ cy_rslt_t cyhal_spi_init(cyhal_spi_t *obj, cyhal_gpio_t mosi, cyhal_gpio_t miso,
     {
         if (clk == NULL)
         {
-            result = cyhal_hwmgr_allocate_clock(&(obj->clock), CY_SYSCLK_DIV_8_BIT, true);
+            result = cyhal_hwmgr_allocate_clock(&(obj->clock), CY_SYSCLK_DIV_16_BIT, true);
         }
     }
     if (result == CY_RSLT_SUCCESS)
@@ -607,6 +716,8 @@ cy_rslt_t cyhal_spi_init(cyhal_spi_t *obj, cyhal_gpio_t mosi, cyhal_gpio_t miso,
         result = clock_assign_result == CY_SYSCLK_SUCCESS
             ? CY_RSLT_SUCCESS
             : CYHAL_SPI_RSLT_CLOCK_ERROR;
+        if (result == CY_RSLT_SUCCESS)
+            result = cyhal_spi_frequency(obj, SPI_DEFAULT_SPEED);
     }
     if (result == CY_RSLT_SUCCESS)
     {
@@ -615,6 +726,18 @@ cy_rslt_t cyhal_spi_init(cyhal_spi_t *obj, cyhal_gpio_t mosi, cyhal_gpio_t miso,
     if (result == CY_RSLT_SUCCESS)
     {
         result = cyhal_connect_pin(miso_map);
+    }
+    if (result == CY_RSLT_SUCCESS)
+    {
+        result = cyhal_connect_pin(sclk_map);
+    }
+    if (result == CY_RSLT_SUCCESS)
+    {
+        if (is_slave)
+            result = cyhal_connect_pin(ssel_map);
+        else {
+            result = cyhal_gpio_init(ssel, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, true);
+        }
     }
 
     bool configured = cyhal_hwmgr_is_configured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num);
@@ -633,10 +756,10 @@ cy_rslt_t cyhal_spi_init(cyhal_spi_t *obj, cyhal_gpio_t mosi, cyhal_gpio_t miso,
         result = cyhal_hwmgr_set_configured(obj->resource.type, obj->resource.block_num, obj->resource.channel_num);
         cyhal_spi_install_irq(obj);
     }
-    if (result != CY_RSLT_SUCCESS)
-    {
-        cyhal_spi_free(obj);
-    }
+    if (result == CY_RSLT_SUCCESS)
+        Cy_SCB_SPI_Enable(obj->base);
+    else
+        cyhal_free_resources(obj);
     return result;
 }
 
@@ -686,14 +809,13 @@ static uint32_t cyhal_divider_value(uint32_t frequency, uint32_t frac_bits)
     return ((cy_PeriClkFreqHz * (1 << frac_bits)) + (frequency / 2)) / frequency;
 }
 
-cy_rslt_t cyhal_spi_frequency(cyhal_spi_t *obj, uint32_t hz)
+static cy_rslt_t cyhal_int_spi_frequency(cyhal_spi_t *obj, uint32_t hz)
 {
     cy_en_sysclk_status_t status = CY_SYSCLK_SUCCESS;
+    cy_rslt_t result = CY_RSLT_SUCCESS;
 
     if (NULL == obj)
         return CYHAL_SPI_RSLT_BAD_ARGUMENT;
-
-    Cy_SCB_SPI_Disable(obj->base, NULL);
 
     if (status == CY_SYSCLK_SUCCESS) {
         Cy_SysClk_PeriphDisableDivider(obj->clock.div_type, obj->clock.div_num);
@@ -714,11 +836,45 @@ cy_rslt_t cyhal_spi_frequency(cyhal_spi_t *obj, uint32_t hz)
                                                 cyhal_divider_value(hz * SPI_OVERSAMPLE, 0));
         }
 
-        Cy_SysClk_PeriphEnableDivider(obj->clock.div_type, obj->clock.div_num);
+        if (CY_SYSCLK_SUCCESS != status)
+            result = CYHAL_SPI_RSLT_CLOCK_ERROR;
+
+        if (CY_RSLT_SUCCESS == result)
+            Cy_SysClk_PeriphEnableDivider(obj->clock.div_type, obj->clock.div_num);
     }
 
+    return result;
+}
+
+#define SSEL_ACTIVE      ( 0 )
+#define SSEL_INACTIVE    ( 1 )
+static void cyhal_set_ssel(cyhal_spi_t *obj)
+{
+    if (!obj->is_slave) {
+       cyhal_gpio_write(obj->pin_ssel, SSEL_ACTIVE);
+    }
+}
+
+static void cyhal_reset_ssel(cyhal_spi_t *obj)
+{
+    if (!obj->is_slave) {
+       cyhal_gpio_write(obj->pin_ssel, SSEL_INACTIVE);
+    }
+}
+
+cy_rslt_t cyhal_spi_frequency(cyhal_spi_t *obj, uint32_t hz)
+{
+    cy_rslt_t result = CY_RSLT_SUCCESS;
+
+    if (NULL == obj)
+        return CYHAL_SPI_RSLT_BAD_ARGUMENT;
+
+    Cy_SCB_SPI_Disable(obj->base, NULL);
+
+    result = cyhal_int_spi_frequency(obj, hz);
+
     Cy_SCB_SPI_Enable(obj->base);
-    return CY_RSLT_SUCCESS;
+    return result;
 }
 
 cy_rslt_t cyhal_spi_read(cyhal_spi_t *obj, uint8_t *value)
@@ -727,7 +883,7 @@ cy_rslt_t cyhal_spi_read(cyhal_spi_t *obj, uint8_t *value)
 
     if (NULL == obj)
         return CYHAL_SPI_RSLT_BAD_ARGUMENT;
-
+    
     while (read_value == CY_SCB_SPI_RX_NO_DATA)
     {
         read_value = Cy_SCB_SPI_Read(obj->base);
@@ -739,22 +895,42 @@ cy_rslt_t cyhal_spi_read(cyhal_spi_t *obj, uint8_t *value)
 cy_rslt_t cyhal_spi_write(cyhal_spi_t *obj, uint32_t value)
 {
     uint32_t count = 0;
+    uint32_t rx_count = 0;
+    cy_rslt_t result = CY_RSLT_SUCCESS;
 
     if (NULL == obj)
         return CYHAL_SPI_RSLT_BAD_ARGUMENT;
+ 
+    if (!obj->is_slave) {
+        rx_count = Cy_SCB_SPI_GetNumInRxFifo(obj->base);
+        if (rx_count == Cy_SCB_GetFifoSize(obj->base))
+           return CYHAL_SPI_RSLT_BAD_ARGUMENT;
+        cyhal_set_ssel(obj);
+    }
 
     while (count == 0)
     {
         count = Cy_SCB_SPI_Write(obj->base, value);
     }
-    return CY_RSLT_SUCCESS;
+
+    if (!obj->is_slave) {
+        while (Cy_SCB_SPI_IsTxComplete(obj->base) == false)
+          ;
+        while (( Cy_SCB_SPI_GetNumInRxFifo(obj->base) == rx_count )
+                 && (rx_count != Cy_SCB_GetFifoSize(obj->base)))
+        {
+            /* Wait for RX FIFO not empty */
+        }
+        cyhal_reset_ssel(obj);
+    }
+
+    return result;
 }
 
 #define MAX_DUMMY_SIZE    ( 128 )
 
 cy_rslt_t cyhal_spi_transfer(cyhal_spi_t *obj, const uint8_t *tx, size_t tx_length, uint8_t *rx, size_t rx_length, uint8_t write_fill)
 {
-    uint32_t spi_status;
     uint32_t remaining_rx, remaining_tx, xfr_length;
     uint8_t  dummy[MAX_DUMMY_SIZE];
     uint8_t *bufptr;
@@ -762,46 +938,31 @@ cy_rslt_t cyhal_spi_transfer(cyhal_spi_t *obj, const uint8_t *tx, size_t tx_leng
     if (NULL == obj)
         return CYHAL_SPI_RSLT_BAD_ARGUMENT;
 
+    cyhal_set_ssel(obj);
+
     if (tx_length > rx_length)
     {
         xfr_length = (uint32_t) rx_length;
         remaining_rx = 0;
         remaining_tx = (uint32_t) (tx_length - rx_length);
-        spi_status = Cy_SCB_SPI_Transfer(obj->base, (uint8_t *) tx, rx, xfr_length, &(obj->context));
+        Cy_SCB_SPI_Transfer(obj->base, (uint8_t *) tx, rx, xfr_length, &(obj->context));
 
-        while ( spi_status == CY_SCB_SPI_SUCCESS )
-        {
-           spi_status = Cy_SCB_SPI_GetTransferStatus(obj->base, &(obj->context));
+        while ( CY_SCB_SPI_TRANSFER_ACTIVE & Cy_SCB_SPI_GetTransferStatus(obj->base, &(obj->context))) { };
 
-           if ((spi_status & CY_SCB_SPI_TRANSFER_CMPLT_EVENT)== CY_SCB_SPI_TRANSFER_CMPLT_EVENT )
-               break;
-        }
         bufptr = obj->data_bits == 8 ?
                  (uint8_t *)(((uint8_t *)tx) + xfr_length) :
                  (uint8_t *)(((uint16_t *)tx) + xfr_length);
 
-        spi_status = Cy_SCB_SPI_Transfer(obj->base, bufptr, NULL, remaining_tx, &(obj->context));
+        Cy_SCB_SPI_Transfer(obj->base, bufptr, NULL, remaining_tx, &(obj->context));
 
-        while ( spi_status == CY_SCB_SPI_SUCCESS )
-        {
-          spi_status = Cy_SCB_SPI_GetTransferStatus(obj->base, &(obj->context));
-
-          if ((spi_status & CY_SCB_SPI_TRANSFER_CMPLT_EVENT)== CY_SCB_SPI_TRANSFER_CMPLT_EVENT )
-              break;
-        }
+        while ( CY_SCB_SPI_TRANSFER_ACTIVE & Cy_SCB_SPI_GetTransferStatus(obj->base, &(obj->context))) { };
     } else if (tx_length < rx_length)
     {
         xfr_length = (uint32_t) tx_length;
         remaining_rx = (uint32_t) (rx_length - tx_length);
-        spi_status = Cy_SCB_SPI_Transfer(obj->base, (uint8_t *) tx, rx, xfr_length, &(obj->context));
+        Cy_SCB_SPI_Transfer(obj->base, (uint8_t *) tx, rx, xfr_length, &(obj->context));
 
-        while ( spi_status == CY_SCB_SPI_SUCCESS )
-        {
-           spi_status = Cy_SCB_SPI_GetTransferStatus(obj->base, &(obj->context));
-
-           if ((spi_status & CY_SCB_SPI_TRANSFER_CMPLT_EVENT)== CY_SCB_SPI_TRANSFER_CMPLT_EVENT )
-               break;
-        }
+        while ( CY_SCB_SPI_TRANSFER_ACTIVE & Cy_SCB_SPI_GetTransferStatus(obj->base, &(obj->context))) { };
         memset(dummy, write_fill, sizeof(dummy));
         while (remaining_rx)
         {
@@ -811,38 +972,28 @@ cy_rslt_t cyhal_spi_transfer(cyhal_spi_t *obj, const uint8_t *tx, size_t tx_leng
                        (uint8_t *)(((uint8_t *)rx) + xfr_length) :
                        (uint8_t *)(((uint16_t *)rx) + xfr_length);
 
-               spi_status = Cy_SCB_SPI_Transfer(obj->base, dummy, bufptr, remaining_rx, &(obj->context));
+               Cy_SCB_SPI_Transfer(obj->base, dummy, bufptr, remaining_rx, &(obj->context));
                remaining_rx = 0;
            } else {
                bufptr = obj->data_bits == 8 ?
                        (uint8_t *)(((uint8_t *)rx) + xfr_length) :
                        (uint8_t *)(((uint16_t *)rx) + xfr_length);
 
-               spi_status = Cy_SCB_SPI_Transfer(obj->base, dummy, bufptr, MAX_DUMMY_SIZE, &(obj->context));
+               Cy_SCB_SPI_Transfer(obj->base, dummy, bufptr, MAX_DUMMY_SIZE, &(obj->context));
                remaining_rx -= MAX_DUMMY_SIZE;
                xfr_length += MAX_DUMMY_SIZE;
            }
-           while ( spi_status == CY_SCB_SPI_SUCCESS )
-           {
-              spi_status = Cy_SCB_SPI_GetTransferStatus(obj->base, &(obj->context));
 
-              if ((spi_status & CY_SCB_SPI_TRANSFER_CMPLT_EVENT)== CY_SCB_SPI_TRANSFER_CMPLT_EVENT )
-                  break;
-           }
+        while ( CY_SCB_SPI_TRANSFER_ACTIVE & Cy_SCB_SPI_GetTransferStatus(obj->base, &(obj->context))) { };
        }
     } else
     {
         xfr_length = (uint32_t) tx_length;
-        spi_status = Cy_SCB_SPI_Transfer(obj->base, (uint8_t *) tx, rx, xfr_length, &(obj->context));
+        Cy_SCB_SPI_Transfer(obj->base, (uint8_t *) tx, rx, xfr_length, &(obj->context));
 
-        while ( spi_status == CY_SCB_SPI_SUCCESS )
-        {
-           spi_status = Cy_SCB_SPI_GetTransferStatus(obj->base, &(obj->context));
-
-           if ((spi_status & CY_SCB_SPI_TRANSFER_CMPLT_EVENT)== CY_SCB_SPI_TRANSFER_CMPLT_EVENT )
-               break;
-        }
+        while ( CY_SCB_SPI_TRANSFER_ACTIVE & Cy_SCB_SPI_GetTransferStatus(obj->base, &(obj->context))) { };
     }
+    cyhal_reset_ssel(obj);
     return CY_RSLT_SUCCESS;
 }
 
@@ -854,6 +1005,9 @@ cy_rslt_t cyhal_spi_transfer_async(cyhal_spi_t *obj, const uint8_t *tx, size_t t
     if (NULL == obj)
         return CYHAL_SPI_RSLT_BAD_ARGUMENT;
 
+    cyhal_set_ssel(obj);
+    obj->is_async = true;
+    
     /* Setup transfer */
     if (tx_length > rx_length) {
         if (rx_length > 0) {
@@ -952,3 +1106,5 @@ void cyhal_spi_irq_enable(cyhal_spi_t *obj, cyhal_spi_irq_event_t event, bool en
         obj->irq_cause &= ~event;
     }
 }
+
+#endif /* CY_IP_MXSCB */

@@ -28,6 +28,8 @@
 #include "cyhal_implementation.h"
 #include "cy_rtc.h"
 
+#ifdef CY_IP_MXS40SRSS_RTC_INSTANCES
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -170,22 +172,22 @@ cy_rslt_t cyhal_rtc_write(cyhal_rtc_t *obj, const struct tm *time)
     return rslt;
 }
 
-cy_rslt_t cyhal_rtc_alarm(cyhal_rtc_t *obj, const struct tm *time)
+cy_rslt_t cyhal_rtc_alarm(cyhal_rtc_t *obj, const struct tm *time, cyhal_alarm_active_t active)
 {
     // Note: the hardware does not support year matching
     cy_stc_rtc_alarm_t alarm = {
     .sec = time->tm_sec,
-    .secEn = CY_RTC_ALARM_ENABLE,
+    .secEn = active.en_sec ? CY_RTC_ALARM_ENABLE : CY_RTC_ALARM_DISABLE,
     .min = time->tm_min,
-    .minEn = CY_RTC_ALARM_ENABLE,
+    .minEn = active.en_min ? CY_RTC_ALARM_ENABLE : CY_RTC_ALARM_DISABLE,
     .hour = time->tm_hour,
-    .hourEn = CY_RTC_ALARM_ENABLE,
-    .dayOfWeek = 1,
-    .dayOfWeekEn = CY_RTC_ALARM_DISABLE,
+    .hourEn = active.en_hour ? CY_RTC_ALARM_ENABLE : CY_RTC_ALARM_DISABLE,
+    .dayOfWeek = time->tm_wday + 1,
+    .dayOfWeekEn = active.en_day ? CY_RTC_ALARM_ENABLE : CY_RTC_ALARM_DISABLE,
     .date = time->tm_mday,
-    .dateEn = CY_RTC_ALARM_ENABLE,
+    .dateEn = active.en_date ? CY_RTC_ALARM_ENABLE : CY_RTC_ALARM_DISABLE,
     .month = time->tm_mon + 1,
-    .monthEn = CY_RTC_ALARM_ENABLE,
+    .monthEn = active.en_month ? CY_RTC_ALARM_ENABLE : CY_RTC_ALARM_DISABLE,
     .almEn = CY_RTC_ALARM_ENABLE
     };
     return (cy_rslt_t)Cy_RTC_SetAlarmDateAndTime(&alarm, CY_RTC_ALARM_1);
@@ -208,3 +210,5 @@ void cyhal_rtc_irq_enable(cyhal_rtc_t *obj, cyhal_rtc_irq_event_t event, bool en
 #if defined(__cplusplus)
 }
 #endif
+
+#endif /* CY_IP_MXS40SRSS_RTC_INSTANCES */

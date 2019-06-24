@@ -1,8 +1,9 @@
 /***************************************************************************//**
-* \file cyhal_trng_impl.h
+* \file cyhal_analog_common.c
 *
 * \brief
-* Provides an implementation of the Cypress TRNG HAL API.
+* Provides common functionality that needs to be shared among all drivers that
+* interact with the Programmable Analog Subsystem.
 *
 ********************************************************************************
 * \copyright
@@ -22,38 +23,41 @@
 * limitations under the License.
 *******************************************************************************/
 
-#pragma once
+#include "cy_pdl.h"
 
-#include "cyhal_trng.h"
-
-#if defined(CY_IP_MXCRYPTO)
+#if defined(CY_IP_MXS40PASS_INSTANCES)
 
 #if defined(__cplusplus)
-extern "C" {
-#endif /* __cplusplus */
-
-/* Initialization polynomial values for True Random Number Generator */
-#define CYHAL_GARO31_INITSTATE          (0x04c11db7UL)
-#define CYHAL_FIRO31_INITSTATE          (0x04c11db7UL)
-
-#define MAX_TRNG_BIT_SIZE               (32UL)
-
-static inline uint32_t cyhal_trng_generate_internal(const cyhal_trng_t *obj)
+extern "C"
 {
-    CY_ASSERT(NULL != obj);
-    uint32_t value;
-    cy_en_crypto_status_t status = Cy_Crypto_Core_Trng(
-        obj->base, CYHAL_GARO31_INITSTATE, CYHAL_FIRO31_INITSTATE, MAX_TRNG_BIT_SIZE, &value);
-    (void)status;
-    CY_ASSERT(CY_CRYPTO_SUCCESS == status);
-    return value;
+#endif
+
+static uint16_t cyhal_analog_ref_count = 0;
+
+void cyhal_analog_init()
+{
+    if(cyhal_analog_ref_count == 0)
+    {
+        Cy_SysAnalog_Init(&Cy_SysAnalog_Fast_Local);
+        Cy_SysAnalog_Enable();
+    }
+
+    ++cyhal_analog_ref_count;
 }
 
-#define cyhal_trng_generate(obj) cyhal_trng_generate_internal(obj)
-
+void cyhal_analog_free()
+{
+    CY_ASSERT(cyhal_analog_ref_count > 0);
+    --cyhal_analog_ref_count;
+    if(cyhal_analog_ref_count)
+    {
+        Cy_SysAnalog_Disable();
+        Cy_SysAnalog_DeInit();
+    }
+}
 
 #if defined(__cplusplus)
 }
-#endif /* __cplusplus */
+#endif
 
-#endif /* defined(CY_IP_MXCRYPTO) */
+#endif /* defined(CY_IP_MXS40PASS_INSTANCES) */

@@ -26,6 +26,8 @@
 #include "cyhal_gpio_impl.h"
 #include "cyhal_hwmgr.h"
 
+#ifdef CY_IP_MXS40IOSS
+
 #if defined(__cplusplus)
 extern "C" {
 #endif /* __cplusplus */
@@ -299,3 +301,5 @@ void cyhal_gpio_irq_enable(cyhal_gpio_t pin, cyhal_gpio_irq_event_t event, bool 
 #if defined(__cplusplus)
 }
 #endif /* __cplusplus */
+
+#endif /* CY_IP_MXS40IOSS */

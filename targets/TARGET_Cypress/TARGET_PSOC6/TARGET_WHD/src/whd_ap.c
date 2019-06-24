@@ -191,18 +191,29 @@ uint32_t whd_wifi_init_ap(whd_interface_t ifp, whd_ssid_t *ssid, whd_security_t 
     whd_buffer_t response;
     whd_buffer_t buffer;
     uint32_t *data;
-    whd_driver_t whd_driver = ifp->whd_driver;
-    whd_ap_int_info_t *ap = &whd_driver->ap_info;
-    uint32_t bss_index = ifp->bsscfgidx;
-    whd_interface_t prim_ifp = whd_get_primary_interface(whd_driver);
-    /* Get the Chip Number */
-    uint16_t wlan_chip_id = whd_chip_get_chip_id(whd_driver);
+    whd_ap_int_info_t *ap;
+    uint32_t bss_index;
+    uint16_t wlan_chip_id;
+    uint16_t event_entry = (uint16_t)0xFF;
+    whd_interface_t prim_ifp;
+    whd_driver_t whd_driver;
 
+    CHECK_IFP_NULL(ifp);
+
+    whd_driver = ifp->whd_driver;
+
+    CHECK_DRIVER_NULL(whd_driver);
+
+    prim_ifp = whd_get_primary_interface(whd_driver);
     if (prim_ifp == NULL)
     {
         WPRINT_WHD_ERROR( ("%s failed at %d \n", __func__, __LINE__) );
         return WHD_UNKNOWN_INTERFACE;
     }
+    ap = &whd_driver->ap_info;
+    bss_index = ifp->bsscfgidx;
+    /* Get the Chip Number */
+    wlan_chip_id = whd_chip_get_chip_id(whd_driver);
 
     /* Configuration need to come from some structure whd_driver */
 #if 0
@@ -317,29 +328,15 @@ uint32_t whd_wifi_init_ap(whd_interface_t ifp, whd_ssid_t *ssid, whd_security_t 
 
     /* Register for interested events */
     CHECK_RETURN_WITH_SEMAPHORE(whd_management_set_event_handler(ifp, apsta_events, whd_handle_apsta_event,
-                                                                 NULL), &ap->whd_wifi_sleep_flag);
-
-    if (prim_ifp != ifp)
+                                                                 NULL, &event_entry), &ap->whd_wifi_sleep_flag);
+    if (event_entry >= WHD_EVENT_HANDLER_LIST_SIZE)
     {
-        /* Turn APSTA on */
-        data = (uint32_t *)whd_cdc_get_iovar_buffer(whd_driver, &buffer, (uint16_t)sizeof(*data), IOVAR_STR_APSTA);
-        if (data == NULL)
-        {
-            whd_assert("Could not get buffer for IOVAR", 0 != 0);
-            return WHD_BUFFER_ALLOC_FAIL;
-        }
-        *data = htod32( (uint32_t)1 );
-        /* This will fail on manufacturing test build since it does not have APSTA available */
-        CHECK_RETURN(whd_cdc_send_iovar(prim_ifp, CDC_SET, buffer, 0) );
-
-        if (ifp->state == WHD_FALSE)
-        {
-            CHECK_RETURN_WITH_SEMAPHORE(whd_rtos_get_semaphore(&ap->whd_wifi_sleep_flag, (uint32_t)10000,
-                                                               WHD_FALSE), &ap->whd_wifi_sleep_flag);
-            ifp->state = WHD_TRUE;
-        }
+        WPRINT_WHD_DEBUG( ("Event handler registration failed for AP events in function %s and line %d\n", __func__,
+                           __LINE__) );
+        return WHD_UNFINISHED;
     }
-    else
+    ifp->event_reg_list[WHD_AP_EVENT_ENTRY] = event_entry;
+    if (prim_ifp == ifp)
     {
         /* Set AP mode */
         data = (uint32_t *)whd_cdc_get_ioctl_buffer(whd_driver, &buffer, (uint16_t)4);
@@ -559,27 +556,6 @@ uint32_t whd_wifi_init_ap(whd_interface_t ifp, whd_ssid_t *ssid, whd_security_t 
         }
     }
 
-    if (wlan_chip_id == 4334)
-    {
-        /* Set the GMode */
-        data = whd_cdc_get_ioctl_buffer(whd_driver, &buffer, (uint16_t)4);
-    }
-    else
-    {
-        /* Set the GMode */
-        data = (uint32_t *)whd_cdc_get_ioctl_buffer(whd_driver, &buffer, (uint16_t)4);
-    }
-
-    CHECK_IOCTL_BUFFER_WITH_SEMAPHORE(data, &ap->whd_wifi_sleep_flag);
-    *data = htod32( (uint32_t)GMODE_AUTO );
-    result = whd_cdc_send_ioctl(ifp, CDC_SET, WLC_SET_GMODE, buffer, 0);
-    if ( (result != WHD_SUCCESS) && (result != WHD_WLAN_ASSOCIATED) )
-    {
-        whd_assert("start_ap: Failed to set GMode\n", 0 == 1);
-        (void)whd_rtos_deinit_semaphore(&ap->whd_wifi_sleep_flag);
-        return result;
-    }
-
     /* Set the multicast transmission rate to 11 Mbps rather than the default 1 Mbps */
     data = (uint32_t *)whd_cdc_get_iovar_buffer(whd_driver, &buffer, (uint16_t)4, IOVAR_STR_2G_MULTICAST_RATE);
     CHECK_IOCTL_BUFFER(data);
@@ -593,20 +569,6 @@ uint32_t whd_wifi_init_ap(whd_interface_t ifp, whd_ssid_t *ssid, whd_security_t 
     {
         CHECK_RETURN_WITH_SEMAPHORE(whd_cdc_send_iovar(ifp, CDC_SET, buffer, NULL), &ap->whd_wifi_sleep_flag);
     }
-
-    /* Set DTIM period */
-    if (wlan_chip_id == 4334)
-    {
-        data = whd_cdc_get_ioctl_buffer(whd_driver, &buffer, (uint16_t)4);
-    }
-    else
-    {
-        data = (uint32_t *)whd_cdc_get_ioctl_buffer(whd_driver, &buffer, (uint16_t)4);
-    }
-    CHECK_IOCTL_BUFFER_WITH_SEMAPHORE(data, &ap->whd_wifi_sleep_flag);
-    *data = htod32( (uint32_t)WHD_DEFAULT_SOFT_AP_DTIM_PERIOD );
-    CHECK_RETURN_WITH_SEMAPHORE(whd_cdc_send_ioctl(ifp, CDC_SET, WLC_SET_DTIMPRD, buffer,
-                                                   0), &ap->whd_wifi_sleep_flag);
 
     /* Configuring the max number of associated STA in SoftAP mode. */
     result = whd_wifi_set_iovar_value(ifp, IOVAR_STR_MAX_ASSOC, WHD_WIFI_CONFIG_AP_MAX_ASSOC);
@@ -629,16 +591,27 @@ uint32_t whd_wifi_start_ap(whd_interface_t ifp)
 {
     whd_buffer_t buffer;
     uint32_t *data;
-    whd_driver_t whd_driver = ifp->whd_driver;
-    uint16_t wlan_chip_id = whd_chip_get_chip_id(whd_driver);
+    uint16_t wlan_chip_id;
+    whd_ap_int_info_t *ap;
+    whd_interface_t prim_ifp;
+    whd_driver_t whd_driver;
 
-    whd_ap_int_info_t *ap = &whd_driver->ap_info;
-    whd_interface_t prim_ifp = whd_get_primary_interface(whd_driver);
+    CHECK_IFP_NULL(ifp);
+
+    whd_driver = ifp->whd_driver;
+
+    CHECK_DRIVER_NULL(whd_driver);
+
+    prim_ifp = whd_get_primary_interface(whd_driver);
 
     if (prim_ifp == NULL)
     {
         return WHD_UNKNOWN_INTERFACE;
     }
+
+    ap = &whd_driver->ap_info;
+    /* Get the Chip Number */
+    wlan_chip_id = whd_chip_get_chip_id(whd_driver);
 
     data = (uint32_t *)whd_cdc_get_iovar_buffer(whd_driver, &buffer, (uint16_t)8, IOVAR_STR_BSS);
     CHECK_IOCTL_BUFFER_WITH_SEMAPHORE(data, &ap->whd_wifi_sleep_flag);
@@ -670,8 +643,16 @@ uint32_t whd_wifi_stop_ap(whd_interface_t ifp)
     whd_buffer_t response;
     whd_result_t result;
     whd_result_t result2;
-    whd_driver_t whd_driver = ifp->whd_driver;
-    whd_interface_t prim_ifp = whd_get_primary_interface(whd_driver);
+    whd_interface_t prim_ifp;
+    whd_driver_t whd_driver;
+
+    CHECK_IFP_NULL(ifp);
+
+    whd_driver = ifp->whd_driver;
+
+    CHECK_DRIVER_NULL(whd_driver);
+
+    prim_ifp = whd_get_primary_interface(whd_driver);
 
     if (prim_ifp == NULL)
     {
@@ -754,7 +735,8 @@ uint32_t whd_wifi_stop_ap(whd_interface_t ifp)
     CHECK_RETURN_WITH_SEMAPHORE(whd_cdc_send_ioctl(ifp, CDC_SET, WLC_SET_AP, buffer, 0),
                                 &whd_driver->ap_info.whd_wifi_sleep_flag);
 
-    CHECK_RETURN(whd_management_set_event_handler(ifp, apsta_events, NULL, NULL) );
+    CHECK_RETURN(whd_wifi_deregister_event_handler(ifp, ifp->event_reg_list[WHD_AP_EVENT_ENTRY]) );
+    ifp->event_reg_list[WHD_AP_EVENT_ENTRY] = (uint16_t)0xFF;
     whd_wifi_set_ap_is_up(whd_driver, WHD_FALSE);
 
     ifp->role = WHD_INVALID_ROLE;

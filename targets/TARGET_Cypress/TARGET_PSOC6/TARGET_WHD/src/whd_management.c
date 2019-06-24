@@ -67,45 +67,44 @@ whd_result_t whd_add_interface(whd_driver_t whd_driver, uint8_t bsscfgidx, uint8
 {
     whd_interface_t ifp;
 
-    if (whd_driver->iflist[bsscfgidx] != NULL)
+    if (bsscfgidx < WHD_INTERFACE_MAX)
     {
-        *ifpp = whd_driver->iflist[bsscfgidx];
+        if (whd_driver->iflist[bsscfgidx] != NULL)
+        {
+            *ifpp = whd_driver->iflist[bsscfgidx];
+            return WHD_SUCCESS;
+        }
+
+        if ( (ifp = (whd_interface_t)malloc(sizeof(struct whd_interface) ) ) != NULL )
+        {
+            *ifpp = ifp;
+            ifp->whd_driver = whd_driver;
+
+            /* Add a interface name */
+            /* strncpy doesn't terminate with null if the src string is long */
+            ifp->if_name[WHD_MSG_IFNAME_MAX - 1] = '\0';
+            strncpy(ifp->if_name, name, sizeof(ifp->if_name) - 1);
+            memset(ifp->event_reg_list, 0xFF, sizeof(ifp->event_reg_list) );
+            /* Primary interface takes 0 as default */
+            ifp->ifidx = ifidx;
+            ifp->bsscfgidx = bsscfgidx;
+
+            if (mac_addr != NULL)
+                memcpy(ifp->mac_addr.octet, mac_addr->octet, sizeof(whd_mac_t) );
+            else
+                memset(ifp->mac_addr.octet, 0, sizeof(whd_mac_t) );
+
+            whd_driver->iflist[bsscfgidx] = ifp;
+            whd_driver->if2ifp[ifidx] = bsscfgidx;
+        }
+        else
+        {
+            return WHD_MALLOC_FAILURE;
+        }
+
         return WHD_SUCCESS;
     }
-
-    if ( (ifp = (whd_interface_t)malloc(sizeof(struct whd_interface) ) ) != NULL )
-    {
-        *ifpp = ifp;
-        ifp->whd_driver = whd_driver;
-
-        /* Add a interface name */
-        /* strncpy doesn't terminate with null if the src string is long */
-        ifp->if_name[WHD_MSG_IFNAME_MAX - 1] = '\0';
-        strncpy(ifp->if_name, name, sizeof(ifp->if_name) - 1);
-
-        /* Primary interface takes 0 as default */
-        ifp->ifidx = ifidx;
-        ifp->bsscfgidx = bsscfgidx;
-
-        if (ifp->bsscfgidx == 0)
-            ifp->state = WHD_TRUE;
-        else
-            ifp->state = WHD_FALSE;
-
-        if (mac_addr != NULL)
-            memcpy(ifp->mac_addr.octet, mac_addr->octet, sizeof(whd_mac_t) );
-        else
-            memset(ifp->mac_addr.octet, 0, sizeof(whd_mac_t) );
-
-        whd_driver->iflist[bsscfgidx] = ifp;
-        whd_driver->if2ifp[ifidx] = bsscfgidx;
-    }
-    else
-    {
-        return WHD_MALLOC_FAILURE;
-    }
-
-    return WHD_SUCCESS;
+    return WHD_INVALID_INTERFACE;
 }
 
 whd_result_t whd_add_primary_interface(whd_driver_t whd_driver, whd_interface_t *ifpp)
@@ -113,7 +112,7 @@ whd_result_t whd_add_primary_interface(whd_driver_t whd_driver, whd_interface_t 
     return whd_add_interface(whd_driver, 0, 0, "wlan0", NULL, ifpp);
 }
 
-whd_result_t whd_add_secondary_interface(whd_driver_t whd_driver, whd_mac_t *mac_addr, whd_interface_t *ifpp)
+uint32_t whd_add_secondary_interface(whd_driver_t whd_driver, whd_mac_t *mac_addr, whd_interface_t *ifpp)
 {
     return whd_add_interface(whd_driver, 1, 1, "wlan1", mac_addr, ifpp);
 }
@@ -126,12 +125,12 @@ uint32_t whd_init(whd_driver_t *whd_driver_ptr, whd_init_config_t *whd_init_conf
     if (whd_init_config->thread_stack_size <  MINIMUM_WHD_STACK_SIZE)
     {
         WPRINT_WHD_INFO( ("Stack size is less than minimum stack size required.\n") );
-        return WHD_WLAN_ERROR;
+        return WHD_WLAN_BUFTOOSHORT;
     }
     if (!buffer_ops || !network_ops || !resource_ops)
     {
         WPRINT_WHD_INFO( ("Function pointers not provided .\n") );
-        return WHD_WLAN_ERROR;
+        return WHD_WLAN_NOFUNCTION;
     }
 
     if ( (whd_drv = (whd_driver_t)malloc(sizeof(struct whd_driver) ) ) != NULL )
@@ -165,6 +164,7 @@ uint32_t whd_init(whd_driver_t *whd_driver_ptr, whd_init_config_t *whd_init_conf
 
 uint32_t whd_deinit(whd_interface_t ifp)
 {
+    uint8_t i;
     whd_driver_t whd_driver = ifp->whd_driver;
 
     if (whd_driver->internal_info.whd_wlan_status.state != WLAN_UP)
@@ -179,8 +179,15 @@ uint32_t whd_deinit(whd_interface_t ifp)
     /* Update wlan status */
     whd_driver->internal_info.whd_wlan_status.state = WLAN_DOWN;
 
+    for (i = 0; i < WHD_INTERFACE_MAX; i++)
+    {
+        if (whd_driver->iflist[i] != NULL)
+        {
+            free(whd_driver->iflist[i]);
+        }
+    }
+
     free(whd_driver);
-    free(ifp);
 
     return WHD_SUCCESS;
 }
@@ -231,10 +238,6 @@ whd_result_t whd_management_wifi_platform_init(whd_driver_t whd_driver, whd_coun
         WPRINT_WHD_ERROR( ("Could not initialize WHD thread\n") );
         return retval;
     }
-    /* Register interrupt handler for SDIO/SPI */
-    whd_bus_irq_register(whd_driver);
-    /* Enable SDIO/SPI interrupt */
-    whd_bus_irq_enable(whd_driver, WHD_TRUE);
 
     return WHD_SUCCESS;
 }
@@ -392,6 +395,7 @@ uint32_t whd_wifi_on(whd_driver_t whd_driver, whd_interface_t *ifpp)
     /* Send UP command */
     CHECK_RETURN(whd_wifi_set_up(ifp) );
 
+    whd_wifi_enable_powersave_with_throughput(ifp, 0);
     /* Set the GMode */
     data = (uint32_t *)whd_cdc_get_ioctl_buffer(whd_driver, &buffer, (uint16_t)4);
     if (data == NULL)

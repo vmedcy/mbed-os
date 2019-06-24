@@ -375,6 +375,8 @@ extern whd_result_t whd_ensure_wlan_bus_is_up(whd_driver_t whd_driver);
 
 extern whd_result_t whd_chip_specific_init(whd_driver_t whd_driver);
 extern whd_result_t whd_chip_specific_socsram_init(whd_driver_t whd_driver);
+extern whd_result_t whd_wifi_read_wlan_log(whd_driver_t whd_driver, char *buffer, uint32_t buffer_size);
+extern whd_result_t whd_wifi_print_whd_log(whd_driver_t whd_driver);
 extern whd_result_t whd_wifi_read_wlan_log_unsafe(whd_driver_t whd_driver, uint32_t wlan_shared_address, char *buffer,
                                                   uint32_t buffer_size);
 

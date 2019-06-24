@@ -1,18 +1,5 @@
 /*
- * Copyright 2019 Cypress Semiconductor Corporation
- * SPDX-License-Identifier: Apache-2.0
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * $ Copyright Cypress Semiconductor Apache2 $
  */
 
 /** @file
@@ -27,14 +14,14 @@
 ******************************************************/
 
 whd_result_t whd_rtos_create_thread_with_arg(whd_thread_type_t *thread, void (*entry_function)(
-                                              uint32_t), const char *name, /*@null@*/ void *stack, uint32_t stack_size, uint32_t priority,
-                                          uint32_t arg)
+                                                 uint32_t), const char *name, void *stack, uint32_t stack_size, uint32_t priority,
+                                             uint32_t arg)
 {
     osThreadAttr_t atr;
 
     atr.name = name;
     atr.attr_bits = osThreadDetached;
-    atr.priority = priority;
+    atr.priority = (osPriority_t)priority;
     atr.stack_mem = stack;
     atr.stack_size = stack_size;
     atr.cb_mem = NULL;
@@ -127,9 +114,9 @@ whd_result_t whd_rtos_join_thread(whd_thread_type_t *thread)
  *
  * @returns WHD_SUCCESS on success, error otherwise
  */
-whd_result_t whd_rtos_init_semaphore(/*@out@*/ whd_semaphore_type_t *semaphore)   /*@modifies *semaphore@*/
+whd_result_t whd_rtos_init_semaphore(whd_semaphore_type_t *semaphore)
 {
-    *semaphore = osSemaphoreNew(1, 1, NULL);
+    *semaphore = osSemaphoreNew(1, 0, NULL);
     if (*semaphore == NULL)
     {
         WPRINT_WHD_ERROR( (" semaphore init failed \n") );
@@ -155,7 +142,7 @@ whd_result_t whd_rtos_init_semaphore(/*@out@*/ whd_semaphore_type_t *semaphore) 
  *
  */
 whd_result_t whd_rtos_get_semaphore(whd_semaphore_type_t *semaphore, uint32_t timeout_ms,
-                                          whd_bool_t will_set_in_isr)
+                                    whd_bool_t will_set_in_isr)
 {
     osStatus_t result;
     UNUSED_PARAMETER(will_set_in_isr);
@@ -177,7 +164,6 @@ whd_result_t whd_rtos_get_semaphore(whd_semaphore_type_t *semaphore, uint32_t ti
     }
     else if (result == osErrorTimeout)
     {
-        WPRINT_WHD_INFO( ("%s semaphore time out\n", __func__) );
         return WHD_TIMEOUT;
     }
     else if (result == osErrorResource)
@@ -265,13 +251,13 @@ whd_result_t whd_rtos_deinit_semaphore(whd_semaphore_type_t *semaphore)
  *
  * @returns Time in milliseconds since RTOS started.
  */
-whd_time_t whd_rtos_get_time(void)    /*@modifies internalState@*/
+whd_time_t whd_rtos_get_time(void)
 {
     /* Get Number of ticks per second */
     uint32_t tick_freq = osKernelGetTickFreq();
 
     /* Convert ticks count to time in milliseconds */
-    return (osKernelGetTickCount() * (1000/tick_freq));
+    return (osKernelGetTickCount() * (1000 / tick_freq) );
 
 }
 
@@ -308,3 +294,4 @@ whd_result_t whd_rtos_delay_milliseconds(uint32_t num_ms)
     }
     return WHD_RTOS_ERROR;
 }
+

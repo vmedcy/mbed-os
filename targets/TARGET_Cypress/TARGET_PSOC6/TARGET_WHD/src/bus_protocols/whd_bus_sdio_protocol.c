@@ -164,8 +164,8 @@ static void add_log_entry(whd_bus_transfer_direction_t dir, whd_bus_function_t f
 *             Global Function definitions
 ******************************************************/
 
-void whd_bus_sdio_attach(whd_driver_t whd_driver, whd_sdio_config_t *whd_sdio_config, void *sdio_obj,
-                         whd_sdio_funcs_t *sdio_ops)
+uint32_t whd_bus_sdio_attach(whd_driver_t whd_driver, whd_sdio_config_t *whd_sdio_config, void *sdio_obj,
+                             whd_sdio_funcs_t *sdio_ops)
 {
     struct whd_bus_info *whd_bus_info;
 
@@ -175,7 +175,7 @@ void whd_bus_sdio_attach(whd_driver_t whd_driver, whd_sdio_config_t *whd_sdio_co
              (sdio_ops->whd_get_intr_config == NULL) )
         {
             WPRINT_WHD_ERROR( ("host-wake configuration invalid in %s\n", __FUNCTION__) );
-            return;
+            return WHD_BADARG;
         }
     }
 
@@ -184,7 +184,7 @@ void whd_bus_sdio_attach(whd_driver_t whd_driver, whd_sdio_config_t *whd_sdio_co
     if (whd_bus_info == NULL)
     {
         WPRINT_WHD_ERROR( ("Memory allocation failed for whd_bus_info in %s\n", __FUNCTION__) );
-        return;
+        return WHD_BUFFER_UNAVAILABLE_PERMANENT;
     }
     memset(whd_bus_info, 0, sizeof(whd_bus_info_t) );
 
@@ -195,7 +195,7 @@ void whd_bus_sdio_attach(whd_driver_t whd_driver, whd_sdio_config_t *whd_sdio_co
     if (whd_driver->bus_priv == NULL)
     {
         WPRINT_WHD_ERROR( ("Memory allocation failed for whd_bus_priv in %s\n", __FUNCTION__) );
-        return;
+        return WHD_BUFFER_UNAVAILABLE_PERMANENT;
     }
     memset(whd_driver->bus_priv, 0, sizeof(struct whd_bus_priv) );
 
@@ -236,6 +236,8 @@ void whd_bus_sdio_attach(whd_driver_t whd_driver, whd_sdio_config_t *whd_sdio_co
     whd_bus_info->whd_bus_reinit_stats_fptr = whd_bus_sdio_reinit_stats;
     whd_bus_info->whd_bus_irq_register_fptr = whd_bus_sdio_irq_register;
     whd_bus_info->whd_bus_irq_enable_fptr = whd_bus_sdio_irq_enable;
+
+    return WHD_SUCCESS;
 }
 
 whd_result_t whd_bus_sdio_ack_interrupt(whd_driver_t whd_driver, uint32_t intstatus)
@@ -384,6 +386,11 @@ whd_result_t whd_bus_sdio_init(whd_driver_t whd_driver)
                                               (uint32_t)SDIO_64B_BLOCK) );
     CHECK_RETURN(whd_bus_write_register_value(whd_driver, BUS_FUNCTION, SDIOD_CCCR_F2BLKSIZE_1, (uint8_t)1,
                                               (uint32_t)0) );                                                                                  /* Function 2 = 64 */
+
+    /* Register interrupt handler*/
+    whd_bus_sdio_irq_register(whd_driver);
+    /* Enable SDIO IRQ */
+    whd_bus_sdio_irq_enable(whd_driver, WHD_TRUE);
 
     /* Enable/Disable Client interrupts */
     CHECK_RETURN(whd_bus_write_register_value(whd_driver, BUS_FUNCTION, SDIOD_CCCR_INTEN, (uint8_t)1,

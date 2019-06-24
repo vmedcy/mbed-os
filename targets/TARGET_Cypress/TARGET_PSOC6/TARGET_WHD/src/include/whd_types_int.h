@@ -73,25 +73,50 @@ extern "C"
                                       NULL){ WPRINT_WHD_ERROR( ("Buffer alloc failed in function %s at line %d \n", \
                                                                 __func__, __LINE__) ); \
                                              return WHD_BUFFER_ALLOC_FAIL; }
-#define CHECK_RETURN(expr)  { whd_result_t check_res = (expr); if (check_res != WHD_SUCCESS) \
-                              {WPRINT_WHD_ERROR( ("Function %s failed at line %d checkres = %u \n", __func__, __LINE__, \
-                                                  (unsigned int)check_res) ); \
-                               return check_res; } }
+#define CHECK_RETURN(expr)  { \
+        whd_result_t check_res = (expr); \
+        if (check_res != WHD_SUCCESS) \
+        { \
+            WPRINT_WHD_ERROR( ("Function %s failed at line %d checkres = %u \n", \
+                               __func__, __LINE__, \
+                               (unsigned int)check_res) ); \
+            return check_res; \
+        } \
+}
 
-#define CHECK_RETURN_UNSUPPORTED_OK(expr)  { whd_result_t check_res = (expr);                                      \
-                                             if (check_res != WHD_SUCCESS){ whd_assert("Command failed\n",     \
-                                                                                       check_res ==            \
-                                                                                       WHD_WLAN_UNSUPPORTED); \
-                                                                            return check_res; } }
+#define CHECK_RETURN_UNSUPPORTED_OK(expr)  { whd_result_t check_res = (expr);  \
+                                             if (check_res != WHD_SUCCESS) \
+                                             { \
+                                                 return check_res; \
+                                             } \
+}
 #define CHECK_RETURN_UNSUPPORTED_CONTINUE(expr)  { whd_result_t check_res = (expr);                                 \
-                                                   if (check_res != WHD_SUCCESS &&                                   \
-                                                       check_res != WHD_WLAN_UNSUPPORTED){ whd_assert(           \
-                                                                                               "Command failed\n", \
-                                                                                               0 == 1);           \
-                                                                                           return check_res; } }
-#define RETURN_WITH_ASSERT(expr)  { whd_result_t check_res = (expr); whd_assert("Command failed\n",         \
-                                                                                check_res == WHD_SUCCESS); \
+                                                   if (check_res != WHD_SUCCESS && check_res != WHD_WLAN_UNSUPPORTED) \
+                                                   { \
+                                                       return check_res; \
+                                                   } \
+}
+#define RETURN_WITH_ASSERT(expr)  { whd_result_t check_res = (expr); \
+                                    whd_assert("Command failed\n", check_res == WHD_SUCCESS); \
                                     return check_res; }
+
+#define CHECK_RETURN_IGNORE(expr)  { whd_result_t check_res = (expr);  \
+                                     if (check_res != WHD_SUCCESS) \
+                                     { \
+                                     } \
+}
+
+#define CHECK_IFP_NULL(ifp)  if (ifp == \
+                                 NULL){ WPRINT_WHD_ERROR( ( \
+                                                              "Interface is not up/NULL and failed in function %s at line %d \n", \
+                                                              __func__, __LINE__) ); \
+                                        return WHD_UNKNOWN_INTERFACE; }
+
+#define CHECK_DRIVER_NULL(driver)  if (driver == \
+                                       NULL){ WPRINT_WHD_ERROR( ( \
+                                                                    "WHD driver is not up/NULL and failed in function %s at line %d \n", \
+                                                                    __func__, __LINE__) ); \
+                                              return WHD_DOES_NOT_EXIST; }
 
 #define MIN_OF(x, y) ( (x) < (y) ? (x) : (y) )
 #define MAX_OF(x, y)  ( (x) > (y) ? (x) : (y) )

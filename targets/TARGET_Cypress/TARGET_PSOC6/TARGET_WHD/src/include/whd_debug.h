@@ -32,8 +32,11 @@ extern "C"
 *                      Macros
 ******************************************************/
 #define WPRINT_ENABLE_WHD_ERROR
+/* #define WPRINT_ENABLE_WHD_INFO */
+/* #define WPRINT_ENABLE_WHD_DEBUG */
+
 #define WHD_ENABLE_STATS
-/*#define WWD_LOGGING_BUFFER_ENABLE*/
+/*#define WHD_LOGGING_BUFFER_ENABLE*/
 
 #if defined (__GNUC__)
 #define WHD_TRIGGER_BREAKPOINT( ) do { __asm__ ("bkpt"); } while (0)
@@ -58,7 +61,7 @@ extern "C"
 /******************************************************
 *             Print declarations
 ******************************************************/
-#if defined(WWD_LOGGING_BUFFER_ENABLE)
+#if defined(WHD_LOGGING_BUFFER_ENABLE)
 #define WPRINT_MACRO(args) do { whd_buffer_printf args; } while (0 == 1)
 #else
 #define WPRINT_MACRO(args) do { printf args;} while (0 == 1)
@@ -105,7 +108,7 @@ void whd_init_stats(whd_driver_t whd_driver);
 void whd_print_logbuffer(void);
 
 
-#ifdef WWD_LOGGING_BUFFER_ENABLE
+#ifdef WHD_LOGGING_BUFFER_ENABLE
 #define LOGGING_BUFFER_SIZE (4 * 1024)
 int whd_buffer_printf(const char *format, ...);
 
@@ -119,7 +122,7 @@ typedef struct
 } whd_logging_t;
 #else
 #define whd_print_logbuffer()
-#endif /* WWD_LOGGING_BUFFER_ENABLE */
+#endif /* WHD_LOGGING_BUFFER_ENABLE */
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -51,10 +51,26 @@
 ******************************************************/
 /* helper function for event messages ext API */
 static uint8_t *whd_management_alloc_event_msgs_buffer(whd_interface_t ifp, whd_buffer_t *buffer);
+static uint8_t whd_find_number_of_events(const whd_event_num_t *event_nums);
 
 /******************************************************
 *             Static Functions
 ******************************************************/
+
+static uint8_t whd_find_number_of_events(const whd_event_num_t *event_nums)
+{
+    uint8_t count = 0;
+
+    while (*event_nums != WLC_E_NONE)
+    {
+        count++;
+        event_nums++;
+
+        if (count >= WHD_MAX_EVENT_SUBSCRIPTION)
+            return 0;
+    }
+    return count + 1;
+}
 
 /**
  * Registers locally a handler to receive event callbacks.
@@ -83,36 +99,39 @@ static uint8_t *whd_management_alloc_event_msgs_buffer(whd_interface_t ifp, whd_
  */
 whd_result_t whd_management_set_event_handler_locally(whd_interface_t ifp, const whd_event_num_t *event_nums,
                                                       whd_event_handler_t handler_func,
-                                                      void *handler_user_data)
+                                                      void *handler_user_data, uint16_t *event_index)
 {
     uint16_t entry = (uint16_t)0xFF;
     uint16_t i;
     whd_driver_t whd_driver = ifp->whd_driver;
     whd_cdc_bdc_info_t *cdc_bdc_info = &whd_driver->cdc_bdc_info;
+    uint8_t num_of_events;
+    num_of_events = whd_find_number_of_events(event_nums);
+
+    if (num_of_events <= 1)
+    {
+        WPRINT_WHD_ERROR( ("Exceeded the maximum event subscription/no event subscribed\n") );
+        return WHD_UNFINISHED;
+    }
 
     /* Find an existing matching entry OR the next empty entry */
     for (i = 0; i < (uint16_t)WHD_EVENT_HANDLER_LIST_SIZE; i++)
     {
         /* Find a matching event list OR the first empty event entry */
-        if (cdc_bdc_info->whd_event_list[i].events == event_nums)
+        if (!(memcmp(cdc_bdc_info->whd_event_list[i].events, event_nums,
+                     num_of_events * (sizeof(whd_event_num_t) ) ) ) )
         {
             /* Check if all the data already matches */
             if ( (cdc_bdc_info->whd_event_list[i].handler           == handler_func) &&
                  (cdc_bdc_info->whd_event_list[i].handler_user_data == handler_user_data) &&
                  (cdc_bdc_info->whd_event_list[i].ifidx == ifp->ifidx) )
             {
+                /* send back the entry where the handler is added */
+                *event_index = i;
                 return WHD_SUCCESS;
             }
-
-            /* Delete the entry */
-            cdc_bdc_info->whd_event_list[i].events = NULL;
-            cdc_bdc_info->whd_event_list[i].handler = NULL;
-            cdc_bdc_info->whd_event_list[i].handler_user_data = NULL;
-
-            entry = i;
-            break;
         }
-        else if ( (entry == (uint16_t)0xFF) && (cdc_bdc_info->whd_event_list[i].events == NULL) )
+        else if ( (entry == (uint16_t)0xFF) && (cdc_bdc_info->whd_event_list[i].event_set == WHD_FALSE) )
         {
             entry = i;
         }
@@ -129,10 +148,19 @@ whd_result_t whd_management_set_event_handler_locally(whd_interface_t ifp, const
         }
 
         /* Add the new handler in at the free space */
+        memcpy (cdc_bdc_info->whd_event_list[entry].events, event_nums, num_of_events * (sizeof(whd_event_num_t) ) );
         cdc_bdc_info->whd_event_list[entry].handler           = handler_func;
         cdc_bdc_info->whd_event_list[entry].handler_user_data = handler_user_data;
-        cdc_bdc_info->whd_event_list[entry].events            = event_nums;
         cdc_bdc_info->whd_event_list[entry].ifidx             = ifp->ifidx;
+        cdc_bdc_info->whd_event_list[entry].event_set         = WHD_TRUE;
+
+        /* send back the entry where the handler is added */
+        *event_index = entry;
+    }
+    else
+    {
+        WPRINT_WHD_ERROR( ("Event handler callback function is NULL/not provided to register\n") );
+        return WHD_BADARG;
     }
 
     return WHD_SUCCESS;
@@ -153,7 +181,7 @@ static uint8_t *whd_management_alloc_event_msgs_buffer(whd_interface_t ifp, whd_
     /* Check to see if event that's set requires more than 128 bit */
     for (i = 0; i < (uint16_t)WHD_EVENT_HANDLER_LIST_SIZE; i++)
     {
-        if (cdc_bdc_info->whd_event_list[i].events != NULL)
+        if (cdc_bdc_info->whd_event_list[i].event_set)
         {
             for (j = 0; cdc_bdc_info->whd_event_list[i].events[j] != WLC_E_NONE; j++)
             {
@@ -237,16 +265,31 @@ static uint8_t *whd_management_alloc_event_msgs_buffer(whd_interface_t ifp, whd_
  */
 whd_result_t whd_management_set_event_handler(whd_interface_t ifp, const whd_event_num_t *event_nums,
                                               whd_event_handler_t handler_func,
-                                              void *handler_user_data)
+                                              void *handler_user_data, uint16_t *event_index)
 {
     whd_buffer_t buffer;
     uint8_t *event_mask;
     uint16_t i;
     uint16_t j;
     whd_result_t res;
-    whd_driver_t whd_driver = ifp->whd_driver;
-    whd_cdc_bdc_info_t *cdc_bdc_info = &whd_driver->cdc_bdc_info;
-    whd_interface_t prim_ifp = whd_get_primary_interface(whd_driver);
+    whd_driver_t whd_driver;
+    whd_cdc_bdc_info_t *cdc_bdc_info;
+    whd_interface_t prim_ifp;
+
+    if (ifp == NULL)
+    {
+        return WHD_UNKNOWN_INTERFACE;
+    }
+
+    if (!event_nums || !event_index)
+    {
+        WPRINT_WHD_ERROR( ("Event list to be registered is NULL/Event index is NULL") );
+        return WHD_BADARG;
+    }
+
+    whd_driver = ifp->whd_driver;
+    cdc_bdc_info = &whd_driver->cdc_bdc_info;
+    prim_ifp = whd_get_primary_interface(whd_driver);
 
     if (prim_ifp == NULL)
     {
@@ -261,7 +304,7 @@ whd_result_t whd_management_set_event_handler(whd_interface_t ifp, const whd_eve
     }
 
     /* Set event handler locally  */
-    res = whd_management_set_event_handler_locally(ifp, event_nums, handler_func, handler_user_data);
+    res = whd_management_set_event_handler_locally(ifp, event_nums, handler_func, handler_user_data, event_index);
     if (res != WHD_SUCCESS)
     {
         WPRINT_WHD_ERROR( ("Error in setting event handler locally, %s failed at %d \n", __func__, __LINE__) );
@@ -285,7 +328,7 @@ whd_result_t whd_management_set_event_handler(whd_interface_t ifp, const whd_eve
     memset(event_mask, 0, (size_t)WL_EVENTING_MASK_LEN);
     for (i = 0; i < (uint16_t)WHD_EVENT_HANDLER_LIST_SIZE; i++)
     {
-        if (cdc_bdc_info->whd_event_list[i].events != NULL)
+        if (cdc_bdc_info->whd_event_list[i].event_set)
         {
             for (j = 0; cdc_bdc_info->whd_event_list[i].events[j] != WLC_E_NONE; j++)
             {
@@ -309,5 +352,128 @@ whd_result_t whd_management_set_event_handler(whd_interface_t ifp, const whd_eve
 set_event_handler_exit:
     CHECK_RETURN(whd_rtos_set_semaphore(&cdc_bdc_info->event_list_mutex, WHD_FALSE) );
     return res;
+}
+
+whd_result_t whd_wifi_set_event_handler(whd_interface_t ifp, const uint32_t *event_type,
+                                        whd_event_handler_t handler_func,
+                                        void *handler_user_data, uint16_t *event_index)
+{
+    whd_buffer_t buffer;
+    uint8_t *event_mask;
+    uint16_t i;
+    uint16_t j;
+    whd_result_t res;
+    whd_driver_t whd_driver;
+    whd_cdc_bdc_info_t *cdc_bdc_info;
+    whd_interface_t prim_ifp;
+
+    if (ifp == NULL)
+    {
+        return WHD_UNKNOWN_INTERFACE;
+    }
+
+    if (!event_type || !event_index)
+    {
+        WPRINT_WHD_ERROR( ("Event list to be registered is NULL/Event index is NULL") );
+        return WHD_BADARG;
+    }
+
+    whd_driver = ifp->whd_driver;
+    cdc_bdc_info = &whd_driver->cdc_bdc_info;
+    prim_ifp = whd_get_primary_interface(whd_driver);
+
+    if (prim_ifp == NULL)
+    {
+        return WHD_UNKNOWN_INTERFACE;
+    }
+
+    /* Acquire mutex preventing multiple threads accessing the handler at the same time */
+    res = whd_rtos_get_semaphore(&cdc_bdc_info->event_list_mutex, NEVER_TIMEOUT, WHD_FALSE);
+    if (res != WHD_SUCCESS)
+    {
+        return res;
+    }
+
+    /* Set event handler locally  */
+    res = whd_management_set_event_handler_locally(ifp, (whd_event_num_t *)event_type, handler_func, handler_user_data,
+                                                   event_index);
+    if (res != WHD_SUCCESS)
+    {
+        WPRINT_WHD_ERROR( ("Error in setting event handler locally, %s failed at %d \n", __func__, __LINE__) );
+        goto set_event_handler_exit;
+    }
+
+    /* Send the new event mask value to the wifi chip */
+    event_mask = whd_management_alloc_event_msgs_buffer(ifp, &buffer);
+
+    if (NULL == event_mask)
+    {
+        res = WHD_BUFFER_UNAVAILABLE_PERMANENT;
+        WPRINT_WHD_ERROR( ("Buffer unavailable permanently, %s failed at %d \n", __func__, __LINE__) );
+        goto set_event_handler_exit;
+    }
+
+    /* Keep the wlan awake while we set the event_msgs */
+    WHD_WLAN_KEEP_AWAKE(whd_driver);
+
+    /* Set the event bits for each event from every handler */
+    memset(event_mask, 0, (size_t)WL_EVENTING_MASK_LEN);
+    for (i = 0; i < (uint16_t)WHD_EVENT_HANDLER_LIST_SIZE; i++)
+    {
+        if (cdc_bdc_info->whd_event_list[i].event_set)
+        {
+            for (j = 0; cdc_bdc_info->whd_event_list[i].events[j] != WLC_E_NONE; j++)
+            {
+                setbit(event_mask, cdc_bdc_info->whd_event_list[i].events[j]);
+            }
+        }
+    }
+
+    /* set the event_list_mutex from calling thread before sending iovar
+     * as the RX thread also waits on this Mutex when an ASYNC Event received
+     * causing deadlock
+     */
+    CHECK_RETURN(whd_rtos_set_semaphore(&cdc_bdc_info->event_list_mutex, WHD_FALSE) );
+
+    CHECK_RETURN(whd_cdc_send_iovar(prim_ifp, CDC_SET, buffer, 0) );
+
+    /* The wlan chip can sleep from now on */
+    WHD_WLAN_LET_SLEEP(whd_driver);
+    return WHD_SUCCESS;
+
+set_event_handler_exit:
+    CHECK_RETURN(whd_rtos_set_semaphore(&cdc_bdc_info->event_list_mutex, WHD_FALSE) );
+    return res;
+}
+
+uint32_t whd_wifi_deregister_event_handler(whd_interface_t ifp, uint16_t event_index)
+{
+    whd_driver_t whd_driver;
+    whd_cdc_bdc_info_t *cdc_bdc_info;
+
+    if (ifp == NULL)
+    {
+        return WHD_UNKNOWN_INTERFACE;
+    }
+
+    whd_driver = ifp->whd_driver;
+    cdc_bdc_info = &whd_driver->cdc_bdc_info;
+
+    if (event_index < WHD_EVENT_HANDLER_LIST_SIZE)
+    {
+        memset(cdc_bdc_info->whd_event_list[event_index].events, 0xFF,
+               (sizeof(cdc_bdc_info->whd_event_list[event_index].events) ) );
+        cdc_bdc_info->whd_event_list[event_index].handler = NULL;
+        cdc_bdc_info->whd_event_list[event_index].handler_user_data = NULL;
+        cdc_bdc_info->whd_event_list[event_index].event_set = WHD_FALSE;
+        return WHD_SUCCESS;
+    }
+    if (event_index == 0xFF)
+    {
+        WPRINT_WHD_INFO( ("Event handler not registered \n") );
+        return WHD_SUCCESS;
+    }
+    WPRINT_WHD_DEBUG( ("Invalid event index received to deregister the event handler \n") );
+    return WHD_BADARG;
 }
 

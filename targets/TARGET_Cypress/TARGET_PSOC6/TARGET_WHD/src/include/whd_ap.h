@@ -45,9 +45,6 @@ extern "C" {
 
 #define WHD_WIFI_CONFIG_AP_MAX_ASSOC 5
 
-/* Soft AP Options */
-#define WHD_DEFAULT_SOFT_AP_DTIM_PERIOD       (1)
-
 #define CHECK_IOCTL_BUFFER_WITH_SEMAPHORE(buff, \
                                           sema)  if (buff == \
                                                      NULL){ WPRINT_WHD_ERROR( ("Buffer alloc failed in %s at %d \n", \

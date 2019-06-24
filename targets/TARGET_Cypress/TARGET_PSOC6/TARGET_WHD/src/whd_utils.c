@@ -280,7 +280,6 @@ const char *whd_event_to_string(whd_event_num_t value)
         CASE_RETURN(WLC_E_TX_STAT_ERROR)
         CASE_RETURN(WLC_E_BCMC_CREDIT_SUPPORT)
         CASE_RETURN(WLC_E_PSTA_PRIMARY_INTF_IND)
-        CASE_RETURN(WLC_E_FORCE_32_BIT)
         case WLC_E_LAST:
         default:
             return "Unknown";

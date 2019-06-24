@@ -96,7 +96,8 @@ typedef struct
  */
 typedef struct
 {
-    const whd_event_num_t *events;
+    whd_bool_t event_set;
+    whd_event_num_t events[WHD_MAX_EVENT_SUBSCRIPTION];
     whd_event_handler_t handler;
     void *handler_user_data;
     uint8_t ifidx;

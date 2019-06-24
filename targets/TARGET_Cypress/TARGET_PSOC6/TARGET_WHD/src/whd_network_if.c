@@ -80,6 +80,6 @@ whd_result_t whd_network_process_ethernet_data(whd_interface_t ifp, whd_buffer_t
     {
         WPRINT_WHD_INFO( ("Function pointers not provided .\n") );
     }
-    return WHD_WLAN_ERROR;
+    return WHD_WLAN_NOFUNCTION;
 }
 

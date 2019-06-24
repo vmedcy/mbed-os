@@ -27,6 +27,7 @@
 #include "whd_int.h"
 #include "whd_buffer_api.h"
 #include "whd_resource_if.h"
+#include "whd_resource_api.h"
 #include "whd_types_int.h"
 
 /******************************************************
@@ -66,17 +67,16 @@ whd_result_t whd_process_clm_data(whd_interface_t ifp)
 {
     whd_result_t ret = WHD_SUCCESS;
     uint32_t clm_blob_size;
-    uint32_t datalen;
     unsigned int size2alloc, data_offset;
     unsigned char *chunk_buf;
     uint16_t dl_flag = DL_BEGIN;
-    unsigned int cumulative_len = 0;
     unsigned int chunk_len;
     uint32_t size_read;
     uint8_t *image;
-    uint32_t block_size;
     uint32_t blocks_count = 0;
-    uint32_t i;
+    uint16_t datalen = 0;
+    uint32_t i, j, num_buff;
+    unsigned int transfer_progress;
     whd_driver_t whd_driver = ifp->whd_driver;
 
     /* clm file size is the initial datalen value which is decremented */
@@ -87,14 +87,6 @@ whd_result_t whd_process_clm_data(whd_interface_t ifp)
         WPRINT_WHD_ERROR( ("Fatal error: download_resource doesn't exist\n") );
         return ret;
     }
-    datalen = clm_blob_size;
-
-    ret = whd_get_resource_block_size(whd_driver, WHD_RESOURCE_WLAN_CLM, &block_size);
-    if (ret != WHD_SUCCESS)
-    {
-        WPRINT_WHD_ERROR( ("Fatal error: download_resource block size not know\n") );
-        return ret;
-    }
 
     ret = whd_get_resource_no_of_blocks(whd_driver, WHD_RESOURCE_WLAN_CLM, &blocks_count);
     if (ret != WHD_SUCCESS)
@@ -102,32 +94,44 @@ whd_result_t whd_process_clm_data(whd_interface_t ifp)
         WPRINT_WHD_ERROR( ("Fatal error: download_resource blocks count not know\n") );
         return ret;
     }
+
     data_offset = offsetof(wl_dload_data_t, data);
-    size2alloc = data_offset + block_size;
+    size2alloc = data_offset + BLOCK_SIZE;
+
 
     if ( (chunk_buf = (unsigned char *)malloc(size2alloc) ) != NULL )
     {
         memset(chunk_buf, 0, size2alloc);
-
+        transfer_progress = 0;
         for (i = 0; i < blocks_count; i++)
         {
             whd_get_resource_block(whd_driver, WHD_RESOURCE_WLAN_CLM, (const uint8_t **)&image, &size_read);
-            if (datalen >= block_size)
-                chunk_len = block_size;
+
+            num_buff = (size_read + BLOCK_SIZE - 1) / BLOCK_SIZE;
+            if (blocks_count != 1)
+                transfer_progress = 0;
+
+            if (size_read >= BLOCK_SIZE)
+                chunk_len = BLOCK_SIZE;
             else
-                chunk_len = datalen;
+                chunk_len = (int)size_read;
 
-            memcpy(chunk_buf + data_offset, &image[0], size_read);
-            cumulative_len += chunk_len;
+            for (j = 0; j < num_buff; j++)
+            {
+                memcpy(chunk_buf + data_offset, &image[transfer_progress], chunk_len);
 
-            if (datalen - chunk_len == 0)
-                dl_flag |= DL_END;
+                if (datalen + chunk_len == clm_blob_size)
+                {
+                    dl_flag |= DL_END;
+                }
 
-            ret = whd_download_wifi_clm_image(ifp, IOVAR_STR_CLMLOAD, dl_flag, DL_TYPE_CLM, chunk_buf,
-                                              data_offset + chunk_len);
-            dl_flag &= (uint16_t) ~DL_BEGIN;
-
-            datalen = datalen - chunk_len;
+                ret = whd_download_wifi_clm_image(ifp, IOVAR_STR_CLMLOAD, dl_flag, DL_TYPE_CLM, chunk_buf,
+                                                  data_offset + chunk_len);
+                dl_flag &= (uint16_t) ~DL_BEGIN;
+                transfer_progress += chunk_len;
+                size_read = size_read - chunk_len;
+                datalen += chunk_len;
+            }
         }
 
         free(chunk_buf);

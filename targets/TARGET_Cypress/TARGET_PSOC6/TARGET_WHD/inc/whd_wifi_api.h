@@ -39,6 +39,17 @@ extern "C"
 *             Function declarations
 ******************************************************/
 
+/** @addtogroup wifi WHD Wi-Fi APIs
+ *  APIs for controlling the Wi-Fi system
+ *  @{
+ */
+
+/** @addtogroup wifimanagement WHD Wi-Fi Management APIs
+ *  @ingroup wifi
+ *  Initialisation and other management functions for WHD system
+ *  @{
+ */
+
 /** Initialize an instance of the WHD driver
  *
  *  @param whd_driver_ptr      : Pointer to Pointer to handle instance of the driver
@@ -52,6 +63,13 @@ extern "C"
 extern uint32_t whd_init(whd_driver_t *whd_driver_ptr, whd_init_config_t *whd_init_config,
                          whd_resource_source_t *resource_ops, whd_buffer_funcs_t *buffer_ops,
                          whd_netif_funcs_t *network_ops);
+/* @} */
+/* @} */
+
+/** @addtogroup busapi WHD Bus APIs
+ * Allows WHD to operate with specific SDIO/SPI bus
+ *  @{
+ */
 
 /** Attach the WLAN Device to specific SDIO bus
  *
@@ -62,16 +80,14 @@ extern uint32_t whd_init(whd_driver_t *whd_driver_ptr, whd_init_config_t *whd_in
  *
  *  @return WHD_SUCCESS or Error code
  */
-extern void whd_bus_sdio_attach(whd_driver_t whd_driver, whd_sdio_config_t *whd_config, void *sdio_obj,
-                                whd_sdio_funcs_t *sdio_ops);
+extern uint32_t whd_bus_sdio_attach(whd_driver_t whd_driver, whd_sdio_config_t *whd_config, void *sdio_obj,
+                                    whd_sdio_funcs_t *sdio_ops);
 
-/**
- * Notify the WLAN device that the SDIO host-wake signal asserted.
+/** Notify the WLAN device that the SDIO host-wake signal asserted.
  *
  * This function may be called after the WHD calls @ref whd_enable_intr_func_t with enable
  * set to WHD_TRUE.
  *
- *  @param  whd_driver       : Pointer to the handle instance of the driver associated to the event
  */
 extern void whd_bus_sdio_oob_intr_asserted(whd_driver_t whd_driver);
 
@@ -80,11 +96,12 @@ extern void whd_bus_sdio_oob_intr_asserted(whd_driver_t whd_driver);
  *  @param  whd_driver       : Pointer to handle instance of the driver
  *  @param  whd_config       : Configuration for SPI bus
  *  @param  spi_obj          : The SPI hardware interface, from the Level 3 CY HW APIs
+ *  @param  spi_ops          : Pointer to a whd_spi_funcs_t to provide SPI services to the driver instance
  *
  *  @return WHD_SUCCESS or Error code
  */
-extern void whd_bus_spi_attach(whd_driver_t whd_driver, whd_spi_config_t *whd_config, void *spi_obj,
-                               whd_spi_funcs_t *spi_ops);
+extern uint32_t whd_bus_spi_attach(whd_driver_t whd_driver, whd_spi_config_t *whd_config, void *spi_obj,
+                                   whd_spi_funcs_t *spi_ops);
 
 /**
  * Notify the WLAN device that the SPI interrupt signal asserted.
@@ -95,6 +112,18 @@ extern void whd_bus_spi_attach(whd_driver_t whd_driver, whd_spi_config_t *whd_co
  *  @param  whd_driver       : Pointer to the handle instance of the driver associated to the event
  */
 extern void whd_bus_spi_oob_intr_asserted(whd_driver_t whd_driver);
+/*  @} */
+
+/** @addtogroup wifi WHD Wi-Fi APIs
+ *  APIs for controlling the Wi-Fi system
+ *  @{
+ */
+
+/** @addtogroup wifimanagement WHD Wi-Fi Management APIs
+ *  @ingroup wifi
+ *  Initialisation and other management functions for WHD system
+ *  @{
+ */
 
 /**
  * Turn on the Wi-Fi device
@@ -105,26 +134,26 @@ extern void whd_bus_spi_oob_intr_asserted(whd_driver_t whd_driver);
  *  @param  whd_driver       : Pointer to handle instance of the driver
  *  @param   ifpp            : Pointer to Pointer to handle instance of whd interface
  *
- * @return WHD_SUCCESS if initialization is successful, error code otherwise
+ *  @return WHD_SUCCESS if initialization is successful, error code otherwise
  */
 extern uint32_t whd_wifi_on(whd_driver_t whd_driver, whd_interface_t *ifpp);
 
 /**
  * Turn off the Wi-Fi device
  *
- *  De-Initialises the required parts of the hardware platform
- *   i.e. pins for SDIO/SPI, interrupt, reset, power etc.
+ *  - De-Initialises the required parts of the hardware platform
+ *    i.e. pins for SDIO/SPI, interrupt, reset, power etc.
  *
- *  De-Initialises the whd thread which arbitrates access
- *   to the SDIO/SPI bus
+ *  - De-Initialises the whd thread which arbitrates access
+ *    to the SDIO/SPI bus
  *
  *  @param   ifp             : Pointer to handle instance of whd interface
  *
- * @return WHD_SUCCESS if deinitialization is successful, Error code otherwise
+ *  @return WHD_SUCCESS if deinitialization is successful, Error code otherwise
  */
 extern uint32_t whd_wifi_off(whd_interface_t ifp);
 
-/*  Shutdown this instance of the wifi driver, freeing all used resources
+/** Shutdown this instance of the wifi driver, freeing all used resources
  *
  *  @param   ifp             : Pointer to handle instance of whd interface
  *
@@ -136,8 +165,8 @@ extern uint32_t whd_deinit(whd_interface_t ifp);
  *
  *  @param   ifp             : Pointer to handle instance of whd interface
  *
- *  @return  WHD_SUCCESS : if success
- *           Error code  : if fails
+ *  @return  WHD_SUCCESS     : if success
+ *           Error code      : if fails
  */
 extern uint32_t whd_wifi_set_up(whd_interface_t ifp);
 
@@ -148,10 +177,26 @@ extern uint32_t whd_wifi_set_up(whd_interface_t ifp);
  *
  *  @param   ifp              : Pointer to handle instance of whd interface
  *
- *  @return  WHD_SUCCESS : if success
- *           Error code  : if fails
+ *  @return  WHD_SUCCESS      : if success
+ *           Error code       : if fails
  */
 extern uint32_t whd_wifi_set_down(whd_interface_t ifp);
+
+/** Creates a secondary interface
+ *
+ *  @param  whd_drv             : Pointer to handle instance of the driver
+ *  @param  mac_addr            : MAC address for the interface
+ *  @param  ifpp                : Pointer to the whd interface pointer
+ *  @return WHD_SUCCESS or Error code
+ */
+extern uint32_t whd_add_secondary_interface(whd_driver_t whd_drv, whd_mac_t *mac_addr, whd_interface_t *ifpp);
+/*  @} */
+
+/** @addtogroup wifijoin   WHD Wi-Fi Join, Scan and Halt APIs
+ *  @ingroup wifi
+ *  Wi-Fi APIs for join, scan & leave
+ *  @{
+ */
 
 /** Scan result callback function pointer type
  *
@@ -162,9 +207,9 @@ extern uint32_t whd_wifi_set_down(whd_interface_t ifp);
 typedef void (*whd_scan_result_callback_t)(whd_scan_result_t **result_ptr, void *user_data, whd_scan_status_t status);
 
 /** Initiates a scan to search for 802.11 networks.
- * This functions returns the scan results with limited sets of parameter in a buffer provided by the caller.
- * It is also a blocking call.
- * It is an simplified version of the whd_wifi_scan()
+ *  This functions returns the scan results with limited sets of parameter in a buffer provided by the caller.
+ *  It is also a blocking call.
+ *  It is an simplified version of the whd_wifi_scan()
  *
  *  @param   ifp                      : Pointer to handle instance of whd interface
  *  @param   scan_result              : pointer to user requested records buffer.
@@ -248,20 +293,28 @@ extern uint32_t whd_wifi_join(whd_interface_t ifp, const whd_ssid_t *ssid, whd_s
 
 /** Joins a specific Wi-Fi network
  *
- * Associates and authenticates with a specific Wi-Fi access point.
- * On successful return, the system is ready to send data packets.
+ *  Associates and authenticates with a specific Wi-Fi access point.
+ *  On successful return, the system is ready to send data packets.
  *
- * @param   ifp          : Pointer to handle instance of whd interface
- * @param   ap           : A pointer to a whd_scan_result_t structure containing AP details
- * @param   security_key : A byte array containing either the cleartext security key for WPA/WPA2
- *                           secured networks
- * @param   key_length   : The length of the security_key in bytes.
+ *  @param   ifp          : Pointer to handle instance of whd interface
+ *  @param   ap           : A pointer to a whd_scan_result_t structure containing AP details
+ *  @param   security_key : A byte array containing either the cleartext security key for WPA/WPA2
+ *                          secured networks
+ *  @param   key_length   : The length of the security_key in bytes.
  *
- * @return  WHD_SUCCESS  : when the system is joined and ready to send data packets
- *          Error code   : if an error occurred
+ *  @return  WHD_SUCCESS  : when the system is joined and ready to send data packets
+ *           Error code   : if an error occurred
  */
 extern uint32_t whd_wifi_join_specific(whd_interface_t ifp, const whd_scan_result_t *ap, const uint8_t *security_key,
                                        uint8_t key_length);
+
+/*  @} */
+
+/** @addtogroup wifiutilities   WHD Wi-Fi Utility APIs
+ *  @ingroup wifi
+ *  Wi-Fi Utility functions
+ *  @{
+ */
 
 /** Set the current channel on the WLAN radio
  *
@@ -284,7 +337,7 @@ extern uint32_t whd_wifi_set_channel(whd_interface_t ifp, uint32_t channel);
  *  @param   ifp          : Pointer to handle instance of whd interface
  *  @param   channel      : Pointer to receive the current channel
  *
- *  @return  WWD_SUCCESS   : if the channel was successfully retrieved
+ *  @return  WHD_SUCCESS   : if the channel was successfully retrieved
  *           Error code    : if the channel was not successfully retrieved
  */
 extern uint32_t whd_wifi_get_channel(whd_interface_t ifp, uint32_t *channel);
@@ -330,7 +383,13 @@ extern uint32_t whd_wifi_enable_supplicant(whd_interface_t ifp, whd_security_t a
  *           Error code   : if the RSSI was not retrieved
  */
 extern uint32_t whd_wifi_get_rssi(whd_interface_t ifp, int32_t *rssi);
+/* @} */
 
+/** @addtogroup wifijoin   WHD Wi-Fi Join, Scan and Halt APIs
+ *  @ingroup wifi
+ *  Wi-Fi APIs for join, scan & leave
+ *  @{
+ */
 /** Disassociates from a Wi-Fi network.
  *  Applicable only for STA role
  *
@@ -340,7 +399,13 @@ extern uint32_t whd_wifi_get_rssi(whd_interface_t ifp, int32_t *rssi);
  *           Error code   : If an error occurred
  */
 extern uint32_t whd_wifi_leave(whd_interface_t ifp);
+/* @} */
 
+/** @addtogroup wifiutilities   WHD Wi-Fi Utility APIs
+ *  @ingroup wifi
+ *
+ *  @{
+ */
 /** Retrieves the current Media Access Control (MAC) address
  *  (or Ethernet hardware address) of the 802.11 device
  *
@@ -359,9 +424,15 @@ extern uint32_t whd_wifi_get_mac_address(whd_interface_t ifp, whd_mac_t *mac);
  *  @return WHD_SUCCESS or Error code
  */
 extern uint32_t whd_wifi_get_bssid(whd_interface_t ifp, whd_mac_t *bssid);
+/* @} */
+
+/** @addtogroup wifisoftap     WHD Wi-Fi SoftAP APIs
+ *  @ingroup wifi
+ *  Wi-Fi APIs to perform SoftAP related functionalities
+ *  @{
+ */
 
 /** Init an infrastructure WiFi network (SoftAP)
- *
  *
  *  @param   ifp          : Pointer to handle instance of whd interface
  *  @param   ssid         : A null terminated string containing the SSID name of the network to join
@@ -406,12 +477,12 @@ extern uint32_t whd_wifi_ap_get_max_assoc(whd_interface_t ifp, uint32_t *max_ass
 
 /** Gets the current number of active connections
  *
- *  @param   ifp            : Pointer to handle instance of whd interface
- *  @param client_list_buffer :
- *  @param buffer_length :
+ *  @param   ifp                : Pointer to handle instance of whd interface
+ *  @param   client_list_buffer : Buffer to store list of associated clients
+ *  @param   buffer_length      : Length of client list buffer
  *
- *  @return  WHD_SUCCESS    : if the active connections was successfully read
- *           WHD_ERROR      : if the active connections was not successfully read
+ *  @return  WHD_SUCCESS        : if the active connections was successfully read
+ *           WHD_ERROR          : if the active connections was not successfully read
  */
 extern uint32_t whd_wifi_get_associated_client_list(whd_interface_t ifp, void *client_list_buffer,
                                                     uint16_t buffer_length);
@@ -419,13 +490,13 @@ extern uint32_t whd_wifi_get_associated_client_list(whd_interface_t ifp, void *c
 /** Deauthenticates a STA which may or may not be associated to SoftAP
  *
  * @param   ifp            : Pointer to handle instance of whd interface
- * @param[in] mac       : Pointer to a variable containing the MAC address to which the deauthentication will be sent
- *                        NULL mac address will deauthenticate all the associated STAs
+ * @param   mac            : Pointer to a variable containing the MAC address to which the deauthentication will be sent
+ *                           NULL mac address will deauthenticate all the associated STAs
  *
- * @param[in] reason    : Deauthentication reason code
+ * @param   reason         : Deauthentication reason code
  *
- * @return    WHD_SUCCESS : On successful deauthentication of the other STA
- *            WHD_ERROR   : If an error occurred
+ * @return  WHD_SUCCESS    : On successful deauthentication of the other STA
+ *          WHD_ERROR      : If an error occurred
  */
 extern uint32_t whd_wifi_deauth_sta(whd_interface_t ifp, whd_mac_t *mac, whd_dot11_reason_code_t reason);
 
@@ -435,7 +506,7 @@ extern uint32_t whd_wifi_deauth_sta(whd_interface_t ifp, whd_mac_t *mac, whd_dot
  *  @param  ap_info       : Returns a whd_bss_info_t structure containing AP details
  *  @param  security      : Authentication type
  *
- *  @return WWD_SUCCESS   : if the AP info was successfully retrieved
+ *  @return WHD_SUCCESS   : if the AP info was successfully retrieved
  *          Error code    : if the AP info was not successfully retrieved
  */
 extern uint32_t whd_wifi_get_ap_info(whd_interface_t ifp, whd_bss_info_t *ap_info, whd_security_t *security);
@@ -456,11 +527,20 @@ extern uint32_t whd_wifi_ap_set_beacon_interval(whd_interface_t ifp, uint16_t in
  *  Note that the value needs to be set before ap_start in order to take effect.
  *
  *  @param  ifp           : Pointer to handle instance of whd interface
- *  @param interval       : DTIM interval, in unit of beacon interval
+ *  @param  interval      : DTIM interval, in unit of beacon interval
  *
  *  @return WHD_SUCCESS or Error code
  */
 extern uint32_t whd_wifi_ap_set_dtim_interval(whd_interface_t ifp, uint16_t interval);
+/*  @} */
+
+
+/** @addtogroup wifipowersave   WHD Wi-Fi Power Save APIs
+ *  @ingroup wifi
+ *  Wi-Fi functions for WLAN low power modes
+ *
+ *  @{
+ */
 
 /** Enables powersave mode on specified interface without regard for throughput reduction
  *
@@ -513,7 +593,13 @@ extern uint32_t whd_wifi_get_powersave_mode(whd_interface_t ifp, uint32_t *value
  *
  */
 extern uint32_t whd_wifi_disable_powersave(whd_interface_t ifp);
+/* @} */
 
+/** @addtogroup wifiutilities   WHD Wi-Fi Utility APIs
+ *  @ingroup wifi
+ *
+ *  @{
+ */
 /** Registers interest in a multicast address
  *
  *  Once a multicast address has been registered, all packets detected on the
@@ -564,9 +650,10 @@ extern uint32_t whd_wifi_set_listen_interval(whd_interface_t ifp, uint8_t listen
 /** Gets the current value of all beacon listen interval variables
  *
  *  @param  ifp                    : Pointer to handle instance of whd interface
- *  @param  listen_interval_beacon : The current value of the listen interval set as a multiple of the beacon period
- *  @param  listen_interval_dtim   : The current value of the listen interval set as a multiple of the DTIM period
- *  @param  listen_interval_assoc  : The current value of the listen interval sent to access points in an association request frame
+ *  @param  li                     : Powersave listen interval values
+ *                                      - listen_interval_beacon : The current value of the listen interval set as a multiple of the beacon period
+ *                                      - listen_interval_dtim   : The current value of the listen interval set as a multiple of the DTIM period
+ *                                      - listen_interval_assoc  : The current value of the listen interval sent to access points in an association request frame
  *
  *  @return WHD_SUCCESS            : If all listen interval values are read successfully
  *          Error code             : If at least one of the listen interval values are NOT read successfully
@@ -624,14 +711,18 @@ extern uint32_t whd_wifi_manage_custom_ie(whd_interface_t ifp, whd_custom_ie_act
 /** Send a pre-prepared action frame
  *
  *  @param  ifp           : Pointer to handle instance of whd interface
- *  @param action_frame   : A pointer to a pre-prepared action frame structure
+ *  @param  af_params     : A pointer to a pre-prepared action frame structure
  *
  *  @return WHD_SUCCESS or Error code
  */
 extern uint32_t whd_wifi_send_action_frame(whd_interface_t ifp, whd_af_params_t *af_params);
+/* @} */
 
-/* Set and get IOCTL values */
-
+/** @addtogroup wifiioctl   WHD Wi-Fi IOCTL Set/Get APIs
+ *  @ingroup wifi
+ *  Set and get IOCTL values
+ *  @{
+ */
 /** Sends an IOCTL command
  *
  *  @param  ifp           : Pointer to handle instance of whd interface
@@ -640,7 +731,6 @@ extern uint32_t whd_wifi_send_action_frame(whd_interface_t ifp, whd_af_params_t 
  *
  *  @return WHD_SUCCESS or Error code
  */
-
 extern uint32_t whd_wifi_set_ioctl_value(whd_interface_t ifp, uint32_t ioctl, uint32_t value);
 
 /** Sends an IOCTL command
@@ -681,7 +771,7 @@ extern uint32_t whd_wifi_get_ioctl_buffer(whd_interface_t ifp, uint32_t ioctl, u
  *  @param  ifp          : Pointer to handle instance of whd interface
  *  @param  iovar_name   : SDPCM_GET - To get the I/O Variable
  *  @param  param        : Paramater to be passed for the IOVAR
- *  @param  iovar_name   : Paramter length
+ *  @param  paramlen     : Paramter length
  *  @param  out_buffer   : Pointer to receive the handle for the packet buffer containing the response data value received
  *  @param  out_length   : Length of out_buffer
  *
@@ -690,8 +780,13 @@ extern uint32_t whd_wifi_get_ioctl_buffer(whd_interface_t ifp, uint32_t ioctl, u
 extern uint32_t whd_wifi_get_iovar_buffer_with_param(whd_interface_t ifp, const char *iovar_name, void *param,
                                                      uint32_t paramlen, uint8_t *out_buffer, uint32_t out_length);
 
-/* Debug APIs */
+/* @} */
 
+/** @addtogroup dbg  WHD Wi-Fi Debug APIs
+ *  @ingroup wifi
+ *
+ *  @{
+ */
 /** Retrieves the WLAN firmware version
  *
  *  @param  ifp           : Pointer to handle instance of whd interface
@@ -718,14 +813,23 @@ extern uint32_t whd_wifi_get_clm_version(whd_interface_t ifp, char *version, uin
  *
  *  @return WHD_SUCCESS or Error code
  */
+extern uint32_t whd_wifi_read_wlan_log(whd_driver_t whd_drv, char *buffer, uint32_t buffer_size);
+
+/** To print whd log information
+ *
+ *  @param  whd_drv       : Pointer to handle instance of the driver
+ *
+ *  @return WHD_SUCCESS or Error code
+ */
 extern uint32_t whd_wifi_print_whd_log(whd_driver_t whd_drv);
 
 /** Retrieves the ifidx from interface pointer.
- * ifidx is a unique value and be used to identify a instance of tcp/ip stack
+ *  ifidx is a unique value and be used to identify a instance of tcp/ip stack
  *
- * @param[in] whd_interface_t: Pointer to the whd_interface_t
- * @param[out]  uint8_t: Pointer to ifidx
- * @return WHD_SUCCESS or Error code
+ *  @param  ifp          : Pointer to the whd_interface_t
+ *  @param  ifidx        : Pointer to ifidx
+ *
+ *  @return WHD_SUCCESS or Error code
  */
 extern uint32_t whd_network_get_ifidx_from_ifp(whd_interface_t ifp, uint8_t *ifidx);
 
@@ -757,7 +861,9 @@ extern uint32_t whd_wifi_get_bss_info(whd_interface_t ifp, wl_bss_info_t *bi);
  *
  *  @return WHD_SUCCESS or Error code
  */
-extern uint32_t whd_print_stats(whd_driver_t whd_driver, whd_bool_t reset_after_print);
+extern uint32_t whd_print_stats(whd_driver_t whd_drv, whd_bool_t reset_after_print);
+/* @} */
+/* @} */
 
 #ifdef __cplusplus
 } /* extern "C" */

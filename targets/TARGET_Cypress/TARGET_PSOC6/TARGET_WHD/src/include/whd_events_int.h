@@ -370,66 +370,21 @@ typedef void *(*whd_event_handler_t)(whd_interface_t ifp, const whd_event_header
                                      const uint8_t *event_data, void *handler_user_data);
 /** @endcond */
 
-/** @addtogroup mgmt WHD Management
- *  @{
- */
 
-/**
- * Registers locally a handler to receive event callbacks.
- * Does not notify Wi-Fi about event subscription change.
- * Can be used to refresh local callbacks (e.g. after deep-sleep)
- * if Wi-Fi is already notified about them.
- *
- * This function registers a callback handler to be notified when
- * a particular event is received.
- *
- * Alternately the function clears callbacks for given event type.
- *
- * @note : Currently each event may only be registered to one handler
- *         and there is a limit to the number of simultaneously registered
- *         events
- *
- * @param  event_nums     The event types that are to trigger the handler
- *                        See @ref whd_event_num_t for available events.
- *                        Must be defined in a global constant.
- * @param handler_func   A function pointer to the new handler callback,
- *                        or NULL if callbacks are to be disabled for the given event type
- * @param handler_user_data  A pointer value which will be passed to the event handler function
- *                            at the time an event is triggered (NULL is allowed)
- *
- * @return WHD_SUCCESS or Error code
- */
 extern whd_result_t whd_management_set_event_handler_locally(whd_interface_t ifp,
                                                              const whd_event_num_t *event_nums,
                                                              whd_event_handler_t handler_func,
-                                                             void *handler_user_data);
+                                                             void *handler_user_data, uint16_t *event_index);
 
-/**
- * Registers a handler to receive event callbacks.
- * Subscribe locally and notify Wi-Fi about subscription.
- *
- * This function registers a callback handler to be notified when
- * a particular event is received.
- *
- * Alternately the function clears callbacks for given event type.
- *
- * @note : Currently each event may only be registered to one handler
- *         and there is a limit to the number of simultaneously registered
- *         events
- *
- * @param  event_nums     The event types that are to trigger the handler
- *                        See @ref whd_event_num_t for available events.
- *                        Must be defined in a global constant.
- * @param handler_func   A function pointer to the new handler callback,
- *                        or NULL if callbacks are to be disabled for the given event type
- * @param handler_user_data  A pointer value which will be passed to the event handler function
- *                            at the time an event is triggered (NULL is allowed)
- *
- * @return WHD_SUCCESS or Error code
- */
 extern whd_result_t whd_management_set_event_handler(whd_interface_t ifp, const whd_event_num_t *event_nums,
                                                      whd_event_handler_t handler_func,
-                                                     void *handler_user_data);
+                                                     void *handler_user_data, uint16_t *event_index);
+
+extern uint32_t whd_wifi_set_event_handler(whd_interface_t ifp, const uint32_t *event_type,
+                                           whd_event_handler_t handler_func,
+                                           void *handler_user_data, uint16_t *event_index);
+
+extern uint32_t whd_wifi_deregister_event_handler(whd_interface_t ifp, uint16_t event_index);
 
 /** @cond */
 
@@ -437,7 +392,21 @@ extern whd_result_t whd_management_set_event_handler(whd_interface_t ifp, const 
 
 extern void *whd_nan_scan_handler(const whd_event_header_t *event_header, const uint8_t *event_data,
                                   void *handler_user_data);
+
 #define WHD_MSG_IFNAME_MAX 16
+
+/* Maximum number of events registered at a time */
+#define WHD_MAX_EVENT_SUBSCRIPTION 33
+
+/* Enum to index and find the entry of paricular event registered */
+typedef enum
+{
+    WHD_SCAN_EVENT_ENTRY       = 0,
+    WHD_JOIN_EVENT_ENTRY,
+    WHD_AP_EVENT_ENTRY,
+    WHD_P2P_EVENT_ENTRY,
+    WHD_EVENT_ENTRY_MAX
+} whd_event_entry_t;
 
 #pragma pack(1)
 typedef struct whd_event_eth_hdr

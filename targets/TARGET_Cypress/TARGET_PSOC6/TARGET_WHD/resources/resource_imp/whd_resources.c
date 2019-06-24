@@ -211,9 +211,19 @@ uint32_t host_get_resource_block(whd_driver_t whd_drv, whd_resource_type_t type,
             return result;
         }
         *data = (uint8_t *)&r_buffer;
+        /*
+         * In case of local buffer read use the following code
+         *
+         *  *size_out = MIN(BLOCK_BUFFER_SIZE, resource_size - transfer_progress);
+         *  *data = (uint8_t *)wifi_firmware_image_data;
+         *
+         * For sending the entire buffer in single block set size out as following
+         *  *size_out = (uint32_t)resource_get_size(&wifi_firmware_image);
+         */
     }
     else if (type == WHD_RESOURCE_WLAN_NVRAM)
     {
+        *size_out = NVRAM_SIZE;
         *data = (uint8_t *)NVRAM_IMAGE_VARIABLE;
         i = 0;
     }
@@ -227,6 +237,16 @@ uint32_t host_get_resource_block(whd_driver_t whd_drv, whd_resource_type_t type,
             return result;
         }
         *data = (uint8_t *)&r_buffer;
+        /*
+         * In case of local buffer read use the following code
+         *
+         *  *size_out = MIN(BLOCK_BUFFER_SIZE, resource_size - transfer_progress);
+         *  *data = (uint8_t *)wifi_firmware_clm_blob_image_data;
+         *
+         * For sending the entire buffer in single block set size out as following
+         *  *size_out = sizeof(wifi_firmware_clm_blob_image_data);
+         */
+
     }
     transfer_progress = 0;
 

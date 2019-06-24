@@ -23,16 +23,16 @@
 #include "whd_buffer_api.h"
 
 /******************************************************
- *  * @cond               Constants
- *   ******************************************************/
+** @cond               Constants
+*******************************************************/
 
 /******************************************************
- *  *                   Enumerations
- *   ******************************************************/
+**                   Enumerations
+*******************************************************/
 
 /******************************************************
- *  *               Function Declarations
- *   ******************************************************/
+**               Function Declarations
+*******************************************************/
 
 /******************************************************
  *        Variables Definitions
@@ -61,7 +61,7 @@
  *
  */
 whd_result_t whd_host_buffer_get(whd_driver_t whd_driver, whd_buffer_t *buffer, whd_buffer_dir_t direction,
-                                 unsigned short size, unsigned long wait)
+                                 uint16_t size, uint32_t wait)
 {
     if (whd_driver->buffer_if->whd_host_buffer_get)
     {
@@ -72,7 +72,7 @@ whd_result_t whd_host_buffer_get(whd_driver_t whd_driver, whd_buffer_t *buffer, 
         WPRINT_WHD_INFO( ("Function pointers not provided .\n") );
     }
 
-    return WHD_WLAN_ERROR;
+    return WHD_WLAN_NOFUNCTION;
 }
 
 /** Releases a packet buffer
@@ -102,7 +102,7 @@ whd_result_t whd_buffer_release(whd_driver_t whd_driver, whd_buffer_t buffer, wh
         WPRINT_WHD_INFO( ("Function pointers not provided .\n") );
     }
 
-    return WHD_WLAN_ERROR;
+    return WHD_WLAN_NOFUNCTION;
 }
 
 /** Retrieves the current pointer of a packet buffer
@@ -170,7 +170,7 @@ uint16_t whd_buffer_get_current_piece_size(whd_driver_t whd_driver, whd_buffer_t
  *
  *  @return       : WHD_SUCCESS or error code
  */
-whd_result_t whd_buffer_set_size(whd_driver_t whd_driver, whd_buffer_t buffer, unsigned short size)
+whd_result_t whd_buffer_set_size(whd_driver_t whd_driver, whd_buffer_t buffer, uint16_t size)
 {
     if (whd_driver->buffer_if->whd_buffer_set_size)
     {
@@ -181,7 +181,7 @@ whd_result_t whd_buffer_set_size(whd_driver_t whd_driver, whd_buffer_t buffer, u
         WPRINT_WHD_INFO( ("Function pointers not provided .\n") );
     }
 
-    return WHD_WLAN_ERROR;
+    return WHD_WLAN_NOFUNCTION;
 }
 
 /** Moves the current pointer of a packet buffer
@@ -215,6 +215,6 @@ whd_result_t whd_buffer_add_remove_at_front(whd_driver_t whd_driver, whd_buffer_
         WPRINT_WHD_INFO( ("Function pointers not provided .\n") );
     }
 
-    return WHD_WLAN_ERROR;
+    return WHD_WLAN_NOFUNCTION;
 }
 

@@ -161,6 +161,7 @@ whd_result_t whd_cdc_send_ioctl(whd_interface_t ifp, cdc_command_type_t type, ui
 
     uint32_t data_length;
     uint32_t flags;
+    uint32_t requested_ioctl_id;
     whd_result_t retval;
     control_header_t *send_packet;
     cdc_header_t *cdc_header;
@@ -175,6 +176,9 @@ whd_result_t whd_cdc_send_ioctl(whd_interface_t ifp, cdc_command_type_t type, ui
         CHECK_RETURN(whd_buffer_release(whd_driver, send_buffer_hnd, WHD_NETWORK_TX) );
         return retval;
     }
+
+    /* Count request ioctl ID after acquiring ioctl mutex */
+    requested_ioctl_id = (uint32_t)(++cdc_bdc_info->requested_ioctl_id);
 
     /* Get the data length and cast packet to a CDC BUS header */
     data_length =
@@ -211,7 +215,7 @@ whd_result_t whd_cdc_send_ioctl(whd_interface_t ifp, cdc_command_type_t type, ui
     send_packet->cdc_header.cmd    = htod32(command);
     send_packet->cdc_header.len    = htod32(data_length);
 
-    send_packet->cdc_header.flags  = ( ( (uint32_t)++ (cdc_bdc_info->requested_ioctl_id) << CDCF_IOC_ID_SHIFT )
+    send_packet->cdc_header.flags  = ( (requested_ioctl_id << CDCF_IOC_ID_SHIFT)
                                        & CDCF_IOC_ID_MASK ) | type | bss_index << CDCF_IOC_IF_SHIFT;
     send_packet->cdc_header.flags = htod32(send_packet->cdc_header.flags);
 
@@ -330,7 +334,7 @@ void *whd_cdc_get_iovar_buffer(whd_driver_t whd_driver,
     }
     else
     {
-        WPRINT_WHD_DEBUG( ("Error - failed to allocate a packet buffer for IOVAR\n") );
+        WPRINT_WHD_ERROR( ("Error - failed to allocate a packet buffer for IOVAR\n") );
         return NULL;
     }
 }
@@ -439,7 +443,7 @@ void *whd_cdc_get_ioctl_buffer(whd_driver_t whd_driver,
     }
     else
     {
-        WPRINT_WHD_DEBUG( ("Error - failed to allocate a packet buffer for IOCTL\n") );
+        WPRINT_WHD_ERROR( ("Error - failed to allocate a packet buffer for IOCTL\n") );
         return NULL;
     }
 }
@@ -457,11 +461,14 @@ void whd_process_cdc(whd_driver_t whd_driver, whd_buffer_t buffer)
     whd_cdc_bdc_info_t *cdc_bdc_info = &whd_driver->cdc_bdc_info;
     whd_result_t result;
     cdc_header_t *cdc_header = (cdc_header_t *)whd_buffer_get_current_piece_data_pointer(whd_driver, buffer);
+    whd_result_t ioctl_mutex_res;
 
     flags         = dtoh32(cdc_header->flags);
     id            = (uint16_t)( (flags & CDCF_IOC_ID_MASK) >> CDCF_IOC_ID_SHIFT );
 
-    if (id == cdc_bdc_info->requested_ioctl_id)
+    /* Validate request ioctl ID and check if whd_cdc_send_ioctl is still waiting for response*/
+    if ( ( (ioctl_mutex_res = whd_rtos_get_semaphore(&cdc_bdc_info->ioctl_mutex, 0, WHD_FALSE) ) != WHD_SUCCESS ) &&
+         (id == cdc_bdc_info->requested_ioctl_id) )
     {
         /* Save the response packet in a variable */
         cdc_bdc_info->ioctl_response = buffer;
@@ -477,11 +484,25 @@ void whd_process_cdc(whd_driver_t whd_driver, whd_buffer_t buffer)
     }
     else
     {
+        WPRINT_WHD_ERROR( ("Received buffer request ID: %d (expectation: %d)\n",
+                           id, cdc_bdc_info->requested_ioctl_id) );
+        if (ioctl_mutex_res == WHD_SUCCESS)
+        {
+            WPRINT_WHD_ERROR( ("whd_cdc_send_ioctl is already timed out, drop the buffer\n") );
+            result = whd_rtos_set_semaphore(&cdc_bdc_info->ioctl_mutex, WHD_FALSE);
+            if (result != WHD_SUCCESS)
+            {
+                WPRINT_WHD_ERROR( ("Error setting semaphore in %s at %d \n", __func__, __LINE__) );
+            }
+        }
+        else
+        {
+            WPRINT_WHD_ERROR( ("Received a response for a different IOCTL - retry\n") );
+        }
+
         result = whd_buffer_release(whd_driver, buffer, WHD_NETWORK_RX);
         if (result != WHD_SUCCESS)
             WPRINT_WHD_ERROR( ("buffer release failed in %s at %d \n", __func__, __LINE__) );
-
-        WPRINT_WHD_ERROR( ("Received a response for a different IOCTL - retry\n") );
     }
 }
 
@@ -640,7 +661,7 @@ void whd_process_bdc_event(whd_driver_t whd_driver, whd_buffer_t buffer, uint16_
 
     for (i = 0; i < (uint16_t)WHD_EVENT_HANDLER_LIST_SIZE; i++)
     {
-        if (cdc_bdc_info->whd_event_list[i].events != NULL)
+        if (cdc_bdc_info->whd_event_list[i].event_set)
         {
             for (j = 0; cdc_bdc_info->whd_event_list[i].events[j] != WLC_E_NONE; ++j)
             {

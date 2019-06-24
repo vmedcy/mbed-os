@@ -123,7 +123,7 @@ static whd_result_t whd_bus_common_download_resource(whd_driver_t whd_driver, wh
     uint16_t transfer_size = 0;
     uint32_t segment_size;
     uint32_t blocks_count = 0;
-    uint32_t i;
+    uint32_t i, j, num_buff;
     uint32_t size_out;
     uint32_t reset_instr = 0;
 
@@ -145,7 +145,6 @@ static whd_result_t whd_bus_common_download_resource(whd_driver_t whd_driver, wh
     }
 
     /* Transfer firmware image into the RAM */
-    transfer_progress = 0;
     result = whd_get_resource_block_size(whd_driver, resource, &block_size);
     if (result != WHD_SUCCESS)
     {
@@ -162,79 +161,81 @@ static whd_result_t whd_bus_common_download_resource(whd_driver_t whd_driver, wh
         goto exit;
     }
 
-    do
+    result = whd_host_buffer_get(whd_driver, &buffer, WHD_NETWORK_TX,
+                                 (uint16_t)(BLOCK_SIZE + sizeof(whd_buffer_header_t) ), WHD_FALSE);
+    if (result != WHD_SUCCESS)
     {
-        result = whd_host_buffer_get(whd_driver, &buffer, WHD_NETWORK_TX,
-                                     (unsigned short)(block_size + sizeof(whd_buffer_header_t) ), WHD_FALSE);
-    } while ( (result == WHD_BUFFER_UNAVAILABLE_PERMANENT) && ( (block_size >>= 1) > 1 ) );
+        WPRINT_WHD_ERROR( ("%s:%d whd_host_buffer_get() failed\n", __func__, __LINE__) );
+        goto exit;
+    }
 
-    /*
-     * In case of direct read the no of blocks is one and we would be getting a pointer pointing to entire resource
-     * In case of indirect read the no of blocks is the size of the resource/ size of blocks,
-     * get resource block would return pointer to the block
-     */
-
+    transfer_progress = 0;
     for (i = 0; i < blocks_count; i++)
     {
-        packet = (uint8_t *)whd_buffer_get_current_piece_data_pointer(whd_driver, buffer);
-
+        /*
+         * In case of direct read the no of blocks is one and we would be getting a pointer pointing to entire resource
+         * In case of indirect read the no of blocks is the size of the resource/ size of blocks,
+         * get resource block would return pointer to the block
+         */
         CHECK_RETURN(whd_get_resource_block(whd_driver, resource, (const uint8_t **)&image, &size_out) );
+        /* Need to find the min size last block will be less that block_size */
+        transfer_size = MIN_OF(BLOCK_SIZE, size_out);
+        num_buff = (size_out + transfer_size - 1) / transfer_size;
 
-        if (resource == WHD_RESOURCE_WLAN_FIRMWARE)
+        if (blocks_count != 1)
+            transfer_progress = 0;
+        for (j = 0; j < num_buff; j++)
         {
-            memcpy(packet + sizeof(whd_buffer_header_t), &image[0], size_out);
-            transfer_size = (uint16_t)block_size;
+            packet = (uint8_t *)whd_buffer_get_current_piece_data_pointer(whd_driver, buffer);
+            memcpy(packet + sizeof(whd_buffer_header_t), &image[transfer_progress], transfer_size);
 
-        }
-        else if (resource == WHD_RESOURCE_WLAN_NVRAM)
-        {
-            memcpy(packet + sizeof(whd_buffer_header_t), &image[transfer_progress], block_size);
-            transfer_size = (uint16_t)MIN_OF(block_size, image_size - transfer_progress);
-        }
-        /* Round up the size of the chunk */
-        transfer_size = (uint16_t)ROUND_UP(transfer_size, WHD_BUS_ROUND_UP_ALIGNMENT);
-        segment_size = transfer_size;
 
-        if (address != 0)
-        {
-            if ( (resource == WHD_RESOURCE_WLAN_FIRMWARE) && (reset_instr == 0) )
+            /* Round up the size of the chunk */
+            transfer_size = (uint16_t)ROUND_UP(transfer_size, WHD_BUS_ROUND_UP_ALIGNMENT);
+            segment_size = transfer_size;
+            transfer_size = (uint16_t)MIN_OF(whd_bus_get_max_transfer_size(whd_driver), transfer_size);
+
+            if (address != 0)
             {
-                /* Copy the starting address of the firmware into a global variable */
-                reset_instr = *( (uint32_t *)(packet + sizeof(whd_buffer_header_t) ) );
+                if ( (resource == WHD_RESOURCE_WLAN_FIRMWARE) && (reset_instr == 0) )
+                {
+                    /* Copy the starting address of the firmware into a global variable */
+                    reset_instr = *( (uint32_t *)(packet + sizeof(whd_buffer_header_t) ) );
+                }
             }
-        }
+            for (; segment_size != 0;
+                 segment_size -= transfer_size, packet += transfer_size)
+            {
+                if (whd_driver->bus_common_info->resource_download_abort == WHD_TRUE)
+                {
+                    WPRINT_WHD_ERROR( ("Download_resource is aborted; terminating after %" PRIu32 " iterations\n",
+                                       transfer_progress) );
+                    CHECK_RETURN(whd_buffer_release(whd_driver, buffer, WHD_NETWORK_TX) );
+                    result = WHD_UNFINISHED;
+                    goto exit;
+                }
 
-        for (; segment_size != 0;
-             segment_size -= transfer_size, packet += transfer_size, transfer_progress += transfer_size,
-             address += transfer_size)
-        {
-            if (whd_driver->bus_common_info->resource_download_abort == WHD_TRUE)
-            {
-                WPRINT_WHD_ERROR( ("Download_resource is aborted; terminating after %" PRIu32 " iterations\n",
-                                   transfer_progress) );
-                CHECK_RETURN(whd_buffer_release(whd_driver, buffer, WHD_NETWORK_TX) );
-                result = WHD_UNFINISHED;
-                goto exit;
-            }
-            transfer_size = (uint16_t)MIN_OF(whd_bus_get_max_transfer_size(whd_driver), segment_size);
-            result = whd_bus_set_backplane_window(whd_driver, address);
+                result = whd_bus_set_backplane_window(whd_driver, address);
+                if (result != WHD_SUCCESS)
+                {
+                    CHECK_RETURN(whd_buffer_release(whd_driver, buffer, WHD_NETWORK_TX) );
+                    goto exit;
+                }
+                result = whd_bus_transfer_bytes(whd_driver, BUS_WRITE, BACKPLANE_FUNCTION,
+                                                (address & BACKPLANE_ADDRESS_MASK), transfer_size,
+                                                (whd_transfer_bytes_packet_t *)(packet +
+                                                                                sizeof(whd_buffer_queue_ptr_t) ) );
+                if (result != WHD_SUCCESS)
+                {
+                    CHECK_RETURN(whd_buffer_release(whd_driver, buffer, WHD_NETWORK_TX) );
+                    goto exit;
+                }
 
-            if (result != WHD_SUCCESS)
-            {
-                CHECK_RETURN(whd_buffer_release(whd_driver, buffer, WHD_NETWORK_TX) );
-                goto exit;
-            }
-            result = whd_bus_transfer_bytes(whd_driver, BUS_WRITE, BACKPLANE_FUNCTION,
-                                            (address & BACKPLANE_ADDRESS_MASK), transfer_size,
-                                            (whd_transfer_bytes_packet_t *)(packet + sizeof(whd_buffer_queue_ptr_t) ) );
-            if (result != WHD_SUCCESS)
-            {
-                CHECK_RETURN(whd_buffer_release(whd_driver, buffer, WHD_NETWORK_TX) );
-                goto exit;
+                address += transfer_size;
+                transfer_progress = transfer_progress + transfer_size;
             }
         }
     }
-
     CHECK_RETURN(whd_buffer_release(whd_driver, buffer, WHD_NETWORK_TX) );
     /* Below part of the code is applicable to arm_CR4 type chips only
      * The CR4 chips by default firmware is not loaded at 0. So we need
@@ -507,6 +508,7 @@ whd_result_t whd_bus_transfer_backplane_bytes(whd_driver_t whd_driver, whd_bus_t
                                                   whd_driver) + MAX_BUS_HEADER_SIZE), WHD_TRUE);
     if (result != WHD_SUCCESS)
     {
+        WPRINT_WHD_ERROR( ("Packet buffer allocation failed in %s at %d \n", __func__, __LINE__) );
         goto done;
     }
     packet = (uint8_t *)whd_buffer_get_current_piece_data_pointer(whd_driver, pkt_buffer);

@@ -53,7 +53,7 @@ uint32_t whd_resource_size(whd_driver_t whd_driver, whd_resource_type_t resource
         WPRINT_WHD_ERROR( ("Function pointers not provided .\n") );
     }
 
-    return WHD_WLAN_ERROR;
+    return WHD_WLAN_NOFUNCTION;
 }
 
 uint32_t whd_get_resource_block_size(whd_driver_t whd_driver, whd_resource_type_t type, uint32_t *size_out)
@@ -68,7 +68,7 @@ uint32_t whd_get_resource_block_size(whd_driver_t whd_driver, whd_resource_type_
         WPRINT_WHD_ERROR( ("Function pointers not provided .\n") );
     }
 
-    return WHD_WLAN_ERROR;
+    return WHD_WLAN_NOFUNCTION;
 }
 
 uint32_t whd_get_resource_no_of_blocks(whd_driver_t whd_driver, whd_resource_type_t type, uint32_t *block_count)
@@ -82,7 +82,7 @@ uint32_t whd_get_resource_no_of_blocks(whd_driver_t whd_driver, whd_resource_typ
         WPRINT_WHD_ERROR( ("Function pointers not provided .\n") );
     }
 
-    return WHD_WLAN_ERROR;
+    return WHD_WLAN_NOFUNCTION;
 }
 
 uint32_t whd_get_resource_block(whd_driver_t whd_driver, whd_resource_type_t type, const uint8_t **data,
@@ -98,6 +98,6 @@ uint32_t whd_get_resource_block(whd_driver_t whd_driver, whd_resource_type_t typ
         WPRINT_WHD_ERROR( ("Function pointers not provided .\n") );
     }
 
-    return WHD_WLAN_ERROR;
+    return WHD_WLAN_NOFUNCTION;
 }
 

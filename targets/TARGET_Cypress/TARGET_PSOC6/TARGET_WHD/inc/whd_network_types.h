@@ -15,6 +15,13 @@
  * limitations under the License.
  */
 
+/** @file whd_network_types.h
+ *  Prototypes of functions corresponding to Buffer and Network Interface
+ *
+ *  This file provides prototypes for functions which allows different functionalities related to:
+ *      - Buffer Interface: Allocate and release a packet buffer, Retrieve the current pointer and size of a packet buffer, etc.
+ *      - Network Interface: Called by WHD to pass received data to the network stack, to send an ethernet frame to WHD, etc.
+ */
 #include "whd.h"
 
 #ifndef INC_WHD_NETWORK_TYPES_H_
@@ -26,21 +33,26 @@ extern "C"
 #endif
 
 /******************************************************
-* @cond       Constants
+*                  Constants
 ******************************************************/
-
-typedef enum
-{
-    WHD_NETWORK_TX, WHD_NETWORK_RX
-} whd_buffer_dir_t;
-
-/** @endcond */
-
-/** @addtogroup buffif Buffer Interface
+/** @addtogroup buffif WHD Buffer Interface APIs
  * Allows WHD to use packet buffers in an abstract way.
  *  @{
  */
 
+/**
+ * Indicates transmit/receive direction that the packet buffer has
+ * been used for. This might be needed if tx/rx pools are separate.
+ */
+typedef enum
+{
+    WHD_NETWORK_TX, /**< Transmit direction */
+    WHD_NETWORK_RX  /**< Recieve direction */
+} whd_buffer_dir_t;
+
+/**
+ * Allows WHD to use packet buffers in an abstract way.
+ */
 struct whd_buffer_funcs
 {
     /** Allocates a packet buffer
@@ -115,7 +127,6 @@ struct whd_buffer_funcs
 
     /** Sets the current size of a WHD packet
      *
-     *
      *  Implemented in the port layer interface which is specific to the
      *  buffering scheme in use.
      *  This function sets the current length of a WHD packet buffer
@@ -149,7 +160,16 @@ struct whd_buffer_funcs
      */
     whd_result_t (*whd_buffer_add_remove_at_front)(whd_buffer_t *buffer, int32_t add_remove_amount);
 };
+/*  @} */
 
+/** @addtogroup netif WHD Network Interface APIs
+ *  Allows WHD to pass received data to the network stack, to send an ethernet frame to WHD, etc.
+ *  @{
+ */
+
+/**
+ * Allows WHD to pass received data to the network stack, to send an ethernet frame to WHD, etc
+ */
 struct whd_netif_funcs
 {
     /** Called by WHD to pass received data to the network stack
@@ -200,6 +220,7 @@ struct whd_netif_funcs
  *
  */
 extern void whd_network_send_ethernet_data(whd_interface_t ifp, whd_buffer_t buffer);
+/*  @} */
 
 
 #ifdef __cplusplus

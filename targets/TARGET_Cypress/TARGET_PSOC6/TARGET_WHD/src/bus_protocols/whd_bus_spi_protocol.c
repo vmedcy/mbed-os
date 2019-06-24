@@ -200,15 +200,15 @@ static void add_log_entry(gspi_log_direction_t dir, whd_bus_function_t function,
 *             Global Function definitions
 ******************************************************/
 
-void whd_bus_spi_attach(whd_driver_t whd_driver, whd_spi_config_t *whd_spi_config, void *spi_obj,
-                        whd_spi_funcs_t *spi_ops)
+uint32_t whd_bus_spi_attach(whd_driver_t whd_driver, whd_spi_config_t *whd_spi_config, void *spi_obj,
+                            whd_spi_funcs_t *spi_ops)
 {
     struct whd_bus_info *whd_bus_info;
 
     if ( (spi_ops == NULL) || (spi_ops->whd_enable_intr == NULL) || (spi_ops->whd_get_intr_config == NULL) )
     {
         WPRINT_WHD_ERROR( ("oob interrupt configuration is invalid in %s\n", __FUNCTION__) );
-        return;
+        return WHD_BADARG;
     }
 
     whd_bus_info = (whd_bus_info_t *)malloc(sizeof(whd_bus_info_t) );
@@ -216,7 +216,7 @@ void whd_bus_spi_attach(whd_driver_t whd_driver, whd_spi_config_t *whd_spi_confi
     if (whd_bus_info == NULL)
     {
         WPRINT_WHD_ERROR( ("Memory allocation failed for whd_bus_info in %s\n", __FUNCTION__) );
-        return;
+        return WHD_BUFFER_UNAVAILABLE_PERMANENT;
     }
     memset(whd_bus_info, 0, sizeof(whd_bus_info_t) );
 
@@ -227,7 +227,7 @@ void whd_bus_spi_attach(whd_driver_t whd_driver, whd_spi_config_t *whd_spi_confi
     if (whd_driver->bus_priv == NULL)
     {
         WPRINT_WHD_ERROR( ("Memory allocation failed for whd_bus_priv in %s\n", __FUNCTION__) );
-        return;
+        return WHD_BUFFER_UNAVAILABLE_PERMANENT;
     }
     memset(whd_driver->bus_priv, 0, sizeof(struct whd_bus_priv) );
 
@@ -269,6 +269,8 @@ void whd_bus_spi_attach(whd_driver_t whd_driver, whd_spi_config_t *whd_spi_confi
     whd_bus_info->whd_bus_reinit_stats_fptr = whd_bus_spi_reinit_stats;
     whd_bus_info->whd_bus_irq_register_fptr = whd_bus_spi_irq_register;
     whd_bus_info->whd_bus_irq_enable_fptr = whd_bus_spi_irq_enable;
+
+    return WHD_SUCCESS;
 }
 
 whd_result_t whd_bus_spi_send_buffer(whd_driver_t whd_driver, whd_buffer_t buffer)
@@ -521,6 +523,8 @@ whd_result_t whd_bus_spi_init(whd_driver_t whd_driver)
 
     whd_bus_init_backplane_window(whd_driver);
 
+    whd_bus_gspi_header_t *gspi_header = (whd_bus_gspi_header_t *)init_data;
+
     /* Due to an chip issue, the first transfer will be corrupted.
      * This means a repeated safe read of a known value register is required until
      * the correct value is returned - signalling the bus is running.
@@ -531,8 +535,7 @@ whd_result_t whd_bus_spi_init(whd_driver_t whd_driver)
     loop_count = 0;
     do
     {
-        whd_bus_gspi_header_t *gspi_header = (whd_bus_gspi_header_t *)init_data;
-
+        /* Header needs to calculated every time as init_data gets modified in cyhal_spi_transfer() */
         *gspi_header =
             ( whd_bus_gspi_header_t )SWAP32_16BIT_PARTS(SWAP32( (uint32_t)( (whd_bus_gspi_command_mapping[(int)BUS_READ]
                                                                              & 0x1) << 31 ) |
@@ -541,8 +544,7 @@ whd_result_t whd_bus_spi_init(whd_driver_t whd_driver)
                                                                 (uint32_t)( (SPI_READ_TEST_REGISTER & 0x1FFFFu) <<
                                                                             11 ) |
                                                                 (uint32_t)( (4u /*size*/ & 0x7FFu) << 0 ) ) );
-        CHECK_RETURN(cyhal_spi_transfer(whd_driver->bus_priv->spi_obj, NULL, 0, init_data, transfer_size,
-                                        0) );
+        CHECK_RETURN(cyhal_spi_transfer(whd_driver->bus_priv->spi_obj, NULL, 0, init_data, transfer_size, 0) );
         loop_count++;
     } while ( (NULL == memchr(&init_data[4], SPI_READ_TEST_REG_LSB, (size_t)8) ) &&
               (NULL == memchr(&init_data[4], SPI_READ_TEST_REG_LSB_SFT1, (size_t)8) ) &&
@@ -550,6 +552,11 @@ whd_result_t whd_bus_spi_init(whd_driver_t whd_driver)
               (NULL == memchr(&init_data[4], SPI_READ_TEST_REG_LSB_SFT3, (size_t)8) ) &&
               (loop_count < ( uint32_t )FEADBEAD_TIMEOUT_MS) &&
               (whd_rtos_delay_milliseconds( (uint32_t)1 ), (1 == 1) ) );
+
+    /* Register interrupt handler */
+    whd_bus_spi_irq_register(whd_driver);
+    /* Enable SPI IRQ */
+    whd_bus_spi_irq_enable(whd_driver, WHD_TRUE);
 
     /* Keep/reset defaults for registers 0x0-0x4 except for, 0x0: Change word length to 32bit,
      * set endianness, enable wakeup. 0x2: enable interrupt with status. */

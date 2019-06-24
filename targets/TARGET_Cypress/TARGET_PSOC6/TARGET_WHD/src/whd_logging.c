@@ -20,7 +20,7 @@
 #include <stdarg.h>
 #include "whd_debug.h"
 
-#ifdef WWD_LOGGING_BUFFER_ENABLE
+#ifdef WHD_LOGGING_BUFFER_ENABLE
 
 #ifndef LOGGING_BUFFER_SIZE
 #error LOGGING_BUFFER_SIZE is not defined
@@ -107,5 +107,5 @@ void whd_print_logbuffer(void)
         logbuf.buffer_read = (logbuf.buffer_read + 1) % LOGGING_BUFFER_SIZE;
     }
 }
-#endif /* ifdef WWD_LOGGING_BUFFER_ENABLE */
+#endif /* ifdef WHD_LOGGING_BUFFER_ENABLE */
 

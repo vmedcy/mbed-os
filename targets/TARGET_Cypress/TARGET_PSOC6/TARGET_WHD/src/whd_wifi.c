@@ -59,10 +59,6 @@ uint32_t whd_wifi_set_mac_address(whd_interface_t ifp, whd_mac_t mac)
     uint32_t *data;
     whd_driver_t whd_driver = ifp->whd_driver;
 
-    /* Assert when WLAN is UP */
-    whd_assert("WLAN is UP. Ensure WLAN is DOWN before invoking this API",
-               whd_driver->internal_info.whd_wlan_status.state == WLAN_DOWN);
-
     /* AP interface needs to come up with MAC different from STA  */
 #ifdef APOLLO_AUDIO
 

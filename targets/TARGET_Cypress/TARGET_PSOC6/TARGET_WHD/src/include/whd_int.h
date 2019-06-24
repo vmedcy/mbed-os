@@ -65,7 +65,7 @@ struct whd_interface
     char if_name[WHD_MSG_IFNAME_MAX];
     whd_interface_role_t role;
     whd_mac_t mac_addr;
-
+    uint16_t event_reg_list[WHD_EVENT_ENTRY_MAX];
     whd_bool_t state;
 };
 
@@ -104,7 +104,6 @@ whd_result_t whd_add_interface(whd_driver_t whd_driver, uint8_t bsscfgidx, uint8
 whd_result_t whd_add_primary_interface(whd_driver_t whd_driver, whd_interface_t *ifpp);
 
 whd_interface_t whd_get_primary_interface(whd_driver_t whd_driver);
-whd_result_t whd_add_secondary_interface(whd_driver_t whd_driver, whd_mac_t *mac_addr, whd_interface_t *ifpp);
 
 
 #ifdef __cplusplus

@@ -60,7 +60,7 @@ extern "C"
  *
  */
 whd_result_t whd_host_buffer_get(whd_driver_t whd_driver, whd_buffer_t *buffer, whd_buffer_dir_t direction,
-                                 unsigned short size, unsigned long wait);
+                                 uint16_t size, uint32_t wait);
 
 /** Releases a packet buffer
  *
@@ -120,7 +120,7 @@ uint16_t whd_buffer_get_current_piece_size(whd_driver_t whd_driver, whd_buffer_t
  *
  *  @return       : WHD_SUCCESS or error code
  */
-whd_result_t whd_buffer_set_size(whd_driver_t whd_driver, whd_buffer_t buffer, unsigned short size);
+whd_result_t whd_buffer_set_size(whd_driver_t whd_driver, whd_buffer_t buffer, uint16_t size);
 
 /** Moves the current pointer of a packet buffer
  *

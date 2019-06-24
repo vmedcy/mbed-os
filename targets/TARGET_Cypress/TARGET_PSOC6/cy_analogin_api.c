@@ -18,6 +18,9 @@
 #include "analogin_api.h"
 #include "mbed_error.h"
 #include "cyhal_adc.h"
+#include "cyhal_utils.h"
+#include "cyhal_pin_package.h"
+#include "cy_pdl.h"
 
 #if DEVICE_ANALOGIN
 
@@ -25,21 +28,36 @@
 extern "C" {
 #endif
 
+static cyhal_adc_t cy_mbed_adc_inst[CY_IP_MXS40PASS_SAR_INSTANCES];
+
 void analogin_init(analogin_t *obj, PinName pin)
 {
-    if (CY_RSLT_SUCCESS != cyhal_adc_init(&(obj->hal_adc), pin)) {
-        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_ANALOG, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_adc_init");
+    const cyhal_resource_pin_mapping_t *map = CY_UTILS_GET_RESOURCE(pin, cyhal_pin_map_pass_sarmux_pads);
+    if (NULL == map) {
+        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_ANALOG, MBED_ERROR_CODE_INVALID_ARGUMENT), "pin does not support analog in");
+    } else {
+        const uint8_t adc_num = map->inst->block_num;
+        obj->hal_adc = &(cy_mbed_adc_inst[adc_num]);
+        if (obj->hal_adc->base == NULL) {
+            if (CY_RSLT_SUCCESS != cyhal_adc_init(obj->hal_adc, pin, NULL)) {
+                MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_ANALOG, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_adc_init");
+            }
+        }
+
+        if (CY_RSLT_SUCCESS != cyhal_adc_channel_init(&(obj->hal_adc_channel), obj->hal_adc, pin)) {
+            MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_ANALOG, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_adc_channel_init");
+        }
     }
 }
 
 float analogin_read(analogin_t *obj)
 {
-    return analogin_read_u16(obj) * (1.0f / (1.0f + CY_ADC_MAX_VALUE));
+    return analogin_read_u16(obj) * (1.0f / (1.0f + CYHAL_ADC_MAX_VALUE));
 }
 
 uint16_t analogin_read_u16(analogin_t *obj)
 {
-    return cyhal_adc_read_u16(&(obj->hal_adc));
+    return cyhal_adc_read_u16(&(obj->hal_adc_channel));
 }
 
 const PinMap *analogin_pinmap(void)

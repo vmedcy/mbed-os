@@ -19,6 +19,7 @@
 #include "device.h"
 #include "cycfg.h"
 #include "cyhal_hwmgr.h"
+#include "cybsp_api_core.h"
 #include "mbed_power_mgmt.h"
 #include "rtos_idle.h"
 
@@ -52,6 +53,11 @@ static void active_idle_hook(void)
 *******************************************************************************/
 void mbed_sdk_init(void)
 {
+#if (CY_CPU_CORTEX_M0P && !defined(COMPONENT_SPM_MAILBOX))
+    /* Disable global interrupts */
+    __disable_irq();
+#endif
+
     /* Initialize system and clocks. */
     /* Placed here as it must be done after proper LIBC initialization. */
     SystemInit();
@@ -63,9 +69,21 @@ void mbed_sdk_init(void)
     mailbox_init();
 #endif
 
-#if (!CY_CPU_CORTEX_M0P)
+#if (CY_CPU_CORTEX_M0P)
+#if defined(COMPONENT_SPE)
     /* Set up the device based on configurator selections */
     init_cycfg_all();
+#endif
+
+#if !defined(COMPONENT_SPM_MAILBOX)
+    /* Enable global interrupts */
+    __enable_irq();
+#endif
+#else
+#if !defined(TARGET_PSA)
+    /* Set up the device based on configurator selections */
+    cybsp_init();
+#endif
 
     /* Enable global interrupts (disabled in CM4 startup assembly) */
     __enable_irq();
@@ -85,4 +103,3 @@ void mbed_sdk_init(void)
 #endif
 #endif
 }
-

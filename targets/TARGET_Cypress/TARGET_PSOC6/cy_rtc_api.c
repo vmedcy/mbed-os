@@ -41,7 +41,7 @@ void rtc_free(void)
 
 int rtc_isenabled(void)
 {
-    return CY_RSLT_SUCCESS == cyhal_rtc_is_enabled(&cy_rtc);
+    return cyhal_rtc_is_enabled(&cy_rtc) ? 1 : 0;
 }
 
 time_t rtc_read(void)

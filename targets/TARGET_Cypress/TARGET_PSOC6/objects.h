@@ -32,14 +32,14 @@ extern "C" {
 
 #if DEVICE_ANALOGIN
 struct analogin_s {
-    cyhal_adc_t hal_adc;
+    cyhal_adc_t *hal_adc;
+    cyhal_adc_channel_t hal_adc_channel;
 };
 #endif
 
 #if DEVICE_ANALOGOUT
 struct dac_s {
     cyhal_dac_t hal_dac;
-    uint16_t max;
 };
 #endif
 

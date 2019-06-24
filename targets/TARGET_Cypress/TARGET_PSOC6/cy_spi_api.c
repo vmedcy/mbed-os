@@ -39,7 +39,7 @@ static struct spi_s *cy_get_spi(spi_t *obj)
 
 SPIName spi_get_peripheral_name(PinName mosi, PinName miso, PinName mclk)
 {
-    const cyhal_resource_pin_mapping_t *map = cyhal_utils_get_resource(mclk, cyhal_pin_map_scb_spi_clk, sizeof(cyhal_pin_map_scb_spi_clk) / sizeof(*cyhal_pin_map_scb_spi_clk));
+    const cyhal_resource_pin_mapping_t *map = cyhal_utils_get_resource(mclk, cyhal_pin_map_scb_spi_s_clk, sizeof(cyhal_pin_map_scb_spi_s_clk) / sizeof(*cyhal_pin_map_scb_spi_s_clk));
     if (NULL != map) {
         return (SPIName)CY_SCB_BASE_ADDRESSES[map->inst->block_num];
     }

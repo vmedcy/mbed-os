@@ -208,7 +208,9 @@ cy_rslt_t cyhal_sdio_send_cmd(const cyhal_sdio_t *obj, cyhal_transfer_t directio
  * @param[in,out] obj       The SDIO object
  * @param[in]     direction The direction of transfer (read/write)
  * @param[in]     argument  The argument to the command
- * @param[in]     data      The data to send to the SDIO device
+ * @param[in]     data      The data to send to the SDIO device. The data buffer 
+ *                          should be aligned to the block size (64 bytes) if data 
+ *                          size is greater that block size (64 bytes).
  * @param[in]     length    The number of bytes to send
  * @param[out]    response  The response from the SDIO device
  * @return The status of the configure request

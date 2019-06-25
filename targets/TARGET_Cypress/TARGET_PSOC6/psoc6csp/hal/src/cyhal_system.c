@@ -124,7 +124,7 @@ cy_rslt_t try_set_hf_divider(uint8_t clock, uint32_t input_freq, uint32_t target
     }
     else
     {
-        return CYHAL_SYSTEM_RSLT_UNABLE_TO_SET_CLK_FREQ;
+        return CYHAL_SYSTEM_RSLT_NO_VALID_DIVIDER;
     }
 }
 
@@ -192,7 +192,7 @@ cy_rslt_t cyhal_system_clock_frequency(uint8_t clock, uint32_t frequencyhal_hz)
     uint32_t src_freq = get_src_freq(source);
     if (src_freq == 0)
     {
-        return CYHAL_SYSTEM_RSLT_UNABLE_TO_SET_CLK_FREQ;
+        return CYHAL_SYSTEM_RSLT_SRC_CLK_DISABLED;
     }
     uint8_t fll_pll_used;
     uint32_t clkpath_freq = get_clkpath_freq(path, src_freq, &fll_pll_used);

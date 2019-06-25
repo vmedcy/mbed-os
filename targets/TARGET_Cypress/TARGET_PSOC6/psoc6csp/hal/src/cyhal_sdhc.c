@@ -1159,7 +1159,6 @@ cy_rslt_t cyhal_sdio_bulk_transfer(cyhal_sdio_t *obj, cyhal_transfer_t direction
     cy_stc_sd_host_data_config_t dat;
     cy_en_sd_host_status_t       result = CY_SD_HOST_ERROR_TIMEOUT;
     uint32_t                     regIntrSts = Cy_SD_Host_GetNormalInterruptMask(obj->base);;
-    uint32_t* temp_Buffer = NULL;
     
     /* Initialize data constants*/
     dat.autoCommand         = CY_SD_HOST_AUTO_CMD_NONE;
@@ -1169,12 +1168,6 @@ cy_rslt_t cyhal_sdio_bulk_transfer(cyhal_sdio_t *obj, cyhal_transfer_t direction
     dat.enableDma           = true;
 
     dat.read = ( direction == CYHAL_WRITE ) ? false : true;
-
-    /* Allocate only on read operation */
-    if (dat.read)
-    {
-        temp_Buffer = (uint32_t*)malloc(length + obj->block_size - 1);
-    }
 
     /* Clear out the response */
     if ( response != NULL )
@@ -1230,11 +1223,6 @@ cy_rslt_t cyhal_sdio_bulk_transfer(cyhal_sdio_t *obj, cyhal_transfer_t direction
         {
             dat.blockSize     = obj->block_size;
             dat.numberOfBlock = ( length + obj->block_size - 1 ) / obj->block_size;
-            
-            if (dat.read)
-            {
-                dat.data = (uint32_t*) temp_Buffer;
-            }
         }
         /* Byte mode */
         else
@@ -1274,16 +1262,6 @@ cy_rslt_t cyhal_sdio_bulk_transfer(cyhal_sdio_t *obj, cyhal_transfer_t direction
     if (CY_SD_HOST_SUCCESS != result)
     {
         ret = CY_RSLT_TYPE_ERROR;
-    }
-
-    if(result == CY_RSLT_SUCCESS && length >= obj->block_size && dat.read)
-    {
-        memcpy((uint32_t *)data, temp_Buffer, (size_t)length);
-    }
-
-    if (temp_Buffer != NULL)
-    {
-        free(temp_Buffer);
     }
 
     if (0u != (CY_SD_HOST_CARD_INTERRUPT & obj->irq_cause))
@@ -1363,7 +1341,6 @@ cy_rslt_t cyhal_sdio_transfer_async(cyhal_sdio_t *obj, cyhal_transfer_t directio
 
         dat.read = ( direction == CYHAL_WRITE ) ? false : true;
 
-        /* TODO - BSP-542 */
         /* Block mode */
         if (length >= obj->block_size)
         {

@@ -330,10 +330,13 @@ typedef struct {
     cyhal_gpio_t                pin_sclk;
     cyhal_gpio_t                pin_ssel;
     cyhal_clock_divider_t       clock;
-    cy_en_scb_spi_mode_t        ms_mode;
     cy_en_scb_spi_sclk_mode_t   clk_mode;
+    uint8_t                     mode;
     uint8_t                     data_bits;
     bool                        is_slave;
+    bool                        alloc_clock;
+    uint8_t                     oversample_value;
+    bool                        msb_first;
     cy_stc_scb_spi_context_t    context;
     uint32_t                    irq_cause;
     uint16_t                    pending;
@@ -421,7 +424,7 @@ typedef struct {
     cyhal_clock_divider_t           clock;
     bool                            shared_clock;
     cyhal_gpio_t                    pin_dp;
-    cyhal_gpio_t                    pin_dm;    
+    cyhal_gpio_t                    pin_dm;
     uint8_t *rd_data[CY_USBFS_DEV_DRV_NUM_EPS_MAX];
     uint32_t rd_size[CY_USBFS_DEV_DRV_NUM_EPS_MAX];
 #else

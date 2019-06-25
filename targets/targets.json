@@ -1485,7 +1485,7 @@
             "PSA"
         ],
         "is_disk_virtual": true,
-        "macros": ["CPU_MK64FN1M0VMD12", "FSL_RTOS_MBED", "MBEDTLS_PSA_CRYPTO_C"],
+        "macros": ["CPU_MK64FN1M0VMD12", "FSL_RTOS_MBED"],
         "inherits": ["Target"],
         "detect_code": ["0240"],
         "device_has": [
@@ -1773,7 +1773,7 @@
             "PSA"
         ],
         "is_disk_virtual": true,
-        "macros": ["CPU_MK66FN2M0VMD18", "FSL_RTOS_MBED", "MBEDTLS_PSA_CRYPTO_C"],
+        "macros": ["CPU_MK66FN2M0VMD18", "FSL_RTOS_MBED"],
         "inherits": ["Target"],
         "detect_code": ["0311"],
         "device_has": [
@@ -2062,7 +2062,8 @@
         "detect_code": ["0236"],
         "device_name": "LPC55S69JBD100",
         "release_versions": ["5"],
-        "program_cycle_s": 10
+        "program_cycle_s": 10,
+        "sectors": [[0,512]]
     },
     "LPC55S69_NS": {
         "inherits": ["NSPE_Target", "LPC55S69"],
@@ -2816,8 +2817,7 @@
         "components_add": ["FLASHIAP"],
         "macros_add": [
             "USB_STM_HAL",
-            "USBHOST_OTHER",
-            "MBEDTLS_PSA_CRYPTO_C"
+            "USBHOST_OTHER"
         ],
         "device_has_add": [
             "ANALOGOUT",
@@ -3237,7 +3237,7 @@
         },
         "components_add": ["SPIF"],
         "detect_code": ["9020"],
-        "device_has_add": ["ANALOGOUT", "CAN", "TRNG", "FLASH", "MPU"],
+        "device_has_add": ["ANALOGOUT", "CAN", "CRC", "TRNG", "FLASH", "MPU"],
         "device_has_remove": ["SERIAL_FC"],
         "features": ["LWIP"],
         "release_versions": ["5"],
@@ -4004,6 +4004,7 @@
         "detect_code": ["0833"],
         "device_has_add": [
             "ANALOGOUT",
+            "CRC",
             "SERIAL_ASYNCH",
             "TRNG",
             "FLASH",
@@ -4024,6 +4025,7 @@
         "detect_code": ["0456"],
         "device_has_add": [
             "ANALOGOUT",
+            "CRC",
             "SERIAL_ASYNCH",
             "TRNG",
             "FLASH",
@@ -4069,6 +4071,7 @@
         "device_has_add": [
             "ANALOGOUT",
             "CAN",
+            "CRC",
             "EMAC",
             "SERIAL_ASYNCH",
             "TRNG",
@@ -4121,6 +4124,7 @@
         "device_has_add": [
             "ANALOGOUT",
             "CAN",
+            "CRC",
             "EMAC",
             "SERIAL_ASYNCH",
             "TRNG",
@@ -4164,6 +4168,7 @@
         "device_has_add": [
             "ANALOGOUT",
             "CAN",
+            "CRC",
             "TRNG",
             "FLASH",
             "QSPI",
@@ -4194,6 +4199,7 @@
         "device_has_add": [
             "ANALOGOUT",
             "CAN",
+            "CRC",
             "SERIAL_FC",
             "TRNG",
             "FLASH",
@@ -4229,6 +4235,7 @@
         "device_has_add": [
             "ANALOGOUT",
             "CAN",
+            "CRC",
             "TRNG",
             "FLASH",
             "QSPI",
@@ -4265,10 +4272,11 @@
         "device_has_add": [
             "ANALOGOUT",
             "CAN",
+            "CRC",
             "SERIAL_FC",
             "TRNG",
             "FLASH",
-            "QSPI", 
+            "QSPI",
             "MPU"
         ],
         "release_versions": ["2", "5"],
@@ -4367,6 +4375,7 @@
         "device_has_add": [
             "ANALOGOUT",
             "CAN",
+            "CRC",
             "SERIAL_ASYNCH",
             "TRNG",
             "FLASH",
@@ -4561,9 +4570,6 @@
         "device_has_remove": [],
         "extra_labels_add": ["PSA"],
         "components_add": ["SD", "FLASHIAP"],
-        "macros_add": [
-            "MBEDTLS_PSA_CRYPTO_C"
-        ],
         "config": {
             "stdio_uart_tx_help": {
                 "help": "Value: D8(default) or D1"
@@ -7240,7 +7246,8 @@
             "SYSTICK_CLK_OFF_DURING_SLEEP",
             "TRNG",
             "USTICKER",
-            "QSPI"
+            "QSPI",
+            "USBDEVICE"
         ],
         "extra_labels": [
             "NORDIC",
@@ -8032,7 +8039,6 @@
     "ARM_FM": {
         "inherits": ["Target"],
         "public": false,
-        "macros": ["__ARM_FM"],
         "extra_labels": ["ARM_FM"]
     },
     "FVP_MPS2": {
@@ -8073,8 +8079,7 @@
     "FVP_MPS2_M0P": {
         "inherits": ["FVP_MPS2"],
         "core": "Cortex-M0+",
-        "macros_add": ["CMSDK_CM0plus"],
-        "device_has_add": ["MPU"]
+        "macros_add": ["CMSDK_CM0plus"]
     },
     "FVP_MPS2_M3": {
         "inherits": ["FVP_MPS2"],
@@ -8262,6 +8267,7 @@
         ],
         "release_versions": ["5"],
         "extra_labels": ["Cypress", "PSOC6"],
+        "components_add": ["SOFTFP"],
         "public": false
     },
     "MCU_PSOC6_M0": {
@@ -8672,7 +8678,7 @@
         ],
         "device_name": "GD32F450ZI",
         "detect_code": ["1702"],
-        "macros_add": ["GD32F450", "MBEDTLS_PSA_CRYPTO_C"],
+        "macros_add": ["GD32F450"],
         "bootloader_supported": true,
         "release_versions": ["5"],
         "overrides": {

@@ -2365,7 +2365,7 @@
 // <e> NRFX_POWER_ENABLED - nrfx_power - POWER peripheral driver
 //==========================================================
 #ifndef NRFX_POWER_ENABLED
-#define NRFX_POWER_ENABLED 0
+#define NRFX_POWER_ENABLED 1
 #endif
 // <o> NRFX_POWER_CONFIG_IRQ_PRIORITY  - Interrupt priority
  
@@ -4152,16 +4152,16 @@
 // <e> NRFX_UARTE_ENABLED - nrfx_uarte - UARTE peripheral driver
 //==========================================================
 #ifndef NRFX_UARTE_ENABLED
-#define NRFX_UARTE_ENABLED 0
+#define NRFX_UARTE_ENABLED 1
 #endif
 // <o> NRFX_UARTE0_ENABLED - Enable UARTE0 instance 
 #ifndef NRFX_UARTE0_ENABLED
-#define NRFX_UARTE0_ENABLED 0
+#define NRFX_UARTE0_ENABLED 1
 #endif
 
 // <o> NRFX_UARTE1_ENABLED - Enable UARTE1 instance 
 #ifndef NRFX_UARTE1_ENABLED
-#define NRFX_UARTE1_ENABLED 0
+#define NRFX_UARTE1_ENABLED 1
 #endif
 
 // <o> NRFX_UARTE_DEFAULT_CONFIG_HWFC  - Hardware Flow Control
@@ -4542,7 +4542,7 @@
 // <e> POWER_ENABLED - nrf_drv_power - POWER peripheral driver - legacy layer
 //==========================================================
 #ifndef POWER_ENABLED
-#define POWER_ENABLED 0
+#define POWER_ENABLED 1
 #endif
 // <o> POWER_CONFIG_IRQ_PRIORITY  - Interrupt priority
  
@@ -5615,7 +5615,7 @@
 // <e> UART1_ENABLED - Enable UART1 instance
 //==========================================================
 #ifndef UART1_ENABLED
-#define UART1_ENABLED 0
+#define UART1_ENABLED 1
 #endif
 // </e>
 
@@ -5624,7 +5624,7 @@
 // <e> USBD_ENABLED - nrf_drv_usbd - USB driver
 //==========================================================
 #ifndef USBD_ENABLED
-#define USBD_ENABLED 0
+#define USBD_ENABLED 1
 #endif
 // <o> USBD_CONFIG_IRQ_PRIORITY  - Interrupt priority
  

@@ -38,6 +38,8 @@ cy_rslt_t cybsp_init(void)
     init_cycfg_system();
 
     cy_rslt_t result = CY_RSLT_SUCCESS;
+
+#ifndef __MBED__
     /* Initialize User LEDs */
     result |= cybsp_led_init(CYBSP_LED_RGB_RED);
     result |= cybsp_led_init(CYBSP_LED_RGB_BLUE);
@@ -48,6 +50,7 @@ cy_rslt_t cybsp_init(void)
     result |= cybsp_btn_init(CYBSP_USER_BTN0);
 
     CY_ASSERT(CY_RSLT_SUCCESS == result);
+#endif
 
 #if defined(CYBSP_WIFI_CAPABLE)
     /* Initialize UDB SDIO interface. This must be done before any other HAL API attempts to allocate clocks or DMA

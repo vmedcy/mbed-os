@@ -37,12 +37,14 @@ cy_rslt_t cybsp_init(void)
 	init_cycfg_system();
 
     cy_rslt_t result = CY_RSLT_SUCCESS;
+
+#ifndef __MBED__
     /* Initialize User LEDs */
     result |= cybsp_led_init(CYBSP_LED_RED);
     /* Initialize User Buttons */
     result |= cybsp_btn_init(CYBSP_USER_BTN);
-
     CY_ASSERT(CY_RSLT_SUCCESS == result);
+#endif
 
 #if defined(CYBSP_RETARGET_ENABLED)
     /* Initialize retargetting stdio to 'DEBUG_UART' peripheral */

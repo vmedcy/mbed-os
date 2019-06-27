@@ -184,6 +184,7 @@ public:
 protected:
     friend class InternetSocket;
     friend class UDPSocket;
+    friend class RAWSocket;
     friend class TCPSocket;
     friend class TCPServer;
 

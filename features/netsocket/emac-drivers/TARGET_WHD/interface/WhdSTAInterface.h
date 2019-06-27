@@ -1,6 +1,5 @@
 /* WHD implementation of NetworkInterfaceAPI
- * Copyright (c) 2017-2019 ARM Limited
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) 2017 ARM Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,24 +17,45 @@
 #ifndef WHD_STA_INTERFACE_H
 #define WHD_STA_INTERFACE_H
 
-#include "netsocket/WiFiInterface.h"
-#include "netsocket/EMACInterface.h"
+#include "mbed.h"
+#include "EthernetInterface.h"
 #include "netsocket/OnboardNetworkStack.h"
 #include "whd_emac.h"
+#include "whd_types_int.h"
 
+struct ol_desc;
 
 /** WhdSTAInterface class
  *  Implementation of the NetworkStack for the WHD
  */
-class WhdSTAInterface : public WiFiInterface, public EMACInterface {
+class WhdSTAInterface : public WiFiInterface, public EMACInterface
+{
 public:
 
-    WhdSTAInterface(
-        WHD_EMAC &emac = WHD_EMAC::get_instance(),
-        OnboardNetworkStack &stack = OnboardNetworkStack::get_default_instance());
+    class OlmInterface
+    {
+    public:
+        /** Get the default OLM interface. */
+        static OlmInterface &get_default_instance();
 
+        OlmInterface(struct ol_desc *list = NULL) {}
+
+        virtual int init_ols(void *whd, void *ip) { return 0; }
+        virtual int sleep() { return 0; }
+        virtual int wake() { return 0; }
+
+        virtual void deinit_ols(void) {}
+    };
+
+    WhdSTAInterface(
+            WHD_EMAC &emac = WHD_EMAC::get_instance(),
+            OnboardNetworkStack &stack = OnboardNetworkStack::get_default_instance(),
+            OlmInterface &olm = OlmInterface::get_default_instance());
 
     static WhdSTAInterface *get_default_instance();
+
+    /* Turn on the wifi device*/
+    void wifi_on();
 
     /** Start the interface
      *
@@ -80,8 +100,7 @@ public:
      *  @param channel   Channel on which the connection is to be made, or 0 for any (Default: 0)
      *  @return          Not supported, returns NSAPI_ERROR_UNSUPPORTED
      */
-    nsapi_error_t set_channel(uint8_t channel)
-    {
+    nsapi_error_t set_channel(uint8_t channel) {
         if (channel != 0) {
             return NSAPI_ERROR_UNSUPPORTED;
         }
@@ -107,12 +126,79 @@ public:
      */
     int scan(WiFiAccessPoint *res, unsigned count);
 
+    /* is interface connected, if yes return WICED_SUCCESS else WICED_NOT_CONNECTED */
+    int is_interface_connected();
+
+    /* get bssid of the AP  if success return WICED_SUCCESS else WICED_ERROR */
+    int get_bssid(uint8_t *bssid);
+
+    /* print WHD log (this routine will malloc/free a buffer
+     * You need to enable printing with WHD_LOGGING_BUFFER_ENABLE
+     */
+    int whd_log_print ( void );
+
+    /* read WHD log */
+    int whd_log_read ( char *buffer, int buffer_size );
+
+    /* Get EDCF AC params */
+    nsapi_error_t wifi_get_ac_params_sta(void * ac_param );
+
+    /* get iovar value */
+    int wifi_get_iovar_value ( const char *iovar, uint32_t *value );
+
+    /* set iovar value */
+    int wifi_set_iovar_value ( const char *iovar, uint32_t value  );
+
+    /* set ioctl value */
+    int wifi_set_ioctl_value( uint32_t ioctl, uint32_t value ) ;
+
+    /* set wifi interface up */
+    int wifi_set_up (void );
+
+    /* set wifi interface down */
+    int wifi_set_down (void );
+
+    /** Set Offload Manager Information
+     *  NOTE: Only allowed while disconnected
+     *
+     * @param  olm      Offload Manager info structure
+     * @return          true if completed successfully
+     *                  false if Interface is connected
+     */
+    int set_olm(OlmInterface *olm) {
+        if (get_connection_status() == NSAPI_STATUS_DISCONNECTED)
+        {
+            _olm = olm;
+            return true;
+        }
+        return false;
+    }
+
+    /** Network stack is suspended
+     *
+     * @return          0 if successful
+     */
+    int net_suspended() {
+        int ret = _olm->sleep();
+        return ret;
+    }
+
+    /** Network stack is resuming
+     *
+     * @return          0 if successful
+     */
+    int net_resuming() {
+        int ret = _olm->wake();
+        return ret;
+    }
 private:
 
     char _ssid[33]; /* The longest possible name (defined in 802.11) +1 for the \0 */
     char _pass[64]; /* The longest allowed passphrase + 1 */
     nsapi_security_t _security;
-    WHD_EMAC &_whd_emac;
+    WHD_EMAC& _whd_emac;
+    OlmInterface *_olm;
 };
 
+extern int wiced_leave_ap      ( int interface );
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019, Arm Limited and affiliates.
+ * Copyright (c) 2018, Arm Limited and affiliates.
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,9 +16,16 @@
  */
 
 #include "WhdSTAInterface.h"
+#include "WhdSoftAPInterface.h"
 
 WiFiInterface *WiFiInterface::get_target_default_instance()
 {
     static WhdSTAInterface wifi;
     return &wifi;
+}
+
+WhdSoftAPInterface *WhdSoftAPInterface::get_default_instance()
+{
+    static WhdSoftAPInterface softap;
+    return &softap;
 }

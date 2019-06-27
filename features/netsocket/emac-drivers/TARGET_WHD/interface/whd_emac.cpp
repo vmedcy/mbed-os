@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2018-2019 ARM Limited
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) 2018 ARM Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +25,15 @@
 #include "lwip/ethip6.h"
 #include "mbed_shared_queues.h"
 #include "whd_wlioctl.h"
-#include "whd_buffer.h"
 #include "whd_buffer_api.h"
 #include "cybsp_api_wifi.h"
+#include "emac_eapol.h"
+#include "cy_result.h"
+
+extern "C"
+{
+    eapol_packet_handler_t emac_eapol_packet_handler = NULL;
+} // extern "C"
 
 WHD_EMAC::WHD_EMAC(whd_interface_role_t role)
     : interface_type(role)
@@ -40,13 +45,11 @@ WHD_EMAC::WHD_EMAC()
 {
 }
 
-WHD_EMAC &WHD_EMAC::get_instance()
-{
+WHD_EMAC &WHD_EMAC::get_instance() {
     return get_instance(WHD_STA_ROLE);
 }
 
-WHD_EMAC &WHD_EMAC::get_instance(whd_interface_role_t role)
-{
+WHD_EMAC &WHD_EMAC::get_instance(whd_interface_role_t role) {
     static WHD_EMAC emac_sta(WHD_STA_ROLE);
     static WHD_EMAC emac_ap(WHD_AP_ROLE);
     return role == WHD_AP_ROLE ? emac_ap : emac_sta;
@@ -75,24 +78,34 @@ void WHD_EMAC::remove_multicast_group(const uint8_t *addr)
 
 void WHD_EMAC::set_all_multicast(bool all)
 {
-    //TODO: new API call for this in the whd interface to be added.
-    //whd_wifi_set_iovar_value(ifp, IOVAR_STR_ALLMULTI, all);
+    /* No-op at this stage */
 }
 
 void WHD_EMAC::power_down()
 {
-    powered_up = false;
-    whd_wifi_off(ifp);
-    whd_deinit(ifp);
+    if(powered_up)
+    {
+        powered_up = false;
+        whd_wifi_off(ifp);
+        whd_deinit(ifp);
+    }
 }
 
 bool WHD_EMAC::power_up()
 {
-    drvp = *(cybsp_get_wifi_driver());
-    whd_wifi_on(drvp, &ifp /* OUT */);
-    powered_up = true;
-    if (link_state && emac_link_state_cb) {
-        emac_link_state_cb(link_state);
+    if(!powered_up)
+    {
+        if(CY_RSLT_SUCCESS != cybsp_wifi_init()){
+            return false;
+        }
+        drvp = *(cybsp_get_wifi_driver());
+        if(WHD_SUCCESS != whd_wifi_on(drvp, &ifp /* OUT */)){
+            return false;
+        }
+        powered_up = true;
+        if (link_state && emac_link_state_cb ) {
+            emac_link_state_cb(link_state);
+        }
     }
     return true;
 }
@@ -139,7 +152,12 @@ bool WHD_EMAC::link_out(emac_mem_buf_t *buf)
 
     uint16_t size = memory_manager->get_total_len(buf);
 
-    whd_result_t res = whd_host_buffer_get(drvp, &buffer, WHD_NETWORK_TX, size + offset, WHD_TRUE);
+    whd_result_t res = whd_host_buffer_get(drvp, &buffer, WHD_NETWORK_TX, size+offset, WHD_TRUE);
+    if ( res != WHD_SUCCESS)
+    {
+        memory_manager->free(buf);
+        return true;
+    }
     MBED_ASSERT(res == WHD_SUCCESS);
 
     whd_buffer_add_remove_at_front(drvp, &buffer, offset);
@@ -147,6 +165,9 @@ bool WHD_EMAC::link_out(emac_mem_buf_t *buf)
     void *dest = whd_buffer_get_current_piece_data_pointer(drvp, buffer);
     memory_manager->copy_from_buf(dest, size, buf);
 
+    if (activity_cb) {
+        activity_cb(true);
+    }
     whd_network_send_ethernet_data(ifp, buffer);
     memory_manager->free(buf);
     return true;
@@ -154,67 +175,98 @@ bool WHD_EMAC::link_out(emac_mem_buf_t *buf)
 
 void WHD_EMAC::get_ifname(char *name, uint8_t size) const
 {
-    memcpy(name, "wl", size);
+    memcpy(name, "whd", size);
+}
+
+void WHD_EMAC::set_activity_cb(mbed::Callback<void(bool)> cb)
+{
+    activity_cb = cb;
 }
 
 extern "C"
 {
-    void cy_network_process_ethernet_data(whd_interface_t ifp, whd_buffer_t buffer)
+
+static void emac_receive_eapol_packet(whd_interface_t interface, whd_buffer_t buffer)
+{
+    if ( buffer != NULL )
     {
-        emac_mem_buf_t *mem_buf = NULL;
+        if ( emac_eapol_packet_handler != NULL )
+        {
 
-        WHD_EMAC &emac = WHD_EMAC::get_instance();
-
-        if (!emac.powered_up && !emac.emac_link_input_cb) {
-            // ignore any trailing packets
-            whd_buffer_release(emac.drvp, buffer, WHD_NETWORK_RX);
-            return;
+            emac_eapol_packet_handler( interface, buffer );
         }
-
-        void *data = whd_buffer_get_current_piece_data_pointer(emac.drvp, buffer);
-        uint16_t size = whd_buffer_get_current_piece_size(emac.drvp, buffer);
-
-        if (size > 0) {
-            /* Allocate a memory buffer chain from buffer pool */
-            mem_buf = emac.memory_manager->alloc_heap(size, 0);
-            if (mem_buf != NULL) {
-                memcpy(static_cast<uint8_t *>(emac.memory_manager->get_ptr(mem_buf)), static_cast<uint8_t *>(data), size);
-                emac.emac_link_input_cb(mem_buf);
-            };
+        else
+        {
+            whd_buffer_release( interface->whd_driver,buffer, WHD_NETWORK_RX );
         }
+    }
+}
+
+whd_result_t emac_register_eapol_packet_handler( eapol_packet_handler_t eapol_packet_handler )
+{
+
+    if ( emac_eapol_packet_handler == NULL )
+    {
+        emac_eapol_packet_handler = eapol_packet_handler;
+        return WHD_SUCCESS;
+    }
+
+    return WHD_HANDLER_ALREADY_REGISTERED;
+}
+
+void emac_unregister_eapol_packet_handler( void )
+{
+    emac_eapol_packet_handler = NULL;
+}
+
+void cy_network_process_ethernet_data(whd_interface_t ifp, whd_buffer_t buffer)
+{
+    emac_mem_buf_t *mem_buf = NULL;
+
+    WHD_EMAC &emac = WHD_EMAC::get_instance(ifp->role);
+
+    if (!emac.powered_up && !emac.emac_link_input_cb) {
+        // ignore any trailing packets
         whd_buffer_release(emac.drvp, buffer, WHD_NETWORK_RX);
+        return;
     }
 
-    void whd_emac_wifi_link_state_changed(bool state_up, whd_interface_t ifp)
-    {
-        WHD_EMAC &emac = WHD_EMAC::get_instance(ifp->role);
+    uint8_t *data = whd_buffer_get_current_piece_data_pointer(emac.drvp, buffer);
 
-        emac.link_state = state_up;
-        if (emac.emac_link_state_cb) {
-            emac.emac_link_state_cb(state_up);
+    uint16_t size = whd_buffer_get_current_piece_size(emac.drvp, buffer);
+
+
+    if (size > WHD_ETHERNET_SIZE ) {
+
+        uint16_t ethertype;
+
+        ethertype = (uint16_t) (data[12] << 8 | data[13]);
+
+        if (ethertype == EAPOL_PACKET_TYPE) {
+
+            /* pass it to the EAP layer, but do not release the packet */
+            emac_receive_eapol_packet(ifp,buffer);
+
+        } else {
+            mem_buf = buffer;
+            if (emac.activity_cb) {
+                emac.activity_cb(false);
+            }
+            emac.emac_link_input_cb(mem_buf);
+        }
         }
     }
 
-    //Stubs
-    whd_result_t whd_network_deinit(void)
-    {
-        return WHD_SUCCESS;
+void whd_emac_wifi_link_state_changed(bool state_up, whd_interface_t ifp)
+{
+    WHD_EMAC &emac = WHD_EMAC::get_instance(ifp->role);
+
+    emac.link_state = state_up;
+    if (emac.emac_link_state_cb ) {
+        emac.emac_link_state_cb(state_up);
     }
-    whd_result_t whd_network_init(void)
-    {
-        return WHD_SUCCESS;
-    }
-    void whd_wireless_link_down_handler(void) {}
-    void whd_wireless_link_renew_handler(void) {}
-    void whd_wireless_link_up_handler(void) {}
-    whd_result_t whd_network_notify_link_up(void)
-    {
-        return WHD_SUCCESS;
-    }
-    whd_result_t whd_network_notify_link_down(void)
-    {
-        return WHD_SUCCESS;
-    }
+}
+
 } // extern "C"
 
 

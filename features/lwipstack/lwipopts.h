@@ -83,9 +83,7 @@
 
 #define SYS_LIGHTWEIGHT_PROT        1
 
-#ifndef LWIP_RAW
-#define LWIP_RAW                    0
-#endif
+#define LWIP_RAW                    1
 
 #define TCPIP_MBOX_SIZE             8
 #define DEFAULT_TCP_RECVMBOX_SIZE   8
@@ -111,7 +109,7 @@
 #define TCPIP_THREAD_STACKSIZE      LWIP_ALIGN_UP(MBED_CONF_LWIP_TCPIP_THREAD_STACKSIZE, 8)
 #endif
 
-#define TCPIP_THREAD_PRIO           (osPriorityNormal)
+#define TCPIP_THREAD_PRIO           (osPriorityHigh)
 
 // Thread stack size for lwip system threads
 #ifndef MBED_CONF_LWIP_DEFAULT_THREAD_STACKSIZE
@@ -226,12 +224,12 @@
 // Number of non-pool pbufs.
 // Each requires 92 bytes of RAM.
 #ifndef MEMP_NUM_PBUF
-#define MEMP_NUM_PBUF               8
+#define MEMP_NUM_PBUF              256
 #endif
 
 // Each netbuf requires 64 bytes of RAM.
 #ifndef MEMP_NUM_NETBUF
-#define MEMP_NUM_NETBUF             8
+#define MEMP_NUM_NETBUF            256
 #endif
 
 // One netconn is needed for each UDPSocket, TCPSocket or TCPServer.

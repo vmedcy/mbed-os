@@ -59,7 +59,7 @@
 #define OS_IDLE_THREAD_STACK_SIZE   (MBED_CONF_RTOS_IDLE_THREAD_STACK_SIZE + EXTRA_IDLE_STACK + EXTRA_IDLE_STACK_DEBUG)
 #endif
 
-#define OS_DYNAMIC_MEM_SIZE        1024 
+#define OS_DYNAMIC_MEM_SIZE        1024
 
 #if defined(OS_TICK_FREQ) && (OS_TICK_FREQ != 1000)
 #error "OS Tickrate must be 1000 for system timing"

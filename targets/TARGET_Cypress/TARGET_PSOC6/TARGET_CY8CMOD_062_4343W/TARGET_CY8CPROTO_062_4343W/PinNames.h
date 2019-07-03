@@ -50,7 +50,7 @@ typedef cyhal_gpio_t PinName;
 
 #define SWITCH2 P0_4
 #define LED1 P13_7
-#define LED2 LED1
+#define LED2 NC
 #define LED3 NC
 #define LED4 NC
 #define LED_RED LED1

@@ -97,8 +97,8 @@ typedef enum
 {
     CYBSP_LED_RED = P13_7,
 
-    CYBSP_USER_LED0 = CYBSP_LED_RED,
-    CYBSP_USER_LED = CYBSP_USER_LED0,
+    CYBSP_USER_LED1 = CYBSP_LED_RED,
+    CYBSP_USER_LED = CYBSP_USER_LED1,
 } cybsp_led_t;
 
 /** Enum defining the different button pins on the board. */
@@ -106,8 +106,8 @@ typedef enum
 {
     CYBSP_SW2 = P0_4,
     
-    CYBSP_USER_BTN0 = CYBSP_SW2,
-    CYBSP_USER_BTN = CYBSP_USER_BTN0,
+    CYBSP_USER_BTN1 = CYBSP_SW2,
+    CYBSP_USER_BTN = CYBSP_USER_BTN1,
 } cybsp_btn_t;
 
 /** \} group_bsp_cy8cproto_062_4343w_enums */

@@ -1,9 +1,9 @@
 /***************************************************************************//**
-* \file cybsp_cy8ckit_062_ble.c
+* \file cybsp_cy8ckit_062s2_4343w.c
 *
 * Description:
 * Provides APIs for interacting with the hardware contained on the Cypress
-* CY8CKIT-062-BLE pioneer kit.
+* CY8CKIT-062S2-4343W pioneer kit.
 *
 ********************************************************************************
 * \copyright
@@ -24,8 +24,10 @@
 *******************************************************************************/
 
 #include <stdlib.h>
-#include "cybsp_cy8ckit_062_ble.h"
+#include "cybsp_cy8ckit_062s2_4343w.h"
+#include "cyhal_utils.h"
 #include "cyhal_implementation.h"
+#include "cybsp_retarget.h"
 #include "cycfg.h"
 
 #if defined(__cplusplus)
@@ -34,32 +36,29 @@ extern "C" {
 
 cy_rslt_t cybsp_init(void)
 {
-	init_cycfg_system();
-
     cy_rslt_t result = CY_RSLT_SUCCESS;
+    
+    init_cycfg_system();
 
 #ifndef __MBED__
-    /* Initialize User LEDs */
+    /* Initialize all the user LEDs */
     result |= cybsp_led_init(CYBSP_USER_LED1);
     result |= cybsp_led_init(CYBSP_USER_LED2);
     result |= cybsp_led_init(CYBSP_USER_LED3);
     result |= cybsp_led_init(CYBSP_USER_LED4);
     result |= cybsp_led_init(CYBSP_USER_LED5);
-    /* Initialize User Buttons */
+    /* Initialize all the user buttons */
     result |= cybsp_btn_init(CYBSP_USER_BTN1);
-
-    CY_ASSERT(CY_RSLT_SUCCESS == result);
 #endif
-
+        
 #if defined(CYBSP_RETARGET_ENABLED)
-    /* Initialize retargetting stdio to 'DEBUG_UART' peripheral */
-    if (CY_RSLT_SUCCESS == result)
+    if(CY_RSLT_SUCCESS == result)
     {
         result = cybsp_retarget_init();
     }
-#endif
+#endif /* CYBSP_RETARGET_ENABLED */
 
-    return result;
+    return result; 
 }
 
 #if defined(__cplusplus)

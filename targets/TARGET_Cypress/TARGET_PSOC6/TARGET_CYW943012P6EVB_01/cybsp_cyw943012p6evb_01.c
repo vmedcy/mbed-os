@@ -40,11 +40,11 @@ cy_rslt_t cybsp_init(void)
 
 #ifndef __MBED__
     /* Initialize User LEDs */
-    result |= cybsp_led_init(CYBSP_LED_RGB_RED);
-    result |= cybsp_led_init(CYBSP_LED_RGB_BLUE);
-    result |= cybsp_led_init(CYBSP_LED_RGB_GREEN);
+    result |= cybsp_led_init(CYBSP_USER_LED1);
+    result |= cybsp_led_init(CYBSP_USER_LED2);
+    result |= cybsp_led_init(CYBSP_USER_LED3);
     /* Initialize User Buttons */
-    result |= cybsp_btn_init(CYBSP_USER_BTN0);
+    result |= cybsp_btn_init(CYBSP_USER_BTN1);
 
     CY_ASSERT(CY_RSLT_SUCCESS == result);
 #endif

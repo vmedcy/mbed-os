@@ -3,7 +3,7 @@
 * \version 1.00
 *
 * \brief
-*  This file provides the source code to the API for the SDIO driver.
+*  This file provides the source code to the API for the UDB based SDIO driver.
 *
 *******************************************************************************
 * \copyright
@@ -12,6 +12,7 @@
 * disclaimers, and limitations in the end user license agreement accompanying
 * the software package with which this file was provided.
 *******************************************************************************/
+
 #include "SDIO_HOST.h"
 
 #if defined(__cplusplus)
@@ -19,7 +20,10 @@ extern "C" {
 #endif
 
 #ifdef SEMAPHORE
-#include "cmsis_os2.h"
+#include "cyabs_rtos.h"
+
+#define NEVER_TIMEOUT ( (uint32_t)0xffffffffUL )
+static cy_semaphore_t sdio_transfer_finished_semaphore;
 #endif
 
 
@@ -47,17 +51,6 @@ static uint8_t crcTable[256];
 /*Global values used for DMA interrupt*/
 static uint32_t yCountRemainder;
 static uint32_t yCounts;
-
-/* declare a semaphore*/
-#ifdef SEMAPHORE
-#define NEVER_TIMEOUT ( (uint32_t)0xffffffffUL )
-typedef osSemaphoreId_t cy_semaphore_t;
-en_sdio_result_t cy_rtos_init_semaphore(/*@out@*/ cy_semaphore_t *semaphore);
-en_sdio_result_t cy_rtos_get_semaphore(cy_semaphore_t *semaphore, uint32_t timeout_ms);
-en_sdio_result_t cy_rtos_set_semaphore(cy_semaphore_t *semaphore );
-en_sdio_result_t cy_rtos_deinit_semaphore(cy_semaphore_t *semaphore);
-static cy_semaphore_t   sdio_transfer_finished_semaphore;
-#endif
 
 static uint32_t udb_initialized = 0;
 
@@ -118,7 +111,7 @@ void SDIO_Init(stc_sdio_irq_cb_t* pfuCb)
     SDIO_WRITE_CRC_CNT_CONTROL_REG  |=  SDIO_ENABLE_CNT;
     SDIO_CRC_BIT_CNT_CONTROL_REG    |=  SDIO_ENABLE_CNT;
     SDIO_BYTE_CNT_CONTROL_REG       |=  SDIO_ENABLE_CNT;
-    
+
     /*Set block byte count to 64, this will be changed later */
     SDIO_SetBlockSize(64);
 
@@ -133,7 +126,7 @@ void SDIO_Init(stc_sdio_irq_cb_t* pfuCb)
 
      /*Initalize the semaphore*/
 #ifdef SEMAPHORE
-    cy_rtos_init_semaphore( &sdio_transfer_finished_semaphore );
+    cy_rtos_init_semaphore( &sdio_transfer_finished_semaphore, 1, 1 );
 #endif
 }
 
@@ -149,10 +142,10 @@ void SDIO_Init(stc_sdio_irq_cb_t* pfuCb)
 *
 *******************************************************************************/
 void SDIO_SendCommand(stc_sdio_cmd_config_t *pstcCmdConfig)
-{ 
-    /*buffer to hold command data*/ 
-    static uint8_t u8cmdBuf[6]; 
-   
+{
+    /*buffer to hold command data*/
+    static uint8_t u8cmdBuf[6];
+
     /*Populate buffer*/
     /*Element 0 is the Most Significant Byte*/
     u8cmdBuf[0] = SDIO_HOST_DIR | pstcCmdConfig->u8CmdIndex;
@@ -167,12 +160,12 @@ void SDIO_SendCommand(stc_sdio_cmd_config_t *pstcCmdConfig)
     u8cmdBuf[5] = u8cmdBuf[5] << 1;
     /*Add on the end bit*/
     u8cmdBuf[5] = u8cmdBuf[5] | SDIO_CMD_END_BIT;
-    
+
     /*Load the first byte into A0*/
     SDIO_CMD_COMMAND_A0_REG = u8cmdBuf[0];
 
     /*If a response is expected setup DMA to receive the response*/
-    if(pstcCmdConfig->bResponseRequired == true)
+    if (pstcCmdConfig->bResponseRequired == true)
     {
         /*Clear the flag in hardware that says skip response*/
         SDIO_CONTROL_REG &= ~SDIO_CTRL_SKIP_RESPONSE;
@@ -185,7 +178,6 @@ void SDIO_SendCommand(stc_sdio_cmd_config_t *pstcCmdConfig)
 
         /*Enable the channel*/
         Cy_DMA_Channel_Enable(SDIO_HOST_Resp_DMA_HW, SDIO_HOST_Resp_DMA_DW_CHANNEL);
-
     }
     else
     {
@@ -210,7 +202,7 @@ void SDIO_SendCommand(stc_sdio_cmd_config_t *pstcCmdConfig)
 ****************************************************************************//**
 *
 * Takes a 6 byte response buffer, and extracts the 32 bit response, also checks
-* for index errors, CRC errors, and end bit errors. 
+* for index errors, CRC errors, and end bit errors.
 *
 * \param bCmdIndexCheck
 * If True check for index errors
@@ -239,12 +231,12 @@ en_sdio_result_t SDIO_GetResponse(uint8_t bCmdIndexCheck, uint8_t bCmdCrcCheck, 
     uint8_t u8TmpCrc;
     /*temporary response*/
     uint32_t u32TmpResponse;
-    
+
     /*Zero out the pu32Response*/
     *pu32Response = 0;
 
     /*Check if the CRC needs to be checked*/
-    if(bCmdCrcCheck)
+    if (bCmdCrcCheck)
     {
         /*Calculate the CRC*/
         u8TmpCrc = SDIO_CalculateCrc7(pu8ResponseBuf, 5);
@@ -253,29 +245,29 @@ en_sdio_result_t SDIO_GetResponse(uint8_t bCmdIndexCheck, uint8_t bCmdCrcCheck, 
         u8TmpCrc = u8TmpCrc << 1;
 
         /*Compare calculated CRC with received CRC*/
-        if((u8TmpCrc & 0xfe) != (pu8ResponseBuf[5] & 0xfe))
+        if ((u8TmpCrc & 0xfe) != (pu8ResponseBuf[5] & 0xfe))
         {
             enRet |= CommandCrcError;
         }
     }
-    
+
     /*Check if the index needs to be checked*/
-    if(bCmdIndexCheck)
+    if (bCmdIndexCheck)
     {
         /*The index resides in the lower 6 bits of the 1st byte of the response*/
-        if((u8cmdIdx != (pu8ResponseBuf[0] & 0x3f)))
+        if ((u8cmdIdx != (pu8ResponseBuf[0] & 0x3f)))
         {
             enRet |= CommandIdxError;
         }
     }
-    
+
     /*Check the end bit*/
-    if(!(pu8ResponseBuf[5] & 0x01))
+    if (!(pu8ResponseBuf[5] & 0x01))
     {
         enRet |= CommandEndError;
     }
-    
-    if(enRet == Error)
+
+    if (enRet == Error)
     {
         /*If we get here then there were no errors with the command populate the response*/
         u32TmpResponse = pu8ResponseBuf[1];
@@ -287,10 +279,10 @@ en_sdio_result_t SDIO_GetResponse(uint8_t bCmdIndexCheck, uint8_t bCmdCrcCheck, 
         u32TmpResponse |= pu8ResponseBuf[4];
 
         *pu32Response = u32TmpResponse;
-        
+
         enRet = Ok;
     }
-    
+
     return enRet;
 }
 
@@ -320,7 +312,7 @@ void SDIO_InitDataTransfer(stc_sdio_data_config_t *pstcDataConfig)
     SDIO_SetNumBlocks((pstcDataConfig->u16BlockCount) - 1);
 
     /*If we are reading data setup the DMA to receive read data*/
-    if(pstcDataConfig->bRead == true)
+    if (pstcDataConfig->bRead == true)
     {
         /*First disable the write channel*/
         Cy_DMA_Channel_Disable(SDIO_HOST_Write_DMA_HW, SDIO_HOST_Write_DMA_DW_CHANNEL );
@@ -334,14 +326,12 @@ void SDIO_InitDataTransfer(stc_sdio_data_config_t *pstcDataConfig)
         readDesr0.dst = (uint32_t)(pstcDataConfig->pu8Data);
         readDesr1.dst = (uint32_t)((pstcDataConfig->pu8Data) + 1024);
 
-
         /*Setup the X control to transfer two 16 bit elements per transfer for a total of 4 bytes
           Remember X increment is in terms of data element size which is 16, thus why it is 1*/
         readDesr0.xCtl = _VAL2FLD(CY_DMA_CTL_COUNT, 1) |
                                 _VAL2FLD(CY_DMA_CTL_DST_INCR, 1);
         readDesr1.xCtl = _VAL2FLD(CY_DMA_CTL_COUNT, 1) |
                                 _VAL2FLD(CY_DMA_CTL_DST_INCR, 1);
-
 
         /*The X Loop will always transfer 4 bytes. The FIFO will only trigger the
         DMA when it has 4 bytes to send (2 in each F0 and F1). There is a possibility
@@ -363,7 +353,7 @@ void SDIO_InitDataTransfer(stc_sdio_data_config_t *pstcDataConfig)
         3) Greater than 2048, use two descriptors and the ISR
         */
 
-        if(dataSize <= 1024)
+        if (dataSize <= 1024)
         {
             /*Setup one descriptor*/
             /*Y Increment is 2 because the X is transfer 2 data elements (which are 16 bits)*/
@@ -377,7 +367,7 @@ void SDIO_InitDataTransfer(stc_sdio_data_config_t *pstcDataConfig)
             /*Disable Interrupt*/
             NVIC_DisableIRQ((IRQn_Type) SDIO_HOST_Read_Int_INTC_NUMBER);
         }
-        else if(dataSize <=2048)
+        else if (dataSize <=2048)
         {
             /*setup the first descriptor for 1024, then setup 2nd descriptor for remainder*/
 
@@ -436,13 +426,12 @@ void SDIO_InitDataTransfer(stc_sdio_data_config_t *pstcDataConfig)
 
         /*Initialize the channel with the first descriptor*/
         Cy_DMA_Channel_SetDescriptor(SDIO_HOST_Read_DMA_HW, SDIO_HOST_Read_DMA_DW_CHANNEL , &readDesr0);
-        
+
         /*Enable the channel*/
         Cy_DMA_Channel_Enable(SDIO_HOST_Read_DMA_HW, SDIO_HOST_Read_DMA_DW_CHANNEL );
-        
+
         /*Set the flag in the control register to enable the read*/
         SDIO_CONTROL_REG |= SDIO_CTRL_ENABLE_READ;
-
     }
 
     /*Otherwise it is a write*/
@@ -468,7 +457,7 @@ void SDIO_InitDataTransfer(stc_sdio_data_config_t *pstcDataConfig)
         writeDesr1.xCtl = _VAL2FLD(CY_DMA_CTL_COUNT, 1) |
                                 _VAL2FLD(CY_DMA_CTL_SRC_INCR, 1);
 
-        if(dataSize <= 1024)
+        if (dataSize <= 1024)
         {
             /*Setup one descriptor*/
             /*Y Increment is 2 because the X is transfer 2 data elements (which are 16 bits)*/
@@ -482,7 +471,7 @@ void SDIO_InitDataTransfer(stc_sdio_data_config_t *pstcDataConfig)
             /*Disable Interrupt*/
             NVIC_DisableIRQ((IRQn_Type) SDIO_HOST_Write_Int_INTC_NUMBER);
         }
-        else if(dataSize <=2048)
+        else if (dataSize <=2048)
         {
             /*setup the first descriptor for 1024, then setup 2nd descriptor for remainder*/
 
@@ -549,9 +538,9 @@ void SDIO_InitDataTransfer(stc_sdio_data_config_t *pstcDataConfig)
 * Function Name: SDIO_SendCommandAndWait
 ****************************************************************************//**
 *
-* This function sends a command on the command channel and waits for that 
-* command to finish before returning. If a Command 53 is issued this function 
-* will handle all of the data transfer and wait to return until it is done. 
+* This function sends a command on the command channel and waits for that
+* command to finish before returning. If a Command 53 is issued this function
+* will handle all of the data transfer and wait to return until it is done.
 *
 * \param pstcCmd
 * Pointer command configuration structure see \ref stc_sdio_cmd_t.
@@ -565,7 +554,7 @@ en_sdio_result_t SDIO_SendCommandAndWait(stc_sdio_cmd_t *pstcCmd)
     /*Store the command and data configurations*/
     stc_sdio_cmd_config_t   stcCmdConfig;
     stc_sdio_data_config_t  stcDataConfig;
-    
+
 #ifdef SEMAPHORE
     en_sdio_result_t result;
 #endif
@@ -578,37 +567,37 @@ en_sdio_result_t SDIO_SendCommandAndWait(stc_sdio_cmd_t *pstcCmd)
 #ifndef SEMAPHORE_CMD
     uint32_t u32CmdTimeout = 0;
 #endif
-    
+
     /*Returns from various function calls*/
     en_sdio_result_t enRet = Error;
     en_sdio_result_t enRetTmp = Ok;
-    
+
     /*Hold value of if these checks are needed*/
-    uint8_t             bCmdIndexCheck;       
-    uint8_t             bCmdCrcCheck; 
+    uint8_t             bCmdIndexCheck;
+    uint8_t             bCmdCrcCheck;
     static uint8_t      u8responseBuf[6];
-    
+
     /*Clear statuses*/
     gstcInternalData.stcEvents.u8CmdComplete = 0;
     gstcInternalData.stcEvents.u8TransComplete = 0;
     gstcInternalData.stcEvents.u8CRCError = 0;
-    
+
     /*Setup the command configuration*/
     stcCmdConfig.u8CmdIndex = (uint8_t)pstcCmd->u32CmdIdx;
     stcCmdConfig.u32Argument =  pstcCmd->u32Arg;
-    
+
     /*Determine the type of response and if we need to do any checks*/
     /*Command 0 and 8 have no response, so don't wait for one*/
-    if(pstcCmd->u32CmdIdx == 0 || pstcCmd->u32CmdIdx == 8)
+    if (pstcCmd->u32CmdIdx == 0 || pstcCmd->u32CmdIdx == 8)
     {
         bCmdIndexCheck        = false;
         bCmdCrcCheck          = false;
         stcCmdConfig.bResponseRequired     = false;
         stcCmdConfig.pu8ResponseBuf = NULL;
     }
-    
+
     /*Command 5's response doesn't have a CRC or index, so don't check*/
-    else if(pstcCmd->u32CmdIdx == 5)
+    else if (pstcCmd->u32CmdIdx == 5)
     {
         bCmdIndexCheck        = false;
         bCmdCrcCheck          = false;
@@ -623,10 +612,10 @@ en_sdio_result_t SDIO_SendCommandAndWait(stc_sdio_cmd_t *pstcCmd)
         stcCmdConfig.bResponseRequired     = true;
         stcCmdConfig.pu8ResponseBuf = u8responseBuf;
     }
-    
+
     /*Check if the command is 53, if it is then setup the data transfer*/
-    if(pstcCmd->u32CmdIdx == 53)
-    { 
+    if (pstcCmd->u32CmdIdx == 53)
+    {
         /*Set the number of blocks in the global struct*/
         stcDataConfig.u16BlockCount = (uint16_t)pstcCmd->u16BlockCnt;
         /*Set the size of the data transfer*/
@@ -635,56 +624,55 @@ en_sdio_result_t SDIO_SendCommandAndWait(stc_sdio_cmd_t *pstcCmd)
         stcDataConfig.bRead = pstcCmd->bRead;
         /*Set the pointer for the data*/
         stcDataConfig.pu8Data = pstcCmd->pu8Data;
-        
+
         /*Get the data Transfer Ready*/
         SDIO_InitDataTransfer(&stcDataConfig);
 
         /*Set bit saying this was a CMD_53*/
         SDIO_CONTROL_REG |= SDIO_CTRL_ENABLE_INT;
     }
-    
+
     /*Send the command*/
     SDIO_SendCommand(&stcCmdConfig);
-    
-    /*Wait for the command to finish*/ 
+
+    /*Wait for the command to finish*/
     do
     {
         //TODO: Use RTOS timeout
         u32CmdTimeout++;
         enRetTmp = SDIO_CheckForEvent(SdCmdEventCmdDone);
-        
-    }while ((enRetTmp != Ok) && (u32CmdTimeout < SDIO_CMD_TIMEOUT));
+
+    } while ((enRetTmp != Ok) && (u32CmdTimeout < SDIO_CMD_TIMEOUT));
 
 
-    if(u32CmdTimeout == SDIO_CMD_TIMEOUT)
+    if (u32CmdTimeout == SDIO_CMD_TIMEOUT)
     {
         enRet |= CMDTimeout;
     }
-
     else /*CMD Passed*/
     {
         /*If a response is expected check it*/
-        if(stcCmdConfig.bResponseRequired == true)
+        if (stcCmdConfig.bResponseRequired == true)
         {
             enRetTmp = SDIO_GetResponse(bCmdCrcCheck, bCmdIndexCheck, (uint8_t)pstcCmd->u32CmdIdx, pstcCmd->pu32Response, u8responseBuf);
-            if(enRetTmp != Ok)
+            if (enRetTmp != Ok)
             {
                 enRet |= enRetTmp;
             }
             else  /*Response good*/
             {
                 /*if it was command 53, check the response to ensure there was no error*/
-                if((pstcCmd->u32CmdIdx) == 53)
+                if ((pstcCmd->u32CmdIdx) == 53)
                 {
                     /*Make sure none of the error bits are set*/
-                    if(*(pstcCmd->pu32Response) & 0x0000cf00)
+                    if (*(pstcCmd->pu32Response) & 0x0000cf00)
                     {
                         enRet |= ResponseFlagError;
                     }
                     else /*CMD53 Response good*/
                     {
                         /*If it was command 53 and it was a write enable the write*/
-                        if(pstcCmd->bRead == false && enRet == Error)
+                        if (pstcCmd->bRead == false && enRet == Error)
                         {
                             Cy_DMA_Channel_Disable(SDIO_HOST_Resp_DMA_HW, SDIO_HOST_Resp_DMA_DW_CHANNEL );
                             Cy_DMA_Channel_Disable(SDIO_HOST_CMD_DMA_HW, SDIO_HOST_CMD_DMA_DW_CHANNEL );
@@ -710,32 +698,31 @@ en_sdio_result_t SDIO_SendCommandAndWait(stc_sdio_cmd_t *pstcCmd)
                         /*if it was a read it is possible there is still extra data hanging out, trigger the
                           DMA again. This can result in extra data being transfered so the read buffer should be
                           3 bytes bigger than needed*/
-                        if(pstcCmd->bRead == true)
+                        if (pstcCmd->bRead == true)
                         {
                             Cy_TrigMux_SwTrigger((uint32_t)SDIO_HOST_Read_DMA_DW__TR_IN, 2);
                         }
 
-                        if(u32Timeout == SDIO_DAT_TIMEOUT)
-
+                        if (u32Timeout == SDIO_DAT_TIMEOUT)
 #else
-                         result = cy_rtos_get_semaphore( &sdio_transfer_finished_semaphore, 10 );
+                         result = cy_rtos_get_semaphore( &sdio_transfer_finished_semaphore, 10, false );
                          enRetTmp = SDIO_CheckForEvent(SdCmdEventTransferDone);
 
                          /* if it was a read it is possible there is still extra data hanging out, trigger the
                            DMA again. This can result in extra data being transfered so the read buffer should be
                            3 bytes bigger than needed*/
-                        if(pstcCmd->bRead == true)
+                        if (pstcCmd->bRead == true)
                         {
                             Cy_TrigMux_SwTrigger((uint32_t)SDIO_HOST_Read_DMA_DW__TR_IN, 2);
                         }
 
-                        if(result != Ok)
+                        if (result != Ok)
 #endif
                         {
                             enRet |= DataTimeout;
                         }
 
-                        if(enRetTmp == DataCrcError)
+                        if (enRetTmp == DataCrcError)
                         {
                             enRet |= DataCrcError;
                         }
@@ -749,9 +736,9 @@ en_sdio_result_t SDIO_SendCommandAndWait(stc_sdio_cmd_t *pstcCmd)
 #ifndef SEMAPHORE
      u32Timeout = 0;
 #endif
-    
+
     /*If there were no errors then indicate transfer was okay*/
-    if(enRet == Error)
+    if (enRet == Error)
     {
         enRet = Ok;
     }
@@ -777,7 +764,7 @@ en_sdio_result_t SDIO_SendCommandAndWait(stc_sdio_cmd_t *pstcCmd)
 ****************************************************************************//**
 *
 * Checks to see if a specific event has occurred such a command complete or
-* transfer complete. 
+* transfer complete.
 *
 * \param enEventType
 * The type of event to check for. See \ref en_sdio_event_t.
@@ -792,7 +779,7 @@ en_sdio_result_t SDIO_CheckForEvent(en_sdio_event_t enEventType)
 
     /*Disable Interrupts while modifying the global*/
     NVIC_DisableIRQ((IRQn_Type) SDIO_HOST_sdio_int__INTC_NUMBER);
-    
+
     /*Switch the event to check*/
     switch ( enEventType )
     {
@@ -801,10 +788,10 @@ en_sdio_result_t SDIO_CheckForEvent(en_sdio_event_t enEventType)
             if (gstcInternalData.stcEvents.u8CmdComplete > 0)
             {
                 gstcInternalData.stcEvents.u8CmdComplete = 0;
-                enRet = Ok; 
+                enRet = Ok;
             }
             break;
-            
+
         /*If the transfer is done check for CRC Error and clear the flag*/
         case SdCmdEventTransferDone:
             if (gstcInternalData.stcEvents.u8TransComplete > 0)
@@ -813,14 +800,14 @@ en_sdio_result_t SDIO_CheckForEvent(en_sdio_event_t enEventType)
                 enRet = Ok;
             }
             /*Check for CRC error and set flags*/
-            if(gstcInternalData.stcEvents.u8CRCError > 0)
+            if (gstcInternalData.stcEvents.u8CRCError > 0)
             {
                 enRet = DataCrcError;
                 gstcInternalData.stcEvents.u8CRCError = 0;
             }
             break;
     }
-     
+
     /*Re-enable Interrupts*/
     NVIC_EnableIRQ((IRQn_Type) SDIO_HOST_sdio_int__INTC_NUMBER);
     return enRet;
@@ -843,7 +830,7 @@ en_sdio_result_t SDIO_CheckForEvent(en_sdio_event_t enEventType)
 * CRC
 *
 * \note
-* This code was copied from 
+* This code was copied from
 * http://www.barrgroup.com/Embedded-Systems/How-To/CRC-Calculation-C-Code
 *
 *******************************************************************************/
@@ -886,7 +873,7 @@ void SDIO_Crc7Init(void)
 
         for(bit = 8; bit > 0; --bit)
         {
-            if(remainder & SDIO_CRC_UPPER_BIT)
+            if (remainder & SDIO_CRC_UPPER_BIT)
             {
                 remainder = (remainder << 1) ^ SDIO_CRC7_POLY;
             }
@@ -905,7 +892,7 @@ void SDIO_Crc7Init(void)
 * Function Name: SDIO_SetBlockSize
 ****************************************************************************//**
 *
-* Sets the size of each block 
+* Sets the size of each block
 *
 * \param u8ByteCount
 * Size of the block
@@ -1019,7 +1006,6 @@ void SDIO_SetSdClkFrequency(uint32_t u32SdClkFreqHz)
 *
 *******************************************************************************/
 void SDIO_SetupDMA(void)
-
 {
     /*Set the number of bytes to send*/
     SDIO_HOST_CMD_DMA_CMD_DMA_Desc_config.xCount = (SDIO_NUM_RESP_BYTES - 1);
@@ -1087,7 +1073,7 @@ void SDIO_SetupDMA(void)
 
     /*Enable the interrupt*/
     Cy_DMA_Channel_SetInterruptMask(SDIO_HOST_Write_DMA_HW, SDIO_HOST_Write_DMA_DW_CHANNEL,CY_DMA_INTR_MASK);
-    
+
     /*Enable DMA block*/
     Cy_DMA_Enable(SDIO_HOST_Write_DMA_HW);
 
@@ -1112,7 +1098,6 @@ void SDIO_SetupDMA(void)
 
     /*Enable DMA block*/
     Cy_DMA_Enable(SDIO_HOST_Read_DMA_HW);
-
 }
 
 
@@ -1171,56 +1156,56 @@ void SDIO_IRQ(void)
     u8Status = SDIO_STATUS_REG;
 
     /*Check card interrupt*/
-    if(u8Status & SDIO_STS_CARD_INT )
+    if (u8Status & SDIO_STS_CARD_INT )
     {
-        if(NULL != gstcInternalData.pstcCallBacks.pfnCardIntCb)
+        if (NULL != gstcInternalData.pstcCallBacks.pfnCardIntCb)
         {
               gstcInternalData.pstcCallBacks.pfnCardIntCb();
         }
     }
-    
+
     /*If the command is complete set the flag*/
-    if(u8Status & SDIO_STS_CMD_DONE)
+    if (u8Status & SDIO_STS_CMD_DONE)
     {
         gstcInternalData.stcEvents.u8CmdComplete++;
     }
-    
+
     /*Check if a write is complete*/
-    if(u8Status & SDIO_STS_WRITE_DONE )
+    if (u8Status & SDIO_STS_WRITE_DONE )
     {
 
         /*Clear the Write flag and CMD53 flag*/
         SDIO_CONTROL_REG &= ~(SDIO_CTRL_ENABLE_WRITE | SDIO_CTRL_ENABLE_INT);
 
         /*Check if the CRC status return was bad*/
-        if(u8Status & SDIO_STS_CRC_ERR )
+        if (u8Status & SDIO_STS_CRC_ERR )
         {
             /*CRC was bad, set the flag*/
             gstcInternalData.stcEvents.u8CRCError++;
         }
         /*set the done flag*/
 #ifdef SEMAPHORE
-        cy_rtos_set_semaphore( &sdio_transfer_finished_semaphore );
+        cy_rtos_set_semaphore( &sdio_transfer_finished_semaphore, true );
 #else
         gstcInternalData.stcEvents.u8TransComplete++;
 #endif
     }
 
     /*Check if a read is complete*/
-    if(u8Status & SDIO_STS_READ_DONE)
+    if (u8Status & SDIO_STS_READ_DONE)
     {
         /*Clear the read flag*/
         SDIO_CONTROL_REG &= ~(SDIO_CTRL_ENABLE_READ| SDIO_CTRL_ENABLE_INT);
 
         /*check the CRC*/
-        if(u8Status & SDIO_STS_CRC_ERR)
+        if (u8Status & SDIO_STS_CRC_ERR)
         {
             /*CRC was bad, set the flag*/
             gstcInternalData.stcEvents.u8CRCError++;
         }
         /*Okay we're done so set the done flag*/
 #ifdef SEMAPHORE
-        cy_rtos_set_semaphore( &sdio_transfer_finished_semaphore );
+        cy_rtos_set_semaphore( &sdio_transfer_finished_semaphore, true );
 #else
         gstcInternalData.stcEvents.u8TransComplete++;
 #endif
@@ -1235,20 +1220,20 @@ void SDIO_READ_DMA_IRQ(void)
     /*Shouldn't have to change anything unless it is the last descriptor*/
 
     /*If the current descriptor is 0, then change descriptor 1*/
-    if(Cy_DMA_Channel_GetCurrentDescriptor(SDIO_HOST_Read_DMA_HW, SDIO_HOST_Read_DMA_DW_CHANNEL) == &readDesr0)
+    if (Cy_DMA_Channel_GetCurrentDescriptor(SDIO_HOST_Read_DMA_HW, SDIO_HOST_Read_DMA_DW_CHANNEL) == &readDesr0)
     {
         /*We need to increment the destination address every time*/
         readDesr1.dst += 2048;
 
         /*If this is the last descriptor*/
-        if((yCounts == 1) && (yCountRemainder == 0))
+        if ((yCounts == 1) && (yCountRemainder == 0))
         {
             /* In this case all we need to change is the next descriptor and disable*/
             readDesr1.nextPtr = 0;
             readDesr1.ctl |= 0x01000000;
             NVIC_DisableIRQ((IRQn_Type) SDIO_HOST_Read_Int_INTC_NUMBER);
         }
-        else if(yCounts == 0 && (yCountRemainder > 0))
+        else if (yCounts == 0 && (yCountRemainder > 0))
         {
             /*change next descriptor, and disable*/
             readDesr1.nextPtr = 0;
@@ -1261,20 +1246,20 @@ void SDIO_READ_DMA_IRQ(void)
     }
 
     /*If the current descriptor is 1, then change descriptor 0*/
-    if(Cy_DMA_Channel_GetCurrentDescriptor(SDIO_HOST_Read_DMA_HW, SDIO_HOST_Read_DMA_DW_CHANNEL) == &readDesr1)
+    if (Cy_DMA_Channel_GetCurrentDescriptor(SDIO_HOST_Read_DMA_HW, SDIO_HOST_Read_DMA_DW_CHANNEL) == &readDesr1)
     {
         /*We need to increment the destination address everytime*/
         readDesr0.dst += 2048;
 
         /*If this is the last descriptor*/
-        if((yCounts == 1) && (yCountRemainder == 0))
+        if ((yCounts == 1) && (yCountRemainder == 0))
         {
             /* In this case all we need to change is the next descriptor and disable*/
             readDesr0.nextPtr = 0;
             readDesr0.ctl |= 0x01000000;
             NVIC_DisableIRQ((IRQn_Type) SDIO_HOST_Read_Int_INTC_NUMBER);
         }
-        else if(yCounts == 0 && (yCountRemainder > 0))
+        else if (yCounts == 0 && (yCountRemainder > 0))
         {
             /*change next descriptor, and disable*/
             readDesr0.nextPtr = 0;
@@ -1298,13 +1283,13 @@ void SDIO_WRITE_DMA_IRQ(void)
     /*We shouldn't have to change anything unless it is the last descriptor*/
 
     /*If the current descriptor is 0, then change descriptor 1*/
-    if(Cy_DMA_Channel_GetCurrentDescriptor(SDIO_HOST_Write_DMA_HW, SDIO_HOST_Write_DMA_DW_CHANNEL) == &writeDesr0)
+    if (Cy_DMA_Channel_GetCurrentDescriptor(SDIO_HOST_Write_DMA_HW, SDIO_HOST_Write_DMA_DW_CHANNEL) == &writeDesr0)
     {
         /*We also need to increment the destination address every-time*/
         writeDesr1.src += 2048;
 
         /*If this is the last descriptor*/
-        if((yCounts == 1) && (yCountRemainder == 0))
+        if ((yCounts == 1) && (yCountRemainder == 0))
         {
             /* In this case all we need to change is the next descriptor and disable*/
             writeDesr1.nextPtr = 0;
@@ -1312,7 +1297,7 @@ void SDIO_WRITE_DMA_IRQ(void)
             NVIC_DisableIRQ((IRQn_Type) SDIO_HOST_Write_Int_INTC_NUMBER);
 
         }
-        else if(yCounts == 0 && (yCountRemainder > 0))
+        else if (yCounts == 0 && (yCountRemainder > 0))
         {
             /*change next descriptor, and disable*/
             writeDesr1.nextPtr = 0;
@@ -1322,23 +1307,22 @@ void SDIO_WRITE_DMA_IRQ(void)
                                     _VAL2FLD(CY_DMA_CTL_SRC_INCR, 2);
             NVIC_DisableIRQ((IRQn_Type) SDIO_HOST_Write_Int_INTC_NUMBER);
         }
-
     }
 
     /*If the current descriptor is 1, then change descriptor 0*/
-    if(Cy_DMA_Channel_GetCurrentDescriptor(SDIO_HOST_Write_DMA_HW, SDIO_HOST_Write_DMA_DW_CHANNEL) == &writeDesr1)
+    if (Cy_DMA_Channel_GetCurrentDescriptor(SDIO_HOST_Write_DMA_HW, SDIO_HOST_Write_DMA_DW_CHANNEL) == &writeDesr1)
     {
         /*We also need to increment the destination address*/
         writeDesr0.src += 2048;
         /*If this is the last descriptor*/
-        if((yCounts == 1) && (yCountRemainder == 0))
+        if ((yCounts == 1) && (yCountRemainder == 0))
         {
             /* In this case all we need to change is the next descriptor and disable*/
             writeDesr0.nextPtr = 0;
             writeDesr0.ctl |= 0x01000000;
             NVIC_DisableIRQ((IRQn_Type) SDIO_HOST_Write_Int_INTC_NUMBER);
         }
-        else if(yCounts == 0 && (yCountRemainder > 0))
+        else if (yCounts == 0 && (yCountRemainder > 0))
         {
             /*change next descriptor, and disable*/
             writeDesr0.nextPtr = 0;
@@ -1354,125 +1338,6 @@ void SDIO_WRITE_DMA_IRQ(void)
     Cy_DMA_Channel_ClearInterrupt(SDIO_HOST_Write_DMA_HW, SDIO_HOST_Write_DMA_DW_CHANNEL);
     yCounts--;
 }
-
-#ifdef SEMAPHORE
-
-/**
- * Creates a semaphore
- *
- * @param semaphore         : pointer to variable which will receive handle of created semaphore
- *
- * @returns Ok on success, Error otherwise
- */
-en_sdio_result_t cy_rtos_init_semaphore(/*@out@*/ cy_semaphore_t *semaphore)   /*@modifies *semaphore@*/
-{
-    *semaphore = osSemaphoreNew(1, 1, NULL);
-    if (*semaphore == NULL)
-    {
-        return Error;
-    }
-    return Ok;
-}
-
-/**
- * Gets a semaphore
- *
- * If value of semaphore is larger than zero, then the semaphore is decremented and function returns
- * Else If value of semaphore is zero, then current thread is suspended until semaphore is set.
- * Value of semaphore should never be below zero
- *
- * Must not be called from interrupt context, since it could block, and since an interrupt is not a
- * normal thread, so could cause RTOS problems if it tries to suspend it.
- *
- * @param semaphore   : Pointer to variable which will receive handle of created semaphore
- * @param timeout_ms  : Maximum period to block for. Can be passed NEVER_TIMEOUT to request no timeout
- */
-en_sdio_result_t cy_rtos_get_semaphore(cy_semaphore_t *semaphore, uint32_t timeout_ms)
-{
-    osStatus_t result;
-
-    if (*semaphore == NULL)
-    {
-        return Error;
-    }
-
-    if (timeout_ms == NEVER_TIMEOUT)
-        result = osSemaphoreAcquire(*semaphore, osWaitForever);
-    else
-        result = osSemaphoreAcquire(*semaphore, timeout_ms );
-
-    if (result == osOK)
-    {
-        return Ok;
-    }
-    else if (result == osErrorTimeout)
-    {
-        return DataTimeout;
-    }
-
-    return Error;
-}
-
-/**
- * Sets a semaphore
- *
- * If any threads are waiting on the semaphore, the first thread is resumed
- * Else increment semaphore.
- *
- * Can be called from interrupt context, so must be able to handle resuming other
- * threads from interrupt context.
- *
- * @param semaphore       : Pointer to variable which will receive handle of created semaphore
- * @return en_sdio_result_t :Ok if semaphore was successfully set
- *                          : Error if an error occurred
- *
- */
-en_sdio_result_t cy_rtos_set_semaphore(cy_semaphore_t *semaphore )
-{
-    osStatus_t result;
-
-    if (*semaphore == NULL)
-    {
-        return Error;
-    }
-
-    result = osSemaphoreRelease(*semaphore);
-
-    if ( (result == osOK) || (result == osErrorResource) )
-    {
-        return Ok;
-    }
-
-    return Error;
-}
-
-/**
- * Deletes a semaphore
- *
- * function to delete a semaphore.
- *
- * @param semaphore         : Pointer to the semaphore handle
- *
- * @return en_sdio_result_t : Ok if semaphore was successfully deleted
- *                        : Error if an error occurred
- *
- */
-en_sdio_result_t cy_rtos_deinit_semaphore(cy_semaphore_t *semaphore)
-{
-    osStatus_t result;
-    if (*semaphore == NULL)
-    {
-        return Error;
-    }
-    result = osSemaphoreDelete(*semaphore);
-
-    if (result != osOK)
-        return Error;
-
-    return Ok;
-}
-
-#endif // SEMAPHORE
 
 #if defined(__cplusplus)
 }

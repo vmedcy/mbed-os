@@ -137,7 +137,6 @@ class CodeBlocks(GccArm):
             'FUTURE_SEQUANA': 'board/cy8ckit_062_ble.cfg',
             'FUTURE_SEQUANA_M0': 'board/cy8ckit_062_ble.cfg',
             'CY8CKIT_062_WIFI_BT': 'board/cy8ckit_062_ble.cfg',
-            'CY8CKIT_062_WIFI_BT_M0': 'board/cy8ckit_062_ble.cfg'
             }
 
         if self.target in openocd_board:

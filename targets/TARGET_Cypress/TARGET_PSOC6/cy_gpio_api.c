@@ -53,6 +53,11 @@ void gpio_mode(gpio_t *obj, PinMode mode)
     if (CY_RSLT_SUCCESS != (rslt = cyhal_gpio_drivemode(obj->pin, mode))) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_GPIO, CY_RSLT_GET_CODE(rslt)), "cyhal_gpio_mode failed");
     }
+    if (mode == PullUp) {
+        gpio_write(obj, 1);
+    } else if (mode == PullDown) {
+        gpio_write(obj, 0);
+    }
 }
 
 void gpio_dir(MBED_UNUSED gpio_t *obj, MBED_UNUSED PinDirection direction)

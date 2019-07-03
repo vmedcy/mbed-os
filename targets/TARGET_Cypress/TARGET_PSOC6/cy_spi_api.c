@@ -151,7 +151,7 @@ int spi_slave_receive(spi_t *obj)
 
 int spi_slave_read(spi_t *obj)
 {
-    uint8_t value;
+    uint32_t value;
     struct spi_s *spi = cy_get_spi(obj);
     if (CY_RSLT_SUCCESS != cyhal_spi_read(&(spi->hal_spi), &value)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_SPI, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_spi_read");

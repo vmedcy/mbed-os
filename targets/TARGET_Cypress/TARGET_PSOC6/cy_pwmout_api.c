@@ -44,8 +44,8 @@ void pwmout_free(pwmout_t *obj)
 
 void pwmout_write(pwmout_t *obj, float percent)
 {
-    MBED_ASSERT(percent >= 0.0f && percent <= 100.0f);
-    pwmout_pulsewidth_us(obj, percent * 0.01f * obj->period_us);
+    MBED_ASSERT(percent >= 0.0f && percent <= 1.0f);
+    pwmout_pulsewidth_us(obj, percent * obj->period_us);
 }
 
 float pwmout_read(pwmout_t *obj)
@@ -68,6 +68,9 @@ void pwmout_period_us(pwmout_t *obj, int us)
     obj->period_us = (uint32_t)us;
     if (CY_RSLT_SUCCESS != cyhal_pwm_period(&(obj->hal_pwm), obj->period_us, obj->width_us)) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_PWM, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_pwm_period");
+    }
+    if (CY_RSLT_SUCCESS != cyhal_pwm_start(&(obj->hal_pwm))) {
+        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_PWM, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_pwm_start");
     }
 }
 

@@ -92,7 +92,7 @@ void i2c_init(i2c_t *obj, PinName sda, PinName scl)
     i2c->cfg.frequencyhal_hz = 400;
     i2c->async_handler = NULL;
     cyhal_i2c_register_irq(&(i2c->hal_i2c), &cy_i2c_event_handler, obj);
-    cyhal_i2c_irq_enable(&(i2c->hal_i2c), CYHAL_I2C_SLAVE_READ_EVENT | CYHAL_I2C_SLAVE_WRITE_EVENT | CYHAL_I2C_SLAVE_ERR_EVENT | CYHAL_I2C_SLAVE_RD_CMPLT_EVENT | CYHAL_I2C_SLAVE_WR_CMPLT_EVENT | CYHAL_I2C_MASTER_ERR_EVENT | CYHAL_I2C_MASTER_RD_CMPLT_EVENT | CYHAL_I2C_MASTER_WR_CMPLT_EVENT, true);
+    cyhal_i2c_irq_enable(&(i2c->hal_i2c), (cyhal_i2c_irq_event_t)(CYHAL_I2C_SLAVE_READ_EVENT | CYHAL_I2C_SLAVE_WRITE_EVENT | CYHAL_I2C_SLAVE_ERR_EVENT | CYHAL_I2C_SLAVE_RD_CMPLT_EVENT | CYHAL_I2C_SLAVE_WR_CMPLT_EVENT | CYHAL_I2C_MASTER_ERR_EVENT | CYHAL_I2C_MASTER_RD_CMPLT_EVENT | CYHAL_I2C_MASTER_WR_CMPLT_EVENT), true);
 }
 
 void i2c_frequency(i2c_t *obj, int hz)
@@ -119,7 +119,7 @@ int i2c_stop(i2c_t *obj)
 int i2c_read(i2c_t *obj, int address, char *data, int length, int stop)
 {
     struct i2c_s *i2c = cy_get_i2c(obj);
-    if (CY_RSLT_SUCCESS != cyhal_i2c_master_recv(&(i2c->hal_i2c), address, (uint8_t *)data, (uint16_t)length, CY_I2C_DEFAULT_TIMEOUT)) {
+    if (CY_RSLT_SUCCESS != cyhal_i2c_master_recv(&(i2c->hal_i2c), address >> 1, (uint8_t *)data, (uint16_t)length, CY_I2C_DEFAULT_TIMEOUT)) {
         return (int)I2C_ERROR_NO_SLAVE;
     }
     return length;
@@ -128,7 +128,7 @@ int i2c_read(i2c_t *obj, int address, char *data, int length, int stop)
 int i2c_write(i2c_t *obj, int address, const char *data, int length, int stop)
 {
     struct i2c_s *i2c = cy_get_i2c(obj);
-    if (CY_RSLT_SUCCESS != cyhal_i2c_master_send(&(i2c->hal_i2c), address, (const uint8_t *)data, (uint16_t)length, CY_I2C_DEFAULT_TIMEOUT)) {
+    if (CY_RSLT_SUCCESS != cyhal_i2c_master_send(&(i2c->hal_i2c), address >> 1, (const uint8_t *)data, (uint16_t)length, CY_I2C_DEFAULT_TIMEOUT)) {
         return (int)I2C_ERROR_NO_SLAVE;
     }
     // NOTE: HAL does not report how many bytes were actually sent in case of early NAK
@@ -225,7 +225,7 @@ void i2c_slave_address(i2c_t *obj, int idx, uint32_t address, uint32_t mask)
     if (CY_RSLT_SUCCESS != cyhal_i2c_set_config(&(i2c->hal_i2c), &(i2c->cfg))) {
         MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_I2C, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_i2c_set_config");
     }
-    Cy_SCB_I2C_SlaveSetAddressMask(&(i2c->hal_i2c.base), (uint8_t)mask);
+    Cy_SCB_I2C_SlaveSetAddressMask(i2c->hal_i2c.base, (uint8_t)mask);
 }
 
 #endif

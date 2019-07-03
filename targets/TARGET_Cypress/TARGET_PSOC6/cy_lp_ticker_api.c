@@ -19,7 +19,7 @@
 
 #include "lp_ticker_api.h"
 #include "mbed_error.h"
-#include "cyhal_wdt.h"
+#include "cyhal_lptimer.h"
 #include "cycfg.h"
 
 #if DEVICE_LPTICKER
@@ -28,10 +28,10 @@
 extern "C" {
 #endif
 
-static cyhal_wdt_t cy_wdt0;
-static bool cy_wdt_initialized = false;
+static cyhal_lptimer_t cy_lptimer0;
+static bool cy_lptimer_initialized = false;
 
-static void cy_lp_ticker_handler(MBED_UNUSED void *unused1, MBED_UNUSED cyhal_wdt_irq_event_t unused2)
+static void cy_lp_ticker_handler(MBED_UNUSED void *unused1, MBED_UNUSED cyhal_lptimer_irq_event_t unused2)
 {
     lp_ticker_irq_handler();
 }
@@ -39,48 +39,48 @@ static void cy_lp_ticker_handler(MBED_UNUSED void *unused1, MBED_UNUSED cyhal_wd
 void lp_ticker_init(void)
 {
     // It should be safe to call this function more than once
-    if (!cy_wdt_initialized) {
-        if (CY_RSLT_SUCCESS != cyhal_wdt_init(&cy_wdt0)) {
-            MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_wdt_init");
+    if (!cy_lptimer_initialized) {
+        if (CY_RSLT_SUCCESS != cyhal_lptimer_init(&cy_lptimer0)) {
+            MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_lptimer_init");
         }
-        cy_wdt_initialized = true;
+        cy_lptimer_initialized = true;
     }
     lp_ticker_disable_interrupt();
-    cyhal_wdt_register_irq(&cy_wdt0, &cy_lp_ticker_handler, NULL);
+    cyhal_lptimer_register_irq(&cy_lptimer0, &cy_lp_ticker_handler, NULL);
 }
 
 void lp_ticker_free(void)
 {
-    cyhal_wdt_free(&cy_wdt0);
-    cy_wdt_initialized = false;
+    cyhal_lptimer_free(&cy_lptimer0);
+    cy_lptimer_initialized = false;
 }
 
 uint32_t lp_ticker_read(void)
 {
-    return cyhal_wdt_read(&cy_wdt0);
+    return cyhal_lptimer_read(&cy_lptimer0);
 }
 
 void lp_ticker_set_interrupt(timestamp_t timestamp)
 {
-    if (CY_RSLT_SUCCESS != cyhal_wdt_set_match(&cy_wdt0, timestamp)) {
-        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_wdt_set_time");
+    if (CY_RSLT_SUCCESS != cyhal_lptimer_set_match(&cy_lptimer0, timestamp)) {
+        MBED_ERROR(MBED_MAKE_ERROR(MBED_MODULE_DRIVER, MBED_ERROR_CODE_FAILED_OPERATION), "cyhal_lptimer_set_time");
     }
-    cyhal_wdt_irq_enable(&cy_wdt0, CYHAL_WDT_COMPARE_MATCH, true);
+    cyhal_lptimer_irq_enable(&cy_lptimer0, CYHAL_LPTIMER_COMPARE_MATCH, true);
 }
 
 void lp_ticker_disable_interrupt(void)
 {
-    cyhal_wdt_irq_enable(&cy_wdt0, CYHAL_WDT_COMPARE_MATCH, false);
+    cyhal_lptimer_irq_enable(&cy_lptimer0, CYHAL_LPTIMER_COMPARE_MATCH, false);
 }
 
 void lp_ticker_clear_interrupt(void)
 {
-    // WDT driver does this automatically; nothing to do
+    // LPTIMER driver does this automatically; nothing to do
 }
 
 void lp_ticker_fire_interrupt(void)
 {
-    cyhal_wdt_irq_trigger(&cy_wdt0);
+    cyhal_lptimer_irq_trigger(&cy_lptimer0);
 }
 
 const ticker_info_t *lp_ticker_get_info(void)

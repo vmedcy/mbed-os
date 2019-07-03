@@ -34,21 +34,15 @@ extern "C" {
 void cy_gpio_irq_handler_impl(void *handler_arg, cyhal_gpio_irq_event_t event)
 {
     gpio_irq_t *obj = (gpio_irq_t *)handler_arg;
+    cyhal_gpio_irq_event_t masked = event & obj->mask;
     void (*handler)(uint32_t, int) = (void (*)(uint32_t, int))obj->handler;
-    if (NULL != handler && CYHAL_GPIO_IRQ_NONE != (event & obj->mask)) {
-        gpio_irq_event mbed_event;
-        switch (event) {
-            case CYHAL_GPIO_IRQ_RISE:
-                mbed_event = IRQ_RISE;
-                break;
-            case CYHAL_GPIO_IRQ_FALL:
-                mbed_event = IRQ_FALL;
-                break;
-            default:
-                mbed_event = IRQ_NONE;
-                break;
+    if (NULL != handler && CYHAL_GPIO_IRQ_NONE != masked) {
+        if (CYHAL_GPIO_IRQ_NONE != (masked & CYHAL_GPIO_IRQ_RISE)) {
+            (*handler)(obj->id, IRQ_RISE);
         }
-        (*handler)(obj->id, (int)mbed_event);
+        if (CYHAL_GPIO_IRQ_NONE != (masked & CYHAL_GPIO_IRQ_FALL)) {
+            (*handler)(obj->id, IRQ_FALL);
+        }
     }
 }
 
@@ -58,6 +52,9 @@ int gpio_irq_init(gpio_irq_t *obj, PinName pin, gpio_irq_handler handler, uint32
     obj->handler = (void *)handler;
     obj->id = id;
     obj->mask = CYHAL_GPIO_IRQ_NONE;
+    if (pin != NC) {
+        gpio_irq_enable(obj);   // InterruptIn expects IRQ to be initially enabled
+    }
     return pin != NC ? 0 : -1;
 }
 
@@ -65,6 +62,7 @@ void gpio_irq_free(gpio_irq_t *obj)
 {
     if (obj->pin != NC) {
         gpio_irq_disable(obj);
+        cyhal_gpio_irq_enable(obj->pin, CYHAL_GPIO_IRQ_BOTH, false);
     }
     obj->pin = NC;
     obj->handler = NULL;
@@ -83,6 +81,7 @@ void gpio_irq_set(gpio_irq_t *obj, gpio_irq_event event, uint32_t enable)
         bits = CYHAL_GPIO_IRQ_NONE;
     }
     obj->mask = enable ? (obj->mask | bits) : (obj->mask & ~bits);
+    cyhal_gpio_irq_enable(obj->pin, obj->mask, true);
 }
 
 void gpio_irq_enable(gpio_irq_t *obj)

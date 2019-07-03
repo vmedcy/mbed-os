@@ -35,10 +35,10 @@ extern "C" {
 *                        Internal Constants
 *******************************************************************************/
 
-/* After suspend, disable wait 2 us per MKAD-172 */
+/* After suspend, disable wait 2 us */
 #define WAIT_SUSPEND_DISABLE    (2U)
 
-/* The bus reset counter is driven by 100 kHz clock and detects bus reset
+/* The bus reset counter is driven by the 100 kHz clock and detects a bus reset
 * condition after 100 us.
 */
 #define BUS_RESET_PERIOD        (10UL)
@@ -83,7 +83,7 @@ static void EndpointTransferComplete(USBFS_Type *base, uint32_t endpoint,
 * modify anything in this structure.
 *
 * \return
-* Status code of the function execution \ref cy_en_usbfs_dev_drv_status_t.
+* The status code of the function execution \ref cy_en_usbfs_dev_drv_status_t.
 *
 *******************************************************************************/
 cy_en_usbfs_dev_drv_status_t Cy_USBFS_Dev_Drv_Init(USBFS_Type *base, 
@@ -100,13 +100,13 @@ cy_en_usbfs_dev_drv_status_t Cy_USBFS_Dev_Drv_Init(USBFS_Type *base,
 
     CY_ASSERT_L3(CY_USBFS_DEV_DRV_IS_MODE_VALID(config->mode));
 
-    /* Enable clock to mxusb IP */
+    /* Enables clock to mxusb IP */
     USBFS_DEV_USB_CLK_EN(base) = CY_USBFS_DEV_DRV_WRITE_ODD(USBFS_USBDEV_USB_CLK_EN_CSR_CLK_EN_Msk);
 
-    /* Clear register (except reserved): the IOMODE = 0 means usb IP controls the usb pins */
+    /* Clears register (except reserved): the IOMODE = 0 means usb IP controls the usb pins */
     USBFS_DEV_USBIO_CR1(base) = (USBFS_DEV_USBIO_CR1(base) & USBFS_USBDEV_USBIO_CR1_RESERVED_2_Msk);
 
-    /* Set number of clocks (divided version of Clk_Peri) to detect bus reset */
+    /* Sets the number of clocks (divided version of Clk_Peri) to detect bus reset */
     USBFS_DEV_BUS_RST_CNT(base) = BUS_RESET_PERIOD;
 
     /* Enable PHY detector and single-ended and differential receivers */
@@ -115,39 +115,39 @@ cy_en_usbfs_dev_drv_status_t Cy_USBFS_Dev_Drv_Init(USBFS_Type *base,
                                      USBFS_USBLPM_POWER_CTL_ENABLE_DMO_Msk);
     (void) USBFS_DEV_LPM_POWER_CTL(base);
 
-    /* Suspend clear sequence */
+    /* Suspends a clear sequence */
     Cy_SysLib_DelayUs(WAIT_SUSPEND_DISABLE);
     USBFS_DEV_LPM_POWER_CTL(base) &= ~USBFS_USBLPM_POWER_CTL_SUSPEND_Msk;
     (void) USBFS_DEV_LPM_POWER_CTL(base);
 
-    /* Clear register (except reserved) and enable IMO lock */
+    /* Clears the register (except reserved) and enable IMO lock */
     USBFS_DEV_CR1(base) = USBFS_USBDEV_CR1_ENABLE_LOCK_Msk |
                       (USBFS_DEV_CR1(base) & USBFS_USBDEV_CR1_RESERVED_3_Msk);
 
-    /* Configure level selection (HI, MED, LO) for each interrupt source */
+    /* Configures the level selection (HI, MED, LO) for each interrupt source */
     USBFS_DEV_LPM_INTR_LVL_SEL(base) = config->intrLevelSel;
 
-    /* Enable interrupt sources: Bus Reset and EP0 */
+    /* Enables the interrupt sources: Bus Reset and EP0 */
     USBFS_DEV_LPM_INTR_SIE_MASK(base) = (USBFS_USBLPM_INTR_SIE_BUS_RESET_INTR_Msk |
                                          USBFS_USBLPM_INTR_SIE_EP0_INTR_Msk);
 
-    /* Clear LPM register (disable LPM response) */
+    /* Clears the LPM register (disable LPM response) */
     USBFS_DEV_LPM_LPM_CTL(base) = 0UL;
 
     if (config->enableLpm)
     {
-        /* Enable device to ACK LPM requests */
+        /* Enables the device to ACK LPM requests */
         USBFS_DEV_LPM_LPM_CTL(base) = (USBFS_USBLPM_LPM_CTL_LPM_EN_Msk |
                                        USBFS_USBLPM_LPM_CTL_LPM_ACK_RESP_Msk);
     }
 
-    /* Copy configuration in the context */
+    /* Copies the configuration in the context */
     context->mode     = config->mode;
     context->useReg16 = (config->epAccess == CY_USBFS_DEV_DRV_USE_16_BITS_DR);
     context->epSharedBuf     = config->epBuffer;
     context->epSharedBufSize = config->epBufferSize;
 
-    /* Initialize pointers to functions that work with data endpoint */
+    /* Initializes the pointers to functions that work with data endpoint */
     switch(config->mode)
     {
         case CY_USBFS_DEV_DRV_EP_MANAGEMENT_CPU:
@@ -261,19 +261,19 @@ void Cy_USBFS_Dev_Drv_DeInit(USBFS_Type *base, cy_stc_usbfs_dev_drv_context_t *c
     
     for (endpoint = 0UL; endpoint < CY_USBFS_DEV_DRV_NUM_EPS_MAX; ++endpoint)
     {
-        /* Set SIE endpoint register into the default state */
+        /* Sets the SIE endpoint register into the default state */
         USBFS_DEV_SIE_EP_CR0(base, endpoint)  = 0UL;
         USBFS_DEV_SIE_EP_CNT0(base, endpoint) = 0UL;
         USBFS_DEV_SIE_EP_CNT1(base, endpoint) = 0UL;
 
-        /* Set ARBITER endpoint register into the default state */
+        /* Sets the ARBITER endpoint register into the default state */
         USBFS_DEV_ARB_EP_CFG(base, endpoint)    = 0UL;
         USBFS_DEV_ARB_EP_INT_EN(base, endpoint) = 0UL;
         USBFS_DEV_ARB_RW_WA16(base, endpoint)   = 0UL;
         USBFS_DEV_ARB_RW_RA16(base, endpoint)   = 0UL;
     }
 
-    /* Clean-up context callbacks */
+    /* Cleans the context callbacks */
     context->cbSof = NULL;
     context->cbLpm = NULL;
     
@@ -291,7 +291,7 @@ void Cy_USBFS_Dev_Drv_DeInit(USBFS_Type *base, cy_stc_usbfs_dev_drv_context_t *c
 * Function Name: Cy_USBFS_Dev_Drv_Enable
 ****************************************************************************//**
 *
-* Enable the USBFS Device operation.
+* Enables the USBFS Device operation.
 *
 * \param base
 * The pointer to the USBFS instance.
@@ -305,16 +305,16 @@ void Cy_USBFS_Dev_Drv_DeInit(USBFS_Type *base, cy_stc_usbfs_dev_drv_context_t *c
 *******************************************************************************/
 void Cy_USBFS_Dev_Drv_Enable(USBFS_Type *base, cy_stc_usbfs_dev_drv_context_t const *context)
 {
-    /* Suppress a compiler warning about unused variables */
+    /* Suppresses a compiler warning about unused variables */
     (void) context;
 
-    /* Clear EP0 count register */
+    /* Clears the  EP0 count register */
     USBFS_DEV_EP0_CNT(base) = CY_USBFS_DEV_DRV_WRITE_ODD(0UL);
 
-    /* Set EP0.CR: ACK Setup, NAK IN/OUT */
+    /* Sets EP0.CR: ACK Setup, NAK IN/OUT */
     USBFS_DEV_EP0_CR(base)  = CY_USBFS_DEV_DRV_EP_CR_NAK_INOUT;
 
-    /* Enable D+ pull-up, the device appears on the bus */
+    /* Enables D+ pull-up, the device appears on the bus */
     USBFS_DEV_LPM_POWER_CTL(base) |= USBFS_USBLPM_POWER_CTL_DP_UP_EN_Msk;
     (void) USBFS_DEV_LPM_POWER_CTL(base);
 }
@@ -338,17 +338,17 @@ void Cy_USBFS_Dev_Drv_Enable(USBFS_Type *base, cy_stc_usbfs_dev_drv_context_t co
 *******************************************************************************/
 void Cy_USBFS_Dev_Drv_Disable(USBFS_Type *base, cy_stc_usbfs_dev_drv_context_t *context)
 {
-    /* Suppress a compiler warning about unused variables */
+    /* Suppresses a compiler warning about unused variables */
     (void) context;
 
-    /* Disable D+ pull-up */
+    /* Disables D+ pull-up */
     USBFS_DEV_LPM_POWER_CTL(base) &= ~USBFS_USBLPM_POWER_CTL_DP_UP_EN_Msk;
     (void) USBFS_DEV_LPM_POWER_CTL(base);
 
-    /* Disable device to respond to usb traffic */
+    /* Disables the device to respond to usb traffic */
     USBFS_DEV_CR0(base) &= ~USBFS_USBDEV_CR0_USB_ENABLE_Msk;
 
-    /* Disable DMA channels */
+    /* Disables the DMA channels */
     if (CY_USBFS_DEV_DRV_EP_MANAGEMENT_CPU != context->mode)
     {
         DmaDisable(context);
@@ -424,34 +424,34 @@ static void SofIntrHandler(USBFS_Type *base, cy_stc_usbfs_dev_drv_context_t *con
 *******************************************************************************/
 static void Ep0IntrHandler(USBFS_Type *base, cy_stc_usbfs_dev_drv_context_t *context)
 {
-    /* Read CR register */
+    /* Reads the CR register */
     uint32_t ep0Cr = Cy_USBFS_Dev_Drv_ReadEp0Mode(base);
 
-    /* Check whether packet was ACKed */
+    /* Checks whether the packet was ACKed */
     if (0U != (ep0Cr & USBFS_USBDEV_EP0_CR_ACKED_TXN_Msk))
     {
-        /* Check packet direction */
+        /* Checks the packet direction */
         if (_FLD2BOOL(USBFS_USBDEV_EP0_CR_SETUP_RCVD, ep0Cr))
         {
             /* A setup packet received */
             context->ep0CtrlState = CY_USBFS_DEV_DRV_EP0_CTRL_STATE_SETUP;
             
-            /* Handle SETUP */
+            /* Handles SETUP */
             if (_FLD2VAL(USBFS_USBDEV_EP0_CR_MODE, ep0Cr) == CY_USBFS_DEV_DRV_EP_CR_NAK_INOUT)
             {
-                /* Try to unlock CR0 register: read and then write.
+                /* Tries to unlock the CR0 register: read and then write.
                 * The success write clears 8-4 bits in the register.
                 */
                 Cy_USBFS_Dev_Drv_WriteEp0Mode(base, ep0Cr);
 
-                /* Check whether CR0 register unlocked (bits cleared) */
+                /* Checks whether the CR0 register unlocked (bits cleared) */
                 ep0Cr = Cy_USBFS_Dev_Drv_ReadEp0Mode(base);
                 if (false == _FLD2BOOL(USBFS_USBDEV_EP0_CR_SETUP_RCVD, ep0Cr))
                 {
-                    /* Reset EP0 data toggle */
+                    /* Resets the EP0 data toggle */
                     context->ep0DataToggle = 0U;
 
-                    /* Call Device layer to service request */
+                    /* Calls Device layer to service a request */
                     context->ep0Setup(base, context);
                 }
                 else
@@ -461,7 +461,7 @@ static void Ep0IntrHandler(USBFS_Type *base, cy_stc_usbfs_dev_drv_context_t *con
                 }
             }
         }
-        /* Handle IN */
+        /* Handles IN */
         else if (_FLD2BOOL(USBFS_USBDEV_EP0_CR_IN_RCVD, ep0Cr))
         {
             if (CY_USBFS_DEV_DRV_EP0_CTRL_STATE_DATA == context->ep0CtrlState)
@@ -495,7 +495,7 @@ static void Ep0IntrHandler(USBFS_Type *base, cy_stc_usbfs_dev_drv_context_t *con
                 /* Nothing to handle in this state */
             }
         }
-        /* Handle OUT */
+        /* Handles OUT */
         else if (_FLD2BOOL(USBFS_USBDEV_EP0_CR_OUT_RCVD, ep0Cr))
         {
             if (CY_USBFS_DEV_DRV_EP0_CTRL_STATE_DATA == context->ep0CtrlState)
@@ -530,18 +530,18 @@ static void Ep0IntrHandler(USBFS_Type *base, cy_stc_usbfs_dev_drv_context_t *con
 *******************************************************************************/
 static void BusResetIntrHandler(USBFS_Type *base, cy_stc_usbfs_dev_drv_context_t *context)
 {
-    /* Reset driver variables if any */
+    /* Resets the driver variables if any */
 
     /* Cypress ID# 293217: write CR0 when pull-up is enabled */
     if (_FLD2BOOL(USBFS_USBLPM_POWER_CTL_DP_UP_EN, USBFS_DEV_LPM_POWER_CTL(base)))
     {
-        /* Pass event to the Device layer */
+        /* Passes an event to the Device layer */
         context->busReset(base, context);
 
-        /* Clear EP0 count register */
+        /* Clears the EP0 count register */
         USBFS_DEV_EP0_CNT(base) = CY_USBFS_DEV_DRV_WRITE_ODD(0UL);
 
-        /* Set EP0.CR: ACK Setup, NAK IN/OUT */
+        /* Sets EP0.CR: ACK Setup, NAK IN/OUT */
         USBFS_DEV_EP0_CR(base) = CY_USBFS_DEV_DRV_EP_CR_NAK_INOUT;
 
         /* Resets the driver context variables into the default state */
@@ -562,8 +562,8 @@ static void BusResetIntrHandler(USBFS_Type *base, cy_stc_usbfs_dev_drv_context_t
 * Function Name: EndpointTransferComplete
 ****************************************************************************//**
 *
-* Handles endpoint transfer complete: updates endpoint state, 
-* calls transfer completion callback, handles abort.
+* Handles the endpoint transfer complete: updates  the endpoint state, 
+* calls a transfer completion callback, handles the abort.
 *
 * \param base
 * The pointer to the USBFS instance.
@@ -585,7 +585,7 @@ static void EndpointTransferComplete(USBFS_Type *base, uint32_t endpoint,
                                     cy_stc_usbfs_dev_drv_endpoint_data_t *endpointData,
                                     cy_stc_usbfs_dev_drv_context_t *context)
 {
-    /* Update toggle (exclude ISOC endpoints) */
+    /* Updates the toggle (exclude ISOC endpoints) */
     if (false == IS_EP_ISOC(endpointData->sieMode))
     {
         endpointData->toggle ^= (uint8_t) USBFS_USBDEV_SIE_EP_DATA_TOGGLE_Msk;
@@ -593,7 +593,7 @@ static void EndpointTransferComplete(USBFS_Type *base, uint32_t endpoint,
 
     if (0U != (context->epAbortMask & EP2MASK(endpoint)))
     {
-        /* Clear endpoint abort: Do not invoke callback, the state was set to idle */
+        /* Clears the endpoint abort: Do not invoke callback, the state was set to idle */
         context->epAbortMask &= (uint8_t) ~EP2MASK(endpoint);
     }
     else
@@ -601,18 +601,18 @@ static void EndpointTransferComplete(USBFS_Type *base, uint32_t endpoint,
         /* Data has been transferred to the bus set-endpoint complete state */
         endpointData->state = CY_USB_DEV_EP_COMPLETED;
 
-        /* Involve callback if it is registered */
+        /* Involves a callback if it is registered */
         if (NULL != endpointData->epComplete)
         {
             uint32_t errorType = 0UL;
             
-            /* Check transfer errors (detect by hardware) */
+            /* Checks transfer errors (detect by hardware) */
             if (0U != Cy_USBFS_Dev_Drv_GetSieEpError(base, endpoint))
             {
                 errorType = CY_USBFS_DEV_ENDPOINT_TRANSFER_ERROR;
             }
             
-            /* Check data toggle bit of current transfer (exclude ISOC endpoints) */
+            /* Checks the data toggle bit of current transfer (exclude ISOC endpoints) */
             if (false == IS_EP_ISOC(endpointData->sieMode))
             {
                 if (endpointData->toggle == Cy_USBFS_Dev_Drv_GetSieEpToggle(base, endpoint))
@@ -621,7 +621,7 @@ static void EndpointTransferComplete(USBFS_Type *base, uint32_t endpoint,
                 }
             }
 
-            /* Call endpoint complete callback */
+            /* Calls the endpoint complete callback */
             endpointData->epComplete(base, (uint32_t) endpointData->address, errorType, context);
         }
     }
@@ -654,10 +654,10 @@ static void ArbiterIntrHandler(USBFS_Type *base, cy_stc_usbfs_dev_drv_context_t 
     {
         if (0U != (intrMask & 0x01U))
         {
-            /* Get endpoint enable interrupt sources */
+            /* Get the endpoint enable interrupt sources */
             uint32_t sourceMask = Cy_USBFS_Dev_Drv_GetArbEpInterruptStatusMasked(base, endpoint);
 
-            /* Get pointer to endpoint data */
+            /* Gets the pointer to the endpoint data */
             cy_stc_usbfs_dev_drv_endpoint_data_t *endpointData = &context->epPool[endpoint];
 
             Cy_USBFS_Dev_Drv_ClearArbEpInterrupt(base, endpoint, sourceMask);
@@ -681,27 +681,27 @@ static void ArbiterIntrHandler(USBFS_Type *base, cy_stc_usbfs_dev_drv_context_t 
             /* Mode 2: Handle DMA completion event for OUT endpoints */
             if (0U != (sourceMask & USBFS_USBDEV_ARB_EP_DMA_GNT_Msk))
             {
-                /* Notify ReadOutEndpointDma function that data has been copied from endpoint buffer 
+                /* Notifies the ReadOutEndpointDma function that the data has been copied from endpoint buffer 
                 * into the user buffer.
                 */
                 endpointData->state = CY_USB_DEV_EP_COMPLETED;
             }
 
-            /* Mode 3: Handle DMA completion event for OUT endpoints */
+            /* Mode 3: Handles a DMA completion event for OUT endpoints */
             if (0U != (sourceMask & USBFS_USBDEV_ARB_EP_DMA_TERMIN_Msk))
             {
-                /* Set DMA channel to start new transfer */
+                /* Sets a DMA channel to start a new transfer */
                 DmaOutEndpointRestore(endpointData);
 
-                /* Complete endpoint transfer */
+                /* Completes an endpoint transfer */
                 EndpointTransferComplete(base, endpoint, endpointData, context);
             }
 
             /* This error condition indicates system failure */
             if (0U != (sourceMask & USBFS_USBDEV_ARB_EP_BUF_OVER_Msk))
             {
-                /* The DMA is not capable of moving data from the mxusbfs IP 
-                * hardware buffer fast enough and so caused overflow. Give DMA 
+                /* The DMA cannot move the data from the mxusbfs IP 
+                * hardware buffer fast enough and so caused an overflow. Give a DMA 
                 * channel for this endpoint greater priority or increase the clock 
                 * at which it operates.
                 */
@@ -711,8 +711,8 @@ static void ArbiterIntrHandler(USBFS_Type *base, cy_stc_usbfs_dev_drv_context_t 
             /* This error condition indicates system failure */
             if (0U != (sourceMask & USBFS_USBDEV_ARB_EP_BUF_UNDER_Msk))
             {
-                /* The DMA is not capable of moving data into the mxusbfs IP 
-                * hardware buffer fast enough and so caused underflow. Give DMA 
+                /* The DMA cannot move the data into the mxusbfs IP 
+                * hardware buffer fast enough and so caused an underflow. Give a DMA 
                 * channel for this endpoint greater priority or increase the clock 
                 * at which it operates.
                 */                
@@ -720,7 +720,7 @@ static void ArbiterIntrHandler(USBFS_Type *base, cy_stc_usbfs_dev_drv_context_t 
             }
         }
 
-        /* Move to next endpoint */
+        /* Moves to a next endpoint */
         intrMask >>= 1UL;
         ++endpoint;
     }
@@ -754,7 +754,7 @@ static void SieEnpointIntrHandler(USBFS_Type *base, uint32_t endpoint,
     bool inEndpoint;
     bool zeroLengthPacket;
 
-    /* Get pointer to endpoint data */
+    /* Gets the pointer to endpoint data */
     cy_stc_usbfs_dev_drv_endpoint_data_t *endpointData = &context->epPool[endpoint];
 
     Cy_USBFS_Dev_Drv_ClearSieEpInterrupt(base, endpoint);
@@ -783,7 +783,7 @@ static void SieEnpointIntrHandler(USBFS_Type *base, uint32_t endpoint,
 * Function Name: Cy_USBFS_Dev_Drv_Interrupt
 ****************************************************************************//**
 *
-* Process interrupt events generated by the USBFS Device.
+* Processes interrupt events generated by the USBFS Device.
 * The interrupts are mandatory for USBFS Device operation and this function 
 * must be called inside the user-defined interrupt service routine.
 *
@@ -810,7 +810,7 @@ void Cy_USBFS_Dev_Drv_Interrupt(USBFS_Type *base, uint32_t intrCause,
     uint32_t endpoint = 0U;
     uint32_t intrCauseEp;
 
-    /* Clear SIE interrupts while are served below */
+    /* Clears the SIE interrupts while the below are served */
     Cy_USBFS_Dev_Drv_ClearSieInterrupt(base, intrCause);
 
     /* LPM */
@@ -846,7 +846,7 @@ void Cy_USBFS_Dev_Drv_Interrupt(USBFS_Type *base, uint32_t intrCause,
         SofIntrHandler(base, context);
     }
         
-    /* Control EP0 */
+    /* Controls EP0 */
     if (0U != (intrCause & USBFS_USBLPM_INTR_CAUSE_EP0_INTR_Msk))
     {
         Ep0IntrHandler(base, context);
@@ -890,7 +890,7 @@ static uint32_t WriteEp0Buffer(USBFS_Type *base, uint8_t const *buffer, uint32_t
         size = CY_USBFS_DEV_DRV_EP0_BUFFER_SIZE;
     }
     
-    /* Write data into the hardware buffer */
+    /* Writes data into the hardware buffer */
     for (idx = 0UL; idx < size; ++idx)
     {
         Cy_USBFS_Dev_Drv_WriteEp0Data(base, idx, (uint32_t) buffer[idx]);
@@ -923,16 +923,16 @@ static uint32_t ReadEp0Buffer(USBFS_Type const *base, uint8_t *buffer, uint32_t 
 {
     uint32_t idx;
     
-    /* Get number of received bytes */
+    /* Gets the number of received bytes */
     uint32_t numToCopy = Cy_USBFS_Dev_Drv_GetEp0Count(base);
 
-    /* Read only received bytes */
+    /* Reads received bytes only */
     if (size > numToCopy)
     {
         size = numToCopy;
     }
     
-    /* Get data from the buffer */
+    /* Gets the data from the buffer */
     for (idx = 0UL; idx < size; ++idx)
     {
         buffer[idx] = (uint8_t) Cy_USBFS_Dev_Drv_ReadEp0Data(base, idx);
@@ -946,7 +946,7 @@ static uint32_t ReadEp0Buffer(USBFS_Type const *base, uint8_t *buffer, uint32_t 
 * Function Name: Cy_USBFS_Dev_Drv_Ep0GetSetup
 ****************************************************************************//**
 *
-* Reads setup packed from Endpoint 0 hardware buffer.
+* Reads the setup packed from the Endpoint 0 hardware buffer.
 *
 * \param base
 * The pointer to the USBFS instance.
@@ -964,7 +964,7 @@ static uint32_t ReadEp0Buffer(USBFS_Type const *base, uint8_t *buffer, uint32_t 
 void Cy_USBFS_Dev_Drv_Ep0GetSetup(USBFS_Type const *base, uint8_t *buffer, 
                                   cy_stc_usbfs_dev_drv_context_t const *context)
 {
-    /* Suppress a compiler warning about unused variables */
+    /* Suppresses a compiler warning about unused variables */
     (void) context;
 
     (void) ReadEp0Buffer(base, buffer, CY_USBFS_DEV_DRV_EP0_BUFFER_SIZE);
@@ -983,7 +983,7 @@ void Cy_USBFS_Dev_Drv_Ep0GetSetup(USBFS_Type const *base, uint8_t *buffer,
 *
 * \param buffer
 * The pointer to the buffer containing data bytes to write.
-* To switch a transfer from the data stage to status pass NULL as a pointer.
+* To switch a transfer from the data stage to status, pass NULL as a pointer.
 *
 * \param size
 * The number of bytes to write.
@@ -1008,13 +1008,13 @@ uint32_t Cy_USBFS_Dev_Drv_Ep0Write(USBFS_Type *base, uint8_t const *buffer, uint
     {
         /* Data stage (IN): Loads data to be sent */
 
-        /* Put data into the buffer */
+        /* Puts the data into the buffer */
         if (size > 0U)
         {
             numBytes = WriteEp0Buffer(base, buffer, size);
         }
 
-        /* Update data toggle and counter */
+        /* Updates the data toggle and counter */
         context->ep0DataToggle ^= (uint8_t) USBFS_USBDEV_EP0_CNT_DATA_TOGGLE_Msk;
         
         /* Updates the CNT and CR registers to continue the IN transfer */
@@ -1136,7 +1136,7 @@ uint32_t Cy_USBFS_Dev_Drv_Ep0ReadResult(USBFS_Type const *base, cy_stc_usbfs_dev
 * modify anything in this structure.
 *
 * \return
-* Status code of the function execution \ref cy_en_usbfs_dev_drv_status_t.
+* The status code of the function execution \ref cy_en_usbfs_dev_drv_status_t.
 *
 *******************************************************************************/
 void Cy_USBFS_Dev_Drv_RegisterServiceCallback(USBFS_Type const *base,
@@ -1144,7 +1144,7 @@ void Cy_USBFS_Dev_Drv_RegisterServiceCallback(USBFS_Type const *base,
                                               cy_cb_usbfs_dev_drv_callback_t callback,
                                               cy_stc_usbfs_dev_drv_context_t *context)
 {
-    /* Suppress a compiler warning about unused variables */
+    /* Suppresses a compiler warning about unused variables */
     (void) base;
 
     switch(source)
@@ -1192,13 +1192,13 @@ static void RestoreDeviceConfiguration(USBFS_Type *base,
 {
     uint32_t endpoint;
 
-    /* Due to the Deep Sleep non-retention registers set to the default state */
+    /* Due to Deep Sleep, non-retention registers are set to the default state */
 
     for (endpoint = 0U; endpoint < CY_USBFS_DEV_DRV_NUM_EPS_MAX; ++endpoint)
     {
         if (0U != context->epPool[endpoint].address)
         {
-            /* Restore endpoint configuration */
+            /* Restores the endpoint configuration */
             if (CY_USBFS_DEV_DRV_EP_MANAGEMENT_DMA_AUTO == context->mode)
             {
                 RestoreEndpointRamBuffer(base, &context->epPool[endpoint]);
@@ -1232,18 +1232,18 @@ static void RestoreDeviceConfiguration(USBFS_Type *base,
 *
 * \note
 * After entering low-power mode, the data that is left in the IN or OUT 
-* endpoint buffers is not restored after wakeup, and is lost. Therefore, it should
-* be stored in the SRAM for OUT endpoint or read by the host for IN endpoint
+* endpoint buffers is not restored after a wakeup, and is lost. Therefore, it should
+* be stored in the SRAM for OUT endpoint or read by the host for the IN endpoint
 * before entering low-power mode.
 *
 *******************************************************************************/
 void Cy_USBFS_Dev_Drv_Suspend(USBFS_Type *base, cy_stc_usbfs_dev_drv_context_t *context)
 {
-    /* Put PHY to suspend mode */
+    /* Puts PHY to suspend mode */
     USBFS_DEV_LPM_POWER_CTL(base) |= USBFS_USBLPM_POWER_CTL_SUSPEND_Msk;
     (void) USBFS_DEV_LPM_POWER_CTL(base);
 
-    /* Disable all DMA channels: DMA registers are retention */
+    /* Disables all DMA channels: DMA registers are retention */
     if (CY_USBFS_DEV_DRV_EP_MANAGEMENT_CPU != context->mode)
     {
         DmaDisable(context);
@@ -1269,19 +1269,19 @@ void Cy_USBFS_Dev_Drv_Suspend(USBFS_Type *base, cy_stc_usbfs_dev_drv_context_t *
 *******************************************************************************/
 void Cy_USBFS_Dev_Drv_Resume(USBFS_Type *base, cy_stc_usbfs_dev_drv_context_t *context)
 {
-    /* Enable clock to mxusbfs IP */
+    /* Enables the clock to mxusbfs IP */
     USBFS_DEV_USB_CLK_EN(base) = CY_USBFS_DEV_DRV_WRITE_ODD(USBFS_USBDEV_USB_CLK_EN_CSR_CLK_EN_Msk);
 
-    /* Set number of clocks (divided version of Clk_Peri) to detect bus reset */
+    /* Sets the number of clocks (divided version of Clk_Peri) to detect bus reset */
     USBFS_DEV_BUS_RST_CNT(base) = BUS_RESET_PERIOD;
 
-    /* Set EP0.CR: ACK Setup, NAK IN/OUT */
+    /* Sets EP0.CR: ACK Setup, NAK IN/OUT */
     USBFS_DEV_EP0_CR(base) = CY_USBFS_DEV_DRV_EP_CR_NAK_INOUT;
 
-    /* Restore data endpoints configuration  */
+    /* Restores the data endpoints configuration  */
     RestoreDeviceConfiguration(base, context);
 
-    /* Release PHY from suspend mode */
+    /* Releases PHY from suspend mode */
     USBFS_DEV_LPM_POWER_CTL(base) &= ~USBFS_USBLPM_POWER_CTL_SUSPEND_Msk;
     (void) USBFS_DEV_LPM_POWER_CTL(base);
 }

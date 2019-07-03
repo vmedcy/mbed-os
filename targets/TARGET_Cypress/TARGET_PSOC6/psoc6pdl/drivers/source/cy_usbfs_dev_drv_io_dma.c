@@ -842,7 +842,7 @@ cy_en_usbfs_dev_drv_status_t LoadInEndpointDma(USBFS_Type    *base,
         return CY_USBFS_DEV_DRV_BAD_PARAM;
     }
 
-    /* Clear abort mask for the endpoint (there is no transfer during abort) */
+    /* Clears the abort mask for the endpoint (there is no transfer during abort) */
     context->epAbortMask &= (uint8_t) ~EP2MASK(endpoint);
 
     /* Set count and data toggle */
@@ -1052,7 +1052,7 @@ cy_en_usbfs_dev_drv_status_t LoadInEndpointDmaAuto(USBFS_Type    *base,
         return CY_USBFS_DEV_DRV_BAD_PARAM;
     }
 
-    /* Clear abort mask for the endpoint (there is no transfer during abort) */
+    /* Clears the abort mask for the endpoint (there is no transfer during abort) */
     context->epAbortMask &= (uint8_t) ~EP2MASK(endpoint);
 
     /* Endpoint pending: Waits for the host read data after exiting this function */

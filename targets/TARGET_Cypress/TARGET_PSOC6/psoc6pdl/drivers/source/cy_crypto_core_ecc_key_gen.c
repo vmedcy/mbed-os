@@ -29,6 +29,8 @@
 #include "cy_crypto_core_vu.h"
 #include "cy_crypto_core_trng.h"
 
+#if defined(CY_IP_MXCRYPTO)
+
 #define CY_ECC_CONFIG_TR_GARO_CTL      0x6C740B8DuL
 #define CY_ECC_CONFIG_TR_FIRO_CTL      0x52D246E1uL
 
@@ -295,6 +297,8 @@ cy_en_crypto_status_t Cy_Crypto_Core_ECC_MakePublicKey(CRYPTO_Type *base,
 
     return (tmpResult);
 }
+
+#endif /* CY_IP_MXCRYPTO */
 
 
 /* [] END OF FILE */

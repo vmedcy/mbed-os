@@ -29,6 +29,8 @@
 #include "cy_crypto_core_mem.h"
 #include "cy_crypto_core_vu.h"
 
+#if defined(CY_IP_MXCRYPTO)
+
 /*******************************************************************************
 * Function Name: Cy_Crypto_Core_ECC_SignHash
 ****************************************************************************//**
@@ -429,6 +431,8 @@ cy_en_crypto_status_t Cy_Crypto_Core_ECC_VerifyHash(CRYPTO_Type *base,
 
     return (tmpResult);
 }
+
+#endif /* CY_IP_MXCRYPTO */
 
 
 /* [] END OF FILE */

@@ -28,6 +28,8 @@
 #include "cy_crypto_core_ecc.h"
 #include "cy_crypto_core_vu.h"
 
+#if defined(CY_IP_MXCRYPTO)
+
 /*******************************************************************************
 * Elliptic Curve (EC) Scalar Multiplication using (X,Y)-only, Co-Z arithmetic
 *
@@ -2062,6 +2064,8 @@ cy_en_crypto_status_t Cy_Crypto_Core_EC_NistP_PointMultiplication(CRYPTO_Type *b
 
     return myStatus;
 }
+
+#endif /* CY_IP_MXCRYPTO */
 
 
 /* [] END OF FILE */

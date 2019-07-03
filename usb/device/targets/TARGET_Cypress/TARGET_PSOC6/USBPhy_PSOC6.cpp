@@ -33,7 +33,7 @@
 static void usb_dev_bus_reset_callback(void);
 static void usb_dev_ep0_setup_callback(void);
 static void usb_dev_ep0_in_callback(void);
-static void usb_dev_ep0_out_callback(void); 
+static void usb_dev_ep0_out_callback(void);
 static void usb_dev_sof_callback(uint32_t frame_number);
 static void usb_dev_endpoint_callback(cyhal_usb_dev_ep_t endpoint);
 
@@ -66,11 +66,11 @@ void USBPhyHw::init(USBPhyEvents *events)
 
     // Store events
     instance->events = events;
-    
+
     // Initialize USB Device (CYHAL find required resources).
     cy_rslt_t ret = cyhal_usb_dev_init(hal_obj, USBDP, USBDM, NULL);
     MBED_ASSERT(CY_RSLT_SUCCESS == ret);
-    
+
     // Hook device handlers to be called by driver
     cyhal_usb_dev_register_event_callback(hal_obj, CYHAL_USB_DEV_EVENT_BUS_RESET, &usb_dev_bus_reset_callback);
     cyhal_usb_dev_register_event_callback(hal_obj, CYHAL_USB_DEV_EVENT_EP0_SETUP, &usb_dev_ep0_setup_callback);
@@ -88,12 +88,12 @@ void USBPhyHw::init(USBPhyEvents *events)
     (void) cyhal_usb_dev_endpoint_add(hal_obj, true, false, 4U, USB_DEV_EP_NON_ISOC_MAX_PACKET, CYHAL_USB_DEV_EP_TYPE_BULK);
     (void) cyhal_usb_dev_endpoint_add(hal_obj, true, false, 5U, USB_DEV_EP_ISOC_MAX_PACKET,     CYHAL_USB_DEV_EP_TYPE_ISO);
     (void) cyhal_usb_dev_endpoint_add(hal_obj, true, false, 6U, USB_DEV_EP_ISOC_MAX_PACKET,     CYHAL_USB_DEV_EP_TYPE_ISO);
-    
-    // Clear IN and OUT data endpoint event masks 
+
+    // Clear IN and OUT data endpoint event masks
     in_event_mask  = 0;
     out_event_mask = 0;
-    
-    // Configure interrupt and hook interrupt handler 
+
+    // Configure interrupt and hook interrupt handler
     cyhal_usb_dev_register_irq(hal_obj, (cyhal_usb_dev_irq_handler_t)&_usbisr);
     cyhal_usb_dev_irq_enable(hal_obj, true);
 }
@@ -129,32 +129,26 @@ static void usb_dev_sof_callback(uint32_t frame_number)
 
 static void usb_dev_endpoint_callback(cyhal_usb_dev_ep_t endpoint)
 {
-    if (CYHAL_USB_DEV_IS_IN_EP(endpoint))
-    {
+    if (CYHAL_USB_DEV_IS_IN_EP(endpoint)) {
         instance->in_event_mask  |= USB_DEV_EP_BIT(endpoint);
-    }
-    else
-    {
+    } else {
         instance->out_event_mask |= USB_DEV_EP_BIT(endpoint);
     }
 }
 
 void USBPhyHw::usb_dev_execute_ep_callbacks(void)
 {
-    if ((0 != in_event_mask) || (0 != out_event_mask))
-    {
+    if ((0 != in_event_mask) || (0 != out_event_mask)) {
         uint32_t mask;
         uint32 endpoint;
 
         // USBPhy must send IN endpoint events before OUT endpoint events if both are pending.
-    
+
         // Notify IN endpoint transfer complete events
         endpoint = 1U;
         mask = (uint32_t) in_event_mask;
-        while (0 != mask)
-        {
-            if (0 != (mask & 0x1U))
-            {
+        while (0 != mask) {
+            if (0 != (mask & 0x1U)) {
                 events->in(USB_DEV_IN_DIR | endpoint);
             }
 
@@ -165,17 +159,15 @@ void USBPhyHw::usb_dev_execute_ep_callbacks(void)
         // Notify OUT endpoint transfer complete events
         endpoint = 1U;
         mask = (uint32_t) out_event_mask;
-        while (0 != mask)
-        {
-            if (0 != (mask & 0x1U))
-            {
+        while (0 != mask) {
+            if (0 != (mask & 0x1U)) {
                 events->out(endpoint);
             }
 
-              mask >>= 1U;
-              ++endpoint;
+            mask >>= 1U;
+            ++endpoint;
         }
-        
+
         out_event_mask = 0;
         in_event_mask  = 0;
     }
@@ -241,17 +233,17 @@ void USBPhyHw::suspend(bool suspended)
 const usb_ep_table_t *USBPhyHw::endpoint_table()
 {
     static const usb_ep_table_t lpc_table = {
-        512, 
+        512,
         // CY USB IP has hardware buffer of 512 bytes that is shared among 8 data endpoint.
         // The buffer has static allocation as follows:
         // - 4 endpoints of 64 that supports BULK and INT.
         // - 2 endpoints of 128 that support ISOC, BULK and INT.
-        // The static allocation of max packet for BULK and INT allows to handle change interface 
-        // alternates properly if endpoint size is changed (the endpoint is not overlapped with 
+        // The static allocation of max packet for BULK and INT allows to handle change interface
+        // alternates properly if endpoint size is changed (the endpoint is not overlapped with
         // endpoints of neighborhood interface).
         // The CY USB IP has separate endpoint 0 hardware buffer of 8 bytes.
         {
-            {USB_EP_ATTR_ALLOW_CTRL | USB_EP_ATTR_DIR_IN_AND_OUT, 0, 0}, 
+            {USB_EP_ATTR_ALLOW_CTRL | USB_EP_ATTR_DIR_IN_AND_OUT, 0, 0},
             {USB_EP_ATTR_NON_ISO    | USB_EP_ATTR_DIR_IN_OR_OUT,  0, 0},
             {USB_EP_ATTR_NON_ISO    | USB_EP_ATTR_DIR_IN_OR_OUT,  0, 0},
             {USB_EP_ATTR_NON_ISO    | USB_EP_ATTR_DIR_IN_OR_OUT,  0, 0},
@@ -262,7 +254,7 @@ const usb_ep_table_t *USBPhyHw::endpoint_table()
             {0, 0, 0},
         }
     };
-    
+
     return &lpc_table;
 }
 
@@ -270,7 +262,7 @@ uint32_t USBPhyHw::ep0_set_max_packet(uint32_t max_packet)
 {
     // Ignore max packet because endpoint 0 has dedicated hardware buffer
     (void) max_packet;
-    
+
     return cyhal_usb_dev_ep0_get_max_packet(&obj);
 }
 
@@ -302,12 +294,11 @@ void USBPhyHw::ep0_stall()
 bool USBPhyHw::endpoint_add(usb_ep_t endpoint, uint32_t max_packet, usb_ep_type_t type)
 {
     bool result = false;
-    
-    // The endpoint type is USB spec defined therefore it is safe to cast into the different type used for the same
-    result = (CY_RSLT_SUCCESS == cyhal_usb_dev_endpoint_add(&obj, false, true ,endpoint, max_packet, (cyhal_usb_dev_ep_type_t) type));
 
-    if (result)
-    {
+    // The endpoint type is USB spec defined therefore it is safe to cast into the different type used for the same
+    result = (CY_RSLT_SUCCESS == cyhal_usb_dev_endpoint_add(&obj, false, true, endpoint, max_packet, (cyhal_usb_dev_ep_type_t) type));
+
+    if (result) {
         // Hook endpoint callback to get a notification about transfer completion events
         cyhal_usb_dev_register_endpoint_callback(&obj, endpoint, &usb_dev_endpoint_callback);
     }
@@ -318,7 +309,7 @@ bool USBPhyHw::endpoint_add(usb_ep_t endpoint, uint32_t max_packet, usb_ep_type_
 void USBPhyHw::endpoint_remove(usb_ep_t endpoint)
 {
     (void) cyhal_usb_dev_endpoint_remove(&obj, endpoint);
-    
+
     // Clear endpoint masks
     in_event_mask  &= ~USB_DEV_EP_BIT(endpoint);
     out_event_mask &= ~USB_DEV_EP_BIT(endpoint);
@@ -365,7 +356,7 @@ void USBPhyHw::endpoint_abort(usb_ep_t endpoint)
 
 void USBPhyHw::process()
 {
-    // Process interrupt 
+    // Process interrupt
     cyhal_usb_dev_process_irq(&obj);
 
     // Calls data endpoint IN and OUT event in the required order

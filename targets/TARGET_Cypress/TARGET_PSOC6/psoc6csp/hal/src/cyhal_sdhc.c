@@ -694,7 +694,7 @@ cy_rslt_t cyhal_sdhc_abort_async(const cyhal_sdhc_t *obj)
     return ret;
 }
 
-void cyhal_sdhc_register_irq(cyhal_sdhc_t *obj, cyhal_sdhc_irq_handler handler, void *handler_arg)
+void cyhal_sdhc_register_irq(cyhal_sdhc_t *obj, cyhal_sdhc_irq_handler_t handler, void *handler_arg)
 {
     IRQn_Type irqn = (obj->base == SDHC1)
         ? sdhc_0_interrupt_general_IRQn
@@ -1403,7 +1403,7 @@ cy_rslt_t cyhal_sdio_abort_async(const cyhal_sdio_t *obj)
 }
 
 /* Callback array for SDHC SDIO interrupts */
-static cyhal_sdio_irq_handler callbacks[CY_IP_MXSDHC_INSTANCES];
+static cyhal_sdio_irq_handler_t callbacks[CY_IP_MXSDHC_INSTANCES];
 static void *callback_args[CY_IP_MXSDHC_INSTANCES];
 static cyhal_sdio_t *cy_sdio_config_structs[CY_IP_MXSDHC_INSTANCES];
 
@@ -1475,7 +1475,7 @@ static void isr_sdio_1_handler (void)
     isr_sdio_handler(1, SDHC1);
 }
 
-void cyhal_sdio_register_irq(cyhal_sdio_t *obj, cyhal_sdio_irq_handler handler, void *handler_arg)
+void cyhal_sdio_register_irq(cyhal_sdio_t *obj, cyhal_sdio_irq_handler_t handler, void *handler_arg)
 {
     uint8_t index = obj->resource.block_num;
 

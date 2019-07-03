@@ -88,7 +88,7 @@ typedef struct
 } cyhal_dma_cfg_t;
 
 /** Handler for DMA interrupts */
-typedef void (*cyhal_dma_irq_handler)(void *handler_arg, cyhal_dma_irq_event_t event);
+typedef void (*cyhal_dma_irq_handler_t)(void *handler_arg, cyhal_dma_irq_event_t event);
 
 /** \} group_hal_dma_data_structures */
 
@@ -143,7 +143,7 @@ bool cyhal_dma_busy(cyhal_dma_t *obj);
  * @param[in] handler     The callback handler which will be invoked when the interrupt fires
  * @param[in] handler_arg Generic argument that will be provided to the handler when called
  */
-void cyhal_dma_register_irq(cyhal_dma_t *obj, cyhal_dma_irq_handler handler, void *handler_arg);
+void cyhal_dma_register_irq(cyhal_dma_t *obj, cyhal_dma_irq_handler_t handler, void *handler_arg);
 
 /** Configure DMA interrupt enablement.
  *

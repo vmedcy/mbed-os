@@ -107,7 +107,7 @@ typedef enum {
 */
 
 /** GPIO callback function type */
-typedef void (*cyhal_gpio_irq_handler)(void *handler_arg, cyhal_gpio_irq_event_t event);
+typedef void (*cyhal_gpio_irq_handler_t)(void *handler_arg, cyhal_gpio_irq_event_t event);
 
 /** \} group_hal_gpio_data_structures */
 
@@ -182,7 +182,7 @@ void cyhal_gpio_toggle(cyhal_gpio_t pin);
  * @param[in] handler       The function to call when the specified event happens
  * @param[in] handler_arg   Generic argument that will be provided to the handler when called
  */
-void cyhal_gpio_register_irq(cyhal_gpio_t pin, uint8_t intrPriority, cyhal_gpio_irq_handler handler, void *handler_arg);
+void cyhal_gpio_register_irq(cyhal_gpio_t pin, uint8_t intrPriority, cyhal_gpio_irq_handler_t handler, void *handler_arg);
 
 /** Enable or Disable the GPIO IRQ
  *

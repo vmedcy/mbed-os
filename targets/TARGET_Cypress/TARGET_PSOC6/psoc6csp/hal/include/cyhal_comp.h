@@ -92,7 +92,7 @@ typedef struct
 } cyhal_comp_config_t;
 
 /** Handler for comparator interrupts */
-typedef void (*cyhal_comp_irq_handler)(void *handler_arg, cyhal_comp_irq_event_t event);
+typedef void (*cyhal_comp_irq_handler_t)(void *handler_arg, cyhal_comp_irq_event_t event);
 
 /** \} group_hal_comp_data_structures */
 
@@ -139,7 +139,7 @@ bool cyhal_comp_output(cyhal_comp_t *obj);
  * @param[in] handler     The function to call when the specified event happens
  * @param[in] handler_arg Generic argument that will be provided to the handler when called
  */
-void cyhal_comp_register_irq(cyhal_comp_t *obj, cyhal_comp_irq_handler handler, void *handler_arg);
+void cyhal_comp_register_irq(cyhal_comp_t *obj, cyhal_comp_irq_handler_t handler, void *handler_arg);
 
 /** Enable or Disable the comparator IRQ
  *

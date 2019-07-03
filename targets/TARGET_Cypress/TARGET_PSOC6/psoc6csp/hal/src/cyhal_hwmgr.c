@@ -108,8 +108,6 @@
     #define CY_CHANNEL_COUNT_DMA    (CPUSS_DW0_CH_NR + CPUSS_DW1_CH_NR + CPUSS_DMAC_CH_NR)
 #endif
 
-    #define CY_BLOCK_COUNT_FLASH    1
-
 #ifdef IOSS_GPIO_GPIO_PORT_NR
     #define CY_BLOCK_COUNT_GPIO IOSS_GPIO_GPIO_PORT_NR
     #define CY_CHANNEL_COUNT_GPIO   (8 * IOSS_GPIO_GPIO_PORT_NR)
@@ -219,6 +217,12 @@
     #define CY_BLOCK_COUNT_UDB      0
 #endif
 
+#ifdef CY_IP_MXUSBFS_INSTANCES
+    #define CY_BLOCK_COUNT_USB      CY_IP_MXUSBFS_INSTANCES
+#else
+    #define CY_BLOCK_COUNT_USB      0
+#endif
+
 #ifdef CY_IP_MXS40SRSS_MCWDT_INSTANCES
     #define CY_BLOCK_COUNT_WDT      CY_IP_MXS40SRSS_MCWDT_INSTANCES
 #else
@@ -254,9 +258,7 @@
 #define CY_SIZE_DAC        CY_BLOCK_COUNT_DAC
 #define CY_OFFSET_DMA      (CY_OFFSET_DAC + CY_SIZE_DAC)
 #define CY_SIZE_DMA        CY_CHANNEL_COUNT_DMA
-#define CY_OFFSET_FLASH    (CY_OFFSET_DMA + CY_SIZE_DMA)
-#define CY_SIZE_FLASH      CY_BLOCK_COUNT_FLASH
-#define CY_OFFSET_GPIO     (CY_OFFSET_FLASH + CY_SIZE_FLASH)
+#define CY_OFFSET_GPIO     (CY_OFFSET_DMA + CY_SIZE_DMA)
 #define CY_SIZE_GPIO       CY_CHANNEL_COUNT_GPIO
 #define CY_OFFSET_I2S      (CY_OFFSET_GPIO + CY_SIZE_GPIO)
 #define CY_SIZE_I2S        CY_BLOCK_COUNT_I2S
@@ -264,7 +266,9 @@
 #define CY_SIZE_LCD        CY_BLOCK_COUNT_LCD
 #define CY_OFFSET_LPCOMP   (CY_OFFSET_LCD + CY_SIZE_LCD)
 #define CY_SIZE_LPCOMP     CY_BLOCK_COUNT_LPCOMP
-#define CY_OFFSET_OPAMP    (CY_OFFSET_LPCOMP + CY_SIZE_LPCOMP)
+#define CY_OFFSET_LPTIMER  (CY_OFFSET_LPCOMP + CY_SIZE_LPCOMP)
+#define CY_SIZE_LPTIMER    CY_BLOCK_COUNT_WDT
+#define CY_OFFSET_OPAMP    (CY_OFFSET_LPTIMER + CY_SIZE_LPTIMER)
 #define CY_SIZE_OPAMP      CY_BLOCK_COUNT_OPAMP
 #define CY_OFFSET_PDMPCM   (CY_OFFSET_OPAMP + CY_SIZE_OPAMP)
 #define CY_SIZE_PDMPCM     CY_BLOCK_COUNT_PDMPCM
@@ -282,10 +286,10 @@
 #define CY_SIZE_TCPWM      CY_CHANNEL_COUNT_TCPWM
 #define CY_OFFSET_UDB      (CY_OFFSET_TCPWM + CY_SIZE_TCPWM)
 #define CY_SIZE_UDB        CY_BLOCK_COUNT_UDB
-#define CY_OFFSET_WDT      (CY_OFFSET_UDB + CY_SIZE_UDB)
-#define CY_SIZE_WDT        CY_BLOCK_COUNT_WDT
+#define CY_OFFSET_USB      (CY_OFFSET_UDB + CY_SIZE_UDB)
+#define CY_SIZE_USB        CY_BLOCK_COUNT_USB
 
-#define CY_TOTAL_ALLOCATABLE_ITEMS     (CY_OFFSET_WDT + CY_SIZE_WDT)
+#define CY_TOTAL_ALLOCATABLE_ITEMS     (CY_OFFSET_USB + CY_SIZE_USB)
 
 #define CY_BYTE_NUM_SHIFT (3)
 #define CY_BIT_NUM_MASK (0x07)
@@ -413,11 +417,11 @@ static const uint16_t cyhal_resource_offsets[] =
     CY_OFFSET_CRC,
     CY_OFFSET_DAC,
     CY_OFFSET_DMA,
-    CY_OFFSET_FLASH,
     CY_OFFSET_GPIO,
     CY_OFFSET_I2S,
     CY_OFFSET_LCD,
     CY_OFFSET_LPCOMP,
+    CY_OFFSET_LPTIMER,
     CY_OFFSET_OPAMP,
     CY_OFFSET_PDMPCM,
     CY_OFFSET_QSPI,
@@ -427,7 +431,7 @@ static const uint16_t cyhal_resource_offsets[] =
     CY_OFFSET_SDHC,
     CY_OFFSET_TCPWM,
     CY_OFFSET_UDB,
-    CY_OFFSET_WDT,
+    CY_OFFSET_USB,
 };
 
 static const uint32_t cyhal_has_channels =
@@ -436,6 +440,27 @@ static const uint32_t cyhal_has_channels =
     (1 << CYHAL_RSC_DMA)   |
     (1 << CYHAL_RSC_GPIO)  |
     (1 << CYHAL_RSC_TCPWM) ;
+
+/*
+ * This function is designed to verify that the number of valid resources in the cyhal_resource_t
+ * enum and the number entries in the cyhal_resource_offsets array are identical. Any mismatch
+ * between the two will lead to runtime failures. This will produce a divide by 0 error if they
+ * get of of sync. 
+ * NOTE: This function should never be called, it is only for a compile time error check
+ * NOTE: The Supress is to temporaraly disable the IAR warning about an uncalled function 
+ */
+static inline void check_array_size() __attribute__ ((deprecated));
+#if __ICCARM__
+#pragma diag_suppress=Pe177
+#endif
+static inline void check_array_size()
+{
+    uint32_t dummy = 1 / (sizeof(cyhal_resource_offsets) == (sizeof(uint16_t) * CYHAL_RSC_INVALID));
+    (void)dummy;
+}
+#if __ICCARM__
+#pragma diag_default=Pe177
+#endif
 
 /*******************************************************************************
 *       Utility helper functions
@@ -656,24 +681,24 @@ cy_rslt_t cyhal_hwmgr_allocate_clock(cyhal_clock_divider_t* obj, cyhal_clock_div
 {
     static uint8_t counts[] = { PERI_DIV_8_NR, PERI_DIV_16_NR, PERI_DIV_16_5_NR, PERI_DIV_24_5_NR };
 
-    uint8_t block = (uint8_t)div;
-    uint8_t count = counts[block];
-
+    cyhal_clock_divider_types_t max_div_type = (accept_larger) ? (cyhal_clock_divider_types_t)(sizeof(counts) - 1) : div;
     cy_rslt_t rslt = CYHAL_HWMGR_RSLT_ERR_NONE_FREE;
-    for (int i = 0; i < count; i++)
+    for(cyhal_clock_divider_types_t current_div = div; rslt != CY_RSLT_SUCCESS && current_div <= max_div_type; ++current_div)
     {
-        cyhal_resource_inst_t res = { CYHAL_RSC_CLOCK, block, i };
-        bool reserved = (CY_RSLT_SUCCESS == cyhal_hwmgr_reserve(&res));
-        if (reserved)
+        uint8_t block = (uint8_t)current_div;
+        uint8_t count = counts[block];
+
+        for (int i = 0; rslt != CY_RSLT_SUCCESS && i < count; i++)
         {
-            obj->div_type = div;
-            obj->div_num = i;
-            return CY_RSLT_SUCCESS;
+            cyhal_resource_inst_t res = { CYHAL_RSC_CLOCK, block, i };
+            bool reserved = (CY_RSLT_SUCCESS == cyhal_hwmgr_reserve(&res));
+            if (reserved)
+            {
+                obj->div_type = current_div;
+                obj->div_num = i;
+                rslt = CY_RSLT_SUCCESS;
+            }
         }
-    }
-    if (CY_RSLT_SUCCESS != rslt && accept_larger && (div + 1u) < sizeof(counts))
-    {
-        rslt = cyhal_hwmgr_allocate_clock(obj, (cyhal_clock_divider_types_t)(div + 1), accept_larger);
     }
 
     return rslt;

@@ -78,9 +78,11 @@ extern "C" {
 /** Initialize adc peripheral
  *
  * @param[out] obj The adc object to initialize
- * @param[in]  pin The adc pin name
- *  Note: This pin is not reserved, it is just used to identify the ADC. To configure a pin so
- *  that it can be measured by the ADC, call cyhal_adc_channel_init after calling cyhal_adc_init.
+ * @param[in]  pin A pin corresponding to the ADC block to initialize
+ *  Note: This pin is not reserved, it is just used to identify which ADC block to allocate.
+ *  If multiple channels will be allocated for a single ADC instance, only one pin should be
+ *  passed here; it does not matter which one. After calling this function once, call 
+ *  cyhal_adc_channel_init once for each pin whose value should be measured.
  * @param[in]  clk The clock to use can be shared, if not provided a new clock will be allocated
  * @return The status of the init request
  */

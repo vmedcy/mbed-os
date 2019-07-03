@@ -91,9 +91,11 @@ void cyhal_dac_free(cyhal_dac_t *obj);
  */
 void cyhal_dac_write(const cyhal_dac_t *obj, uint16_t value);
 
-/** Read the current voltage value on the pin, as a normalized unsigned 
+/** Read the current DAC output voltage setting, as a normalized unsigned 
  * 16-bit value (where 0 is the lowest value the DAC can output and 0xFFFF
- * is the highest)
+ * is the highest).
+ * Note: Depending on the precision of the underlying hardware, this may not 
+ * precisely match the most recent value passed in to cyhal_dac_write.
  *
  * @param[in]  obj        The dac object
  * @return The 16-bit output value

@@ -26,7 +26,6 @@
 #include "cyhal_hwmgr.h"
 #include "cyhal_hw_types.h"
 #include "cyhal_flash.h"
-#include "cyhal_flash.h"
 #include <string.h>
 
 #ifdef CY_IP_MXS40SRSS
@@ -73,21 +72,12 @@ static cy_rslt_t run_flash_operation(
 
 cy_rslt_t cyhal_flash_init(cyhal_flash_t *obj)
 {
-    CY_ASSERT(NULL != obj);
-    obj->resource.type = CYHAL_RSC_FLASH;
-    obj->resource.block_num = 0;
-    obj->resource.channel_num = 0;
-
-    return cyhal_hwmgr_reserve(&(obj->resource));
+    return CY_RSLT_SUCCESS;   
 }
 
 void cyhal_flash_free(cyhal_flash_t *obj)
 {
     CY_ASSERT(NULL != obj);
-
-    cyhal_resource_inst_t *flashRsc=&(obj->resource);
-    cyhal_hwmgr_free(flashRsc);
-    flashRsc->type = CYHAL_RSC_INVALID;
 }
 
 void cyhal_flash_get_info(const cyhal_flash_t *obj, cyhal_flash_info_t *info)

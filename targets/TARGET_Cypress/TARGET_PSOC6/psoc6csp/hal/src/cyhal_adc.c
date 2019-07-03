@@ -65,8 +65,6 @@ static const en_clk_dst_t cyhal_sar_clock[] =
                                 | (uint32_t)CY_SAR_COMP_PWR_100 | (uint32_t)CY_SAR_DEEPSLEEP_SARMUX_OFF \
                                 | (uint32_t)CY_SAR_SARSEQ_SWITCH_ENABLE)
 #define CYHAL_SAR_DEFAULT_SAMPLE ((uint32_t)CY_SAR_RIGHT_ALIGN | (uint32_t)CY_SAR_TRIGGER_MODE_FW_ONLY | (uint32_t)CY_SAR_SINGLE_ENDED_UNSIGNED)
-#define CYHAL_SAR_DEFAULT_MUX_SWITCH (CY_SAR_MUX_FW_VSSA_VMINUS)
-#define CYHAL_SAR_DEFAULT_MUX_SWITCH_HW_CTRL (CY_SAR_MUX_SQ_CTRL_VSSA)
 #define CYHAL_SAR_DEFAULT_VREF_MV 1200UL
 
 /** Default configuration for a generic channel; OR in a POS addr for the appropriate pin before configuring the channel */
@@ -86,8 +84,8 @@ const cy_stc_sar_config_t CYHAL_SAR_DEFAULT_CONFIG =
     .intrMask = (uint32_t) CY_SAR_INTR_EOS_MASK,
     .satIntrMask = 0UL,
     .rangeIntrMask = 0UL,
-    .muxSwitch = CYHAL_SAR_DEFAULT_MUX_SWITCH,
-    .muxSwitchSqCtrl = CYHAL_SAR_DEFAULT_MUX_SWITCH_HW_CTRL,
+    .muxSwitch = 0UL,
+    .muxSwitchSqCtrl = 0UL,
     .configRouting = true,
     .vrefMvValue = CYHAL_SAR_DEFAULT_VREF_MV,
 };

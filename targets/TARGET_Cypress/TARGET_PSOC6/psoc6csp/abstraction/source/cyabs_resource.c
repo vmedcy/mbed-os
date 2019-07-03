@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "cy_abstraction_resource.h"
+#include "cyabs_resource.h"
 #include "cy_utils.h"
 
 #if defined(__cplusplus)

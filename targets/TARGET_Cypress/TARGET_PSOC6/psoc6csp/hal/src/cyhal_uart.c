@@ -427,44 +427,46 @@ static void (*cyhal_uart_interrupts_dispatcher_table[CY_IP_MXSCB_INSTANCES])(voi
 
 static cy_en_syspm_status_t cyhal_uart_pm_callback(cy_stc_syspm_callback_params_t *params, cy_en_syspm_callback_mode_t mode)
 {
-    cy_en_syspm_status_t rslt = Cy_SCB_UART_DeepSleepCallback(params, mode);
     cyhal_uart_t *obj = params->context;
+    cy_stc_syspm_callback_params_t pdl_params = { .base = obj->base, .context = &(obj->context) };
+    cy_en_syspm_status_t rslt = Cy_SCB_UART_DeepSleepCallback(&pdl_params, mode);
     GPIO_PRT_Type *txport = obj->pin_tx != NC ? CYHAL_GET_PORTADDR(obj->pin_tx) : NULL,
                   *rtsport = obj->pin_rts != NC ? CYHAL_GET_PORTADDR(obj->pin_rts) : NULL;
     uint8_t txpin = (uint8_t)CYHAL_GET_PIN(obj->pin_tx), rtspin = (uint8_t)CYHAL_GET_PIN(obj->pin_rts);
     switch (mode)
     {
-    case CY_SYSPM_CHECK_READY:
-        if (rslt == CY_SYSPM_SUCCESS)
-        {
+        case CY_SYSPM_CHECK_READY:
+            if (rslt == CY_SYSPM_SUCCESS)
+            {
+                if (NULL != txport)
+                {
+                    obj->saved_tx_hsiom = Cy_GPIO_GetHSIOM(txport, txpin);
+                    Cy_GPIO_Set(txport, txpin);
+                    Cy_GPIO_SetHSIOM(txport, txpin, HSIOM_SEL_GPIO);
+                }
+                if (NULL != rtsport)
+                {
+                    obj->saved_rts_hsiom = Cy_GPIO_GetHSIOM(rtsport, rtspin);
+                    Cy_GPIO_Set(rtsport, rtspin);
+                    Cy_GPIO_SetHSIOM(rtsport, rtspin, HSIOM_SEL_GPIO);
+                }
+            }
+            break;
+
+        case CY_SYSPM_CHECK_FAIL: // fallthrough
+        case CY_SYSPM_AFTER_TRANSITION:
             if (NULL != txport)
             {
-                obj->saved_tx_hsiom = Cy_GPIO_GetHSIOM(txport, txpin);
-                Cy_GPIO_Clr(txport, txpin);
-                Cy_GPIO_SetHSIOM(txport, txpin, HSIOM_SEL_GPIO);
+                Cy_GPIO_SetHSIOM(txport, txpin, obj->saved_tx_hsiom);
             }
             if (NULL != rtsport)
             {
-                obj->saved_rts_hsiom = Cy_GPIO_GetHSIOM(rtsport, rtspin);
-                Cy_GPIO_Clr(rtsport, rtspin);
-                Cy_GPIO_SetHSIOM(rtsport, rtspin, HSIOM_SEL_GPIO);
+                Cy_GPIO_SetHSIOM(rtsport, rtspin, obj->saved_rts_hsiom);
             }
-        }
-        break;
-    case CY_SYSPM_CHECK_FAIL: // fallthrough
-    case CY_SYSPM_AFTER_TRANSITION:
-        if (NULL != txport)
-        {
-            Cy_GPIO_SetHSIOM(txport, txpin, obj->saved_tx_hsiom);
-            Cy_GPIO_Set(txport, txpin);
-        }
-        if (NULL != rtsport)
-        {
-            Cy_GPIO_SetHSIOM(rtsport, rtspin, obj->saved_rts_hsiom);
-            Cy_GPIO_Set(rtsport, rtspin);
-        }
-        break;
-    default: break;
+            break;
+
+        default:
+            break;
     }
     return rslt;
 }
@@ -767,6 +769,20 @@ cy_rslt_t cyhal_uart_baud(cyhal_uart_t *obj, uint32_t baudrate, uint32_t *actual
 
     Cy_SCB_UART_Enable(obj->base);
     return status;
+}
+
+cy_rslt_t cyhal_uart_format(cyhal_uart_t *obj, const cyhal_uart_cfg_t *cfg)
+{
+    CY_ASSERT(NULL != obj);
+    CY_ASSERT(NULL != cfg);
+    Cy_SCB_UART_Disable(obj->base, NULL);
+    obj->config.dataWidth = cfg->data_bits;
+    obj->config.stopBits = convert_stopbits((uint8_t)cfg->stop_bits);
+    obj->config.parity = convert_parity(cfg->parity);
+    // Do not pass obj->context here because Cy_SCB_UART_Init will destroy it
+    Cy_SCB_UART_Init(obj->base, &(obj->config), NULL);
+    Cy_SCB_UART_Enable(obj->base);
+    return CY_RSLT_SUCCESS;
 }
 
 cy_rslt_t cyhal_uart_getc(cyhal_uart_t *obj, uint8_t *value, uint32_t timeout)

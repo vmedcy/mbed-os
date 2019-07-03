@@ -68,7 +68,7 @@ typedef enum {
 */
 
 /** Handler for SPI interrupts */
-typedef void (*cyhal_i2s_irq_handler)(void *handler_arg, cyhal_i2s_irq_t event);
+typedef void (*cyhal_i2s_irq_handler_t)(void *handler_arg, cyhal_i2s_irq_t event);
 
 /** \} group_hal_i2s_data_structures */
 
@@ -157,7 +157,7 @@ cy_rslt_t cyhal_i2s_abort_async(cyhal_i2s_t *obj);
  * @param[in] handler     The callback handler which will be invoked when the interrupt fires
  * @param[in] handler_arg Generic argument that will be provided to the handler when called
  */
-void cyhal_i2s_register_irq(cyhal_i2s_t *obj, cyhal_i2s_irq_handler handler, void *handler_arg);
+void cyhal_i2s_register_irq(cyhal_i2s_t *obj, cyhal_i2s_irq_handler_t handler, void *handler_arg);
 
 /** Configure I2S interrupt. This function is used for word-approach
  *

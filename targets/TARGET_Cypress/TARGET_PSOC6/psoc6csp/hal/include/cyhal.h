@@ -51,6 +51,7 @@
 #include "cyhal_i2c.h"
 #include "cyhal_i2s.h"
 #include "cyhal_interconnect.h"
+#include "cyhal_lptimer.h"
 #include "cyhal_opamp.h"
 #include "cyhal_pdmpcm.h"
 #include "cyhal_pwm.h"
@@ -64,7 +65,6 @@
 #include "cyhal_trng.h"
 #include "cyhal_uart.h"
 #include "cyhal_usb_dev.h"
-#include "cyhal_wdt.h"
 
 /** \} group_hal */
 

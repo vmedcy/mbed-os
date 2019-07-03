@@ -42,7 +42,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cy_result.h"
-#include "cyhal_implementation.h"
 #include "cyhal_hwmgr.h"
 
 #if defined(__cplusplus)
@@ -234,8 +233,6 @@ uint32_t cyhal_usb_dev_ep0_get_max_packet(cyhal_usb_dev_t *obj);
  * @param[in,out] obj The usb device object
  * @param[in] buffer  Buffer to fill with the data read
  * @param[in] size    Size of buffer
- *
- * @return The status of the read endpoint 0 request
  */
  void cyhal_usb_dev_ep0_read(cyhal_usb_dev_t *obj, uint8_t *buffer, uint32_t size);
 

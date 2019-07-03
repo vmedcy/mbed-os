@@ -1,5 +1,5 @@
 /***************************************************************************//**
-* \file cy_abstraction_chip.h
+* \file cyabs_chip.h
 *
 * \brief
 * Basic abstraction layer for dealing with chips containing a Cypress MCU. This

@@ -56,13 +56,19 @@ extern "C" {
 */
 
 /** Bad argument */
-#define CYHAL_SPI_RSLT_BAD_ARGUMENT             (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_SPI, 0))
+#define CYHAL_SPI_RSLT_BAD_ARGUMENT                    (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_SPI, 0))
 /** Failed to initialize SPI clock */
-#define CYHAL_SPI_RSLT_CLOCK_ERROR              (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_SPI, 1))
+#define CYHAL_SPI_RSLT_CLOCK_ERROR                     (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_SPI, 1))
 /** Failed to Transfer SPI data */
-#define CYHAL_SPI_RSLT_TRANSFER_ERROR           (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_SPI, 2))
- /** Provided clock is not supported by SPI */
-#define CYHAL_SPI_RSLT_CLOCK_NOT_SUPPORTED      (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_SPI, 3))
+#define CYHAL_SPI_RSLT_TRANSFER_ERROR                  (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_SPI, 2))
+/** Provided clock is not supported by SPI */
+#define CYHAL_SPI_RSLT_CLOCK_NOT_SUPPORTED             (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_SPI, 3))
+/** Provided PIN configuration is not supported by SPI */
+#define CYHAL_SPI_RSLT_PIN_CONFIG_NOT_SUPPORTED        (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_SPI, 5))
+/** Provided PIN configuration is not supported by SPI */
+#define CYHAL_SPI_RSLT_INVALID_PIN_API_NOT_SUPPORTED   (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_SPI, 6))
+/** The requested resource type is invalid */
+#define CYHAL_SPI_RSLT_ERR_INVALID_PIN                 (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_SPI, 7))
 
 /** \} group_hal_spi_macros */
 
@@ -84,29 +90,21 @@ typedef void (*cyhal_spi_irq_handler_t)(void *handler_arg, cyhal_spi_irq_event_t
 /** SPI operating modes */
 typedef enum
 {
-    /** Standard motorola SPI with MSB first operation */
+    /** Standard motorola SPI CPOL=0, CPHA=0 with MSB first operation */
     CYHAL_SPI_MODE_00_MSB,
-    /** Standard motorola SPI with LSB first operation */
+    /** Standard motorola SPI CPOL=0, CPHA=0 with LSB first operation */
     CYHAL_SPI_MODE_00_LSB,
-    /** TI SPI operation, where the slave select is a pulse. In this mode,
-      * the pulse coincides with the first bit. MSB first
-      */
+    /** Standard motorola SPI CPOL=0, CPHA=1 with MSB first operation */
     CYHAL_SPI_MODE_01_MSB,
-    /** TI SPI operation, where the slave select is a pulse. In this mode,
-      * the pulse coincides with the first bit. LSB first
-      */
+    /** Standard motorola SPI CPOL=0, CPHA=1 with LSB first operation */
     CYHAL_SPI_MODE_01_LSB,
-    /** National SPI operation. This is a half-duplex mode of operation. MSB first */
+    /** Standard motorola SPI CPOL=1, CPHA=0 with MSB first operation */
     CYHAL_SPI_MODE_10_MSB,
-    /** National SPI operation. This is a half-duplex mode of operation. LSB first */
+    /** Standard motorola SPI CPOL=1, CPHA=0 with LSB first operation */
     CYHAL_SPI_MODE_10_LSB,
-    /** TI SPI operation, where the slave select is a pulse. In this mode,
-      * the pulse precedes with the first bit. MSB first
-      */
+    /** Standard motorola SPI CPOL=1, CPHA=1 with MSB first operation */
     CYHAL_SPI_MODE_11_MSB,
-    /** TI SPI operation, where the slave select is a pulse. In this mode,
-      * the pulse precedes with the first bit. LSB first
-      */
+    /** Standard motorola SPI CPOL=1, CPHA=1 with LSB first operation */
     CYHAL_SPI_MODE_11_LSB,
 } cyhal_spi_mode_t;
 
@@ -118,19 +116,22 @@ typedef struct
     bool is_slave; //!< Whether the peripheral is operating as slave or master
 } cyhal_spi_cfg_t;
 
-/** The requested resource type is invalid */
-#define CYHAL_SPI_RSLT_ERR_INVALID_PIN (CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CYHAL_RSLT_MODULE_SPI, 0))
 
 /** Initialize the SPI peripheral
  *
  * Configures the pins used by SPI, sets a default format and frequency, and enables the peripheral
  * @param[out] obj  The SPI object to initialize
  * @param[in]  mosi The pin to use for MOSI
+ * @note At least MOSI or MISO pin should be non-NC
  * @param[in]  miso The pin to use for MISO
+ * @note At least MOSI or MISO pin should be non-NC
  * @param[in]  sclk The pin to use for SCLK
+ * @note This pin cannot be NC
  * @param[in]  ssel The pin to use for SSEL
+ * @note This pin can be NC
  * @param[in]  clk The clock to use can be shared, if not provided a new clock will be allocated
  * @param[in]  bits      The number of bits per frame
+ * @note bits should be 8 or 16
  * @param[in]  mode      The SPI mode (clock polarity, phase, and shift direction)
  * @param[in]  is_slave  false for master mode or true for slave mode operation
  * @return The status of the init request
@@ -161,14 +162,20 @@ cy_rslt_t cyhal_spi_frequency(cyhal_spi_t *obj, uint32_t hz);
  * @param[in] obj   The SPI peripheral to read
  * @param[in] value The value received
  * @return The status of the read request
+ * @note 
+ * - In Master mode, MISO pin required to be non-NC for this API to operate
+ * - In Slave mode, MOSI pin required to be non-NC for this API to operate
  */
-cy_rslt_t cyhal_spi_read(cyhal_spi_t *obj, uint8_t* value);
+cy_rslt_t cyhal_spi_read(cyhal_spi_t *obj, uint32_t* value);
 
 /** Write a byte out
  *
  * @param[in] obj   The SPI peripheral to use for sending
  * @param[in] value The value to send
  * @return The status of the write request
+ * @note
+ * - In Master mode, MOSI pin required to be non-NC for this API to operate
+ * - In Slave mode, MISO pin required to be non-NC for this API to operate
  */
 cy_rslt_t cyhal_spi_write(cyhal_spi_t *obj, uint32_t value);
 
@@ -185,6 +192,7 @@ cy_rslt_t cyhal_spi_write(cyhal_spi_t *obj, uint32_t value);
  * @param[in,out] rx_length Number of bytes to read, udpated with the number actually read
  * @param[in] write_fill    Default data transmitted while performing a read
  * @return The status of the transfer request
+ * @note Both MOSI and MISO pins required to be non-NC for this API to operate
  */
 cy_rslt_t cyhal_spi_transfer(cyhal_spi_t *obj, const uint8_t *tx, size_t tx_length, uint8_t *rx, size_t rx_length, uint8_t write_fill);
 
@@ -196,6 +204,7 @@ cy_rslt_t cyhal_spi_transfer(cyhal_spi_t *obj, const uint8_t *tx, size_t tx_leng
  * @param[out] rx           The receive buffer
  * @param[in,out] rx_length The number of bytes to receive
  * @return The status of the transfer_async request
+ * @note Both MOSI and MISO pins required to be non-NC for this API to operate
  */
 cy_rslt_t cyhal_spi_transfer_async(cyhal_spi_t *obj, const uint8_t *tx, size_t tx_length, uint8_t *rx, size_t rx_length);
 

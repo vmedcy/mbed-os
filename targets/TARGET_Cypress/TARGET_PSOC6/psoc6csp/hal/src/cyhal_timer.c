@@ -49,7 +49,7 @@ extern "C" {
 
 
 /* Callback array for TCPWM interrupts */
-static cyhal_timer_irq_handler callbacks[TCPWM_CHANNELS];
+static cyhal_timer_irq_handler_t callbacks[TCPWM_CHANNELS];
 static void *callback_args[TCPWM_CHANNELS];
 
 typedef struct {
@@ -790,7 +790,7 @@ cy_rslt_t cyhal_timer_stop(cyhal_timer_t *obj)
     return CY_RSLT_SUCCESS;
 }
 
-void cyhal_timer_register_irq(cyhal_timer_t *obj, uint8_t priority, cyhal_timer_irq_handler handler, void *handler_arg)
+void cyhal_timer_register_irq(cyhal_timer_t *obj, uint8_t priority, cyhal_timer_irq_handler_t handler, void *handler_arg)
 {
     uint8_t index = GET_ARRAY_INDEX(obj->resource.block_num, obj->resource.channel_num);
     callbacks[index] = handler;

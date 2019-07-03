@@ -154,7 +154,7 @@ typedef struct
 } cyhal_sdio_cfg_t;
 
 /** Handler for SDIO interrupts */
-typedef void (*cyhal_sdio_irq_handler)(void *handler_arg, cyhal_sdio_irq_event_t event);
+typedef void (*cyhal_sdio_irq_handler_t)(void *handler_arg, cyhal_sdio_irq_event_t event);
 
 /** \} group_hal_sdio_data_structures */
 
@@ -248,7 +248,7 @@ cy_rslt_t cyhal_sdio_abort_async(const cyhal_sdio_t *obj);
  * @param[in] handler     The callback handler which will be invoked when the interrupt fires
  * @param[in] handler_arg Generic argument that will be provided to the handler when called
  */
-void cyhal_sdio_register_irq(cyhal_sdio_t *obj, cyhal_sdio_irq_handler handler, void *handler_arg);
+void cyhal_sdio_register_irq(cyhal_sdio_t *obj, cyhal_sdio_irq_handler_t handler, void *handler_arg);
 
 /** Configure sdio interrupt.
  *

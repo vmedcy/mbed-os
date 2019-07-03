@@ -107,7 +107,7 @@ const cy_stc_gpio_pin_config_t pin_clk_config =
 };
 
 /* Callback pointers */
-static cyhal_sdio_irq_handler cyhal_sdio_callback = NULL;
+static cyhal_sdio_irq_handler_t cyhal_sdio_callback = NULL;
 static cyhal_sdio_t *cyhal_sdio_config_struct = NULL;
 static void *cyhal_sdio_callback_args = NULL;
 
@@ -536,7 +536,7 @@ cy_rslt_t cyhal_sdio_abort_async(const cyhal_sdio_t *obj)
     return CY_RSLT_SUCCESS;
 }
 
-void cyhal_sdio_register_irq(cyhal_sdio_t *obj, cyhal_sdio_irq_handler handler, void *handler_arg)
+void cyhal_sdio_register_irq(cyhal_sdio_t *obj, cyhal_sdio_irq_handler_t handler, void *handler_arg)
 {
     cyhal_sdio_config_struct = obj;
     cyhal_sdio_callback = handler;

@@ -52,7 +52,7 @@ static cy_stc_syspm_callback_t cyhal_rtc_pm_cb = {
     .type = CY_SYSPM_DEEPSLEEP,
     .callbackParams = &cyhal_rtc_pm_cb_params,
 };
-static cyhal_rtc_irq_handler cyhal_rtc_user_handler;
+static cyhal_rtc_irq_handler_t cyhal_rtc_user_handler;
 static void *cyhal_rtc_handler_arg;
 #define CYHAL_RTC_INITIAL_CENTURY 1900
 static uint16_t cyhal_rtc_century = CYHAL_RTC_INITIAL_CENTURY;
@@ -193,7 +193,7 @@ cy_rslt_t cyhal_rtc_alarm(cyhal_rtc_t *obj, const struct tm *time, cyhal_alarm_a
     return (cy_rslt_t)Cy_RTC_SetAlarmDateAndTime(&alarm, CY_RTC_ALARM_1);
 }
 
-void cyhal_rtc_register_irq(cyhal_rtc_t *obj, cyhal_rtc_irq_handler handler, void *handler_arg)
+void cyhal_rtc_register_irq(cyhal_rtc_t *obj, cyhal_rtc_irq_handler_t handler, void *handler_arg)
 {
     uint32_t savedIntrStatus = cyhal_system_critical_section_enter();
     cyhal_rtc_handler_arg = handler_arg;

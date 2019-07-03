@@ -93,7 +93,7 @@ typedef enum {
 */
 
 /** Handler for SDHC interrupts */
-typedef void (*cyhal_sdhc_irq_handler)(void *handler_arg, cyhal_sdhc_irq_event_t event);
+typedef void (*cyhal_sdhc_irq_handler_t)(void *handler_arg, cyhal_sdhc_irq_event_t event);
 
 /** Defines configuration options for the SDHC block */
 typedef struct
@@ -234,7 +234,7 @@ cy_rslt_t cyhal_sdhc_abort_async(const cyhal_sdhc_t *obj);
  * @param[in] handler     The callback handler which will be invoked when the interrupt fires
  * @param[in] handler_arg Generic argument that will be provided to the handler when called
  */
-void cyhal_sdhc_register_irq(cyhal_sdhc_t *obj, cyhal_sdhc_irq_handler handler, void *handler_arg);
+void cyhal_sdhc_register_irq(cyhal_sdhc_t *obj, cyhal_sdhc_irq_handler_t handler, void *handler_arg);
 
 /** Configure SDHC interrupt enablement.
  *

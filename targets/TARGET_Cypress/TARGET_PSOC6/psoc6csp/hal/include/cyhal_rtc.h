@@ -82,7 +82,7 @@ typedef struct
 } cyhal_alarm_active_t;
 
 /** Handler for RTC interrupts */
-typedef void (*cyhal_rtc_irq_handler)(void *handler_arg, cyhal_rtc_irq_event_t event);
+typedef void (*cyhal_rtc_irq_handler_t)(void *handler_arg, cyhal_rtc_irq_event_t event);
 
 /** \} group_hal_rtc_data_structures */
 
@@ -155,7 +155,7 @@ cy_rslt_t cyhal_rtc_alarm(cyhal_rtc_t *obj, const struct tm *time, cyhal_alarm_a
  * @param[in] handler     The callback handler which will be invoked when the alarm fires
  * @param[in] handler_arg Generic argument that will be provided to the handler when called
  */
-void cyhal_rtc_register_irq(cyhal_rtc_t *obj, cyhal_rtc_irq_handler handler, void *handler_arg);
+void cyhal_rtc_register_irq(cyhal_rtc_t *obj, cyhal_rtc_irq_handler_t handler, void *handler_arg);
 
 /** Configure RTC alarm interrupt enablement.
  *

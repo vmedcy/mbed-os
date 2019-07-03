@@ -1,5 +1,5 @@
 /***************************************************************************//**
-* \file cy_abstraction_resource.h
+* \file cyabs_resource.h
 *
 * \brief
 * Basic abstraction layer for dealing with resources.

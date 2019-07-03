@@ -74,7 +74,7 @@ typedef struct
 } cyhal_pdm_pcm_cfg_t;
 
 /** Handler for PDM/PCM interrupts */
-typedef void (*cyhal_pdm_pcm_irq_handler)(void *handler_arg, cyhal_pdm_pcm_irq_event_t event);
+typedef void (*cyhal_pdm_pcm_irq_handler_t)(void *handler_arg, cyhal_pdm_pcm_irq_event_t event);
 
 /** \} group_hal_pdmpcm_data_structures */
 
@@ -154,7 +154,7 @@ cy_rslt_t cyhal_pdm_pcm_abort_async(cyhal_pdm_pcm_t *obj);
  * @param[in] handler     The callback handler which will be invoked when the interrupt fires
  * @param[in] handler_arg Generic argument that will be provided to the handler when called
  */
-void cyhal_pdm_pcm_register_irq(cyhal_pdm_pcm_t *obj, cyhal_i2c_irq_handler handler, void *handler_arg);
+void cyhal_pdm_pcm_register_irq(cyhal_pdm_pcm_t *obj, cyhal_pdm_pcm_irq_handler_t handler, void *handler_arg);
 
 /** Configure PDM/PCM interrupt enablement.
  *

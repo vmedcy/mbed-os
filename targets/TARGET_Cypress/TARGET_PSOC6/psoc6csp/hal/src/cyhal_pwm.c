@@ -38,15 +38,15 @@ extern "C" {
 typedef struct {
     TCPWM_Type *base;
     en_clk_dst_t clock_dst;
-    uint32_t max_period;
+    uint32_t cnt_width;
 } cyhal_internal_pwm_data_t;
 
 static const cyhal_internal_pwm_data_t cyhal_internal_pwm_data[] = {
 #ifdef TCPWM0
-    {TCPWM0, PCLK_TCPWM0_CLOCKS0, (uint32_t)((1ULL << TCPWM0_CNT_CNT_WIDTH) - 1ULL)},
+    {TCPWM0, PCLK_TCPWM0_CLOCKS0, TCPWM0_CNT_CNT_WIDTH},
 #endif
 #ifdef TCPWM1
-    {TCPWM1, PCLK_TCPWM1_CLOCKS0, (uint32_t)((1ULL << TCPWM1_CNT_CNT_WIDTH) - 1ULL)},
+    {TCPWM1, PCLK_TCPWM1_CLOCKS0, TCPWM1_CNT_CNT_WIDTH},
 #endif
 };
 #if CY_IP_MXTCPWM_INSTANCES > 2
@@ -54,6 +54,22 @@ static const cyhal_internal_pwm_data_t cyhal_internal_pwm_data[] = {
 #endif
 
 #define CYHAL_NC_PIN_VALUE_GPIO_VALUE ((cyhal_gpio_t)CYHAL_NC_PIN_VALUE)
+#define CYHAL_TCPWM_MAX_WIDTH 32
+
+static const cyhal_resource_pin_mapping_t* try_alloc_pwm(cyhal_gpio_t pin, const cyhal_resource_pin_mapping_t *pin_map, size_t count)
+{
+    for (uint32_t i = 0; i < count; i++)
+    {
+        if (pin == pin_map[i].pin)
+        {
+            if (CY_RSLT_SUCCESS == cyhal_hwmgr_reserve(pin_map[i].inst))
+            {
+                return &pin_map[i];
+            }
+        }
+    }
+    return NULL;
+}
 
 cy_rslt_t cyhal_pwm_init(cyhal_pwm_t *obj, cyhal_gpio_t pin, const cyhal_clock_divider_t *clk)
 {
@@ -63,21 +79,22 @@ cy_rslt_t cyhal_pwm_init(cyhal_pwm_t *obj, cyhal_gpio_t pin, const cyhal_clock_d
     obj->resource.type = CYHAL_RSC_INVALID;
     obj->pin = CYHAL_NC_PIN_VALUE_GPIO_VALUE;
     obj->dedicated_clock = false;
-    
-    cy_rslt_t result;
-    const cyhal_resource_pin_mapping_t *map = CY_UTILS_GET_RESOURCE(pin, cyhal_pin_map_tcpwm_line);
-    if (NULL == map)
-        map = CY_UTILS_GET_RESOURCE(pin, cyhal_pin_map_tcpwm_line_compl);
-    if (NULL == map)
+
+    const cyhal_resource_pin_mapping_t* map = try_alloc_pwm(pin, cyhal_pin_map_tcpwm_line, sizeof(cyhal_pin_map_tcpwm_line) / sizeof(cyhal_resource_pin_mapping_t));
+    if (map == NULL)
+    {
+        map = try_alloc_pwm(pin, cyhal_pin_map_tcpwm_line_compl, sizeof(cyhal_pin_map_tcpwm_line_compl) / sizeof(cyhal_resource_pin_mapping_t));
+    }
+    if (map == NULL)
+    {
         return CYHAL_PWM_RSLT_BAD_ARGUMENT;
+    }
 
-    cyhal_resource_inst_t pwm_inst = *map->inst;
-    if (CY_RSLT_SUCCESS != (result = cyhal_hwmgr_reserve(&pwm_inst)))
-        return result;
+    obj->resource = *map->inst;
+    obj->base = cyhal_internal_pwm_data[obj->resource.block_num].base;
+    en_clk_dst_t pclk = (en_clk_dst_t)(cyhal_internal_pwm_data[obj->resource.block_num].clock_dst + obj->resource.channel_num);
 
-    obj->resource = pwm_inst;
-    obj->base = cyhal_internal_pwm_data[pwm_inst.block_num].base;
-    en_clk_dst_t pclk = (en_clk_dst_t)(cyhal_internal_pwm_data[pwm_inst.block_num].clock_dst + pwm_inst.channel_num);
+    cy_rslt_t result;
     if (CY_RSLT_SUCCESS == (result = cyhal_gpio_init(pin, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, true)))
     {
         obj->pin = pin;
@@ -92,7 +109,7 @@ cy_rslt_t cyhal_pwm_init(cyhal_pwm_t *obj, cyhal_gpio_t pin, const cyhal_clock_d
             else if (CY_RSLT_SUCCESS == (result = cyhal_hwmgr_allocate_clock(&(obj->clock), CY_SYSCLK_DIV_16_BIT, false)))
             {
                 obj->dedicated_clock = true;
-                uint32_t div = cy_PeriClkFreqHz / 1000000u;
+                uint32_t div  = (uint32_t)(1 << (CYHAL_TCPWM_MAX_WIDTH - cyhal_internal_pwm_data[obj->resource.block_num].cnt_width));
                 if (0 == div ||
                     CY_SYSCLK_SUCCESS != Cy_SysClk_PeriphSetDivider(obj->clock.div_type, obj->clock.div_num, div - 1) ||
                     CY_SYSCLK_SUCCESS != Cy_SysClk_PeriphEnableDivider(obj->clock.div_type, obj->clock.div_num) ||
@@ -186,7 +203,7 @@ void cyhal_pwm_free(cyhal_pwm_t *obj)
 
 static cy_rslt_t cyhal_pwm_set_period_and_compare(cyhal_pwm_t *obj, uint32_t period, uint32_t compare)
 {
-    if (period < 1 || period > cyhal_internal_pwm_data[obj->resource.block_num].max_period)
+    if (period < 1 || period > (uint32_t)((1 << cyhal_internal_pwm_data[obj->resource.block_num].cnt_width)) - 1)
         return CYHAL_PWM_RSLT_BAD_ARGUMENT;
     if (compare > period)
         compare = period;

@@ -45,6 +45,7 @@ extern "C" {
 * \{
 */
 
+/* NOTE: Any changes made to this enum must also be made to the hardware manager resource tracking */
 /** Resource types that the hardware manager supports */
 typedef enum
 {
@@ -56,11 +57,11 @@ typedef enum
     CYHAL_RSC_CRC,       /*!< CRC hardware accelerator */
     CYHAL_RSC_DAC,       /*!< Digital to analog converter */
     CYHAL_RSC_DMA,       /*!< DMA controller */
-    CYHAL_RSC_FLASH,     /*!< Flash memory */
     CYHAL_RSC_GPIO,      /*!< General purpose I/O pin */
     CYHAL_RSC_I2S,       /*!< I2S communications block */
     CYHAL_RSC_LCD,       /*!< Segment LCD controller */
     CYHAL_RSC_LPCOMP,    /*!< Low power comparator */
+    CYHAL_RSC_LPTIMER,   /*!< Low power timer */
     CYHAL_RSC_OPAMP,     /*!< Opamp */
     CYHAL_RSC_PDM,       /*!< PCM/PDM communications block */
     CYHAL_RSC_SMIF,      /*!< Quad-SPI communications block */
@@ -71,7 +72,6 @@ typedef enum
     CYHAL_RSC_TCPWM,     /*!< Timer/Counter/PWM block */
     CYHAL_RSC_UDB,       /*!< UDB Array */
     CYHAL_RSC_USB,       /*!< USB communication block */
-    CYHAL_RSC_WDT,       /*!< Watchdog timer */
     CYHAL_RSC_INVALID,   /*!< Placeholder for invalid type */
 } cyhal_resource_t;
 

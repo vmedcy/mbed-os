@@ -26,7 +26,9 @@
 *******************************************************************************/
 
 #include "cyhal_usb_dev.h"
+#include "cyhal_gpio.h"
 #include "cyhal_interconnect.h"
+#include "cyhal_utils.h"
 
 #if defined(CY_IP_MXUSBFS)
 
@@ -536,7 +538,7 @@ cy_rslt_t cyhal_usb_dev_init(cyhal_usb_dev_t *obj, cyhal_gpio_t dp, cyhal_gpio_t
                     CY_USBFS_DEV_DRV_EP_MANAGEMENT_CPU)
             {
                 /* Set context to select 16-bit register access read/write API implementation */
-                obj->context.useReg16 = true;
+                obj->context.useReg16 = false;
             }
             else
             {
@@ -561,7 +563,7 @@ cy_rslt_t cyhal_usb_dev_init(cyhal_usb_dev_t *obj, cyhal_gpio_t dp, cyhal_gpio_t
                 .epBufferSize = 0U,
                 .intrLevelSel = CYHAL_USB_DEV_IRQ_LVL_DEFAULT,
                 .enableLpm    = false,
-                .epAccess     = CY_USBFS_DEV_DRV_USE_16_BITS_DR
+                .epAccess     = CY_USBFS_DEV_DRV_USE_8_BITS_DR
             };
 
             if (CY_USBFS_DEV_DRV_SUCCESS != Cy_USBFS_Dev_Drv_Init(obj->base, 

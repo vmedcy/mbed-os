@@ -99,13 +99,13 @@ extern "C" {
 #define CY_RSLT_MODULE_ABSTRACTION_HAL_BASE       (0x0100U)
 /** Base identifier for board support modules */
 #define CY_RSLT_MODULE_ABSTRACTION_BSP            (0x0180U)
-/** Base identifier for board support modules */
+/** Base identifier for file system modules */
 #define CY_RSLT_MODULE_ABSTRACTION_FS             (0x0181U)
-/** Base identifier for board support modules */
+/** Base identifier for resource abstraction modules */
 #define CY_RSLT_MODULE_ABSTRACTION_RESOURCE       (0x0182U)
-/** Base identifier for board support modules */
+/** Base identifier for rtos abstraction modules */
 #define CY_RSLT_MODULE_ABSTRACTION_OS             (0x0183U)
-/** Base identifier for board support modules */
+/** Base identifier for environment abstraction modules */
 #define CY_RSLT_MODULE_ABSTRACTION_ENV            (0x0184U)
 
 /**** Middleware Module codes: 0x0200 - 0x02FF ****/

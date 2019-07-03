@@ -58,7 +58,7 @@ bool cyhal_dma_busy(cyhal_dma_t *obj)
     return false;
 }
 
-void cyhal_dma_register_irq(cyhal_dma_t *obj, cyhal_dma_irq_handler handler, void *handler_arg)
+void cyhal_dma_register_irq(cyhal_dma_t *obj, cyhal_dma_irq_handler_t handler, void *handler_arg)
 {
 }
 

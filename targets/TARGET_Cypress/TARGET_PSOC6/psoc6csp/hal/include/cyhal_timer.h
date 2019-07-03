@@ -94,7 +94,7 @@ typedef struct
 } cyhal_timer_cfg_t;
 
 /** Handler for test interrupts */
-typedef void (*cyhal_timer_irq_handler)(void *handler_arg, cyhal_timer_irq_event_t event);
+typedef void (*cyhal_timer_irq_handler_t)(void *handler_arg, cyhal_timer_irq_event_t event);
 
 /** \} group_hal_timer_data_structures */
 
@@ -163,7 +163,7 @@ cy_rslt_t cyhal_timer_stop(cyhal_timer_t *obj);
  * @param[in] handler     The callback handler which will be invoked when the interrupt fires
  * @param[in] handler_arg Generic argument that will be provided to the handler when called
  */
-void cyhal_timer_register_irq(cyhal_timer_t *obj, uint8_t priority, cyhal_timer_irq_handler handler, void *handler_arg);
+void cyhal_timer_register_irq(cyhal_timer_t *obj, uint8_t priority, cyhal_timer_irq_handler_t handler, void *handler_arg);
 
 /** Configure timer/counter interrupt enablement.
  *

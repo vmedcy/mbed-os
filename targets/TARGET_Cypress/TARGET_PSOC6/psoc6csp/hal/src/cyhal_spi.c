@@ -553,30 +553,57 @@ cy_rslt_t cyhal_spi_init(cyhal_spi_t *obj, cyhal_gpio_t mosi, cyhal_gpio_t miso,
     obj->pin_mosi = CYHAL_NC_PIN_VALUE;
     obj->pin_sclk = CYHAL_NC_PIN_VALUE;
     obj->pin_ssel = CYHAL_NC_PIN_VALUE;
+
+    if ((NC == sclk) || ((NC == mosi) && (NC == miso)))
+            return CYHAL_SPI_RSLT_PIN_CONFIG_NOT_SUPPORTED;
     
-    const cyhal_resource_pin_mapping_t *mosi_map;
-    const cyhal_resource_pin_mapping_t *miso_map;
-    const cyhal_resource_pin_mapping_t *sclk_map;
-    const cyhal_resource_pin_mapping_t *ssel_map;
+    const cyhal_resource_pin_mapping_t *mosi_map = NULL;
+    const cyhal_resource_pin_mapping_t *miso_map = NULL;
+    const cyhal_resource_pin_mapping_t *sclk_map = NULL;
+    const cyhal_resource_pin_mapping_t *ssel_map = NULL;
     
     // Reserve the SPI
     if (is_slave)
     {
-        mosi_map = CY_UTILS_GET_RESOURCE(mosi, cyhal_pin_map_scb_spi_s_mosi);
-        miso_map = CY_UTILS_GET_RESOURCE(miso, cyhal_pin_map_scb_spi_s_miso);
+        if (NC != mosi)
+        {
+            mosi_map = CY_UTILS_GET_RESOURCE(mosi, cyhal_pin_map_scb_spi_s_mosi);
+        }
+        if (NC != miso)
+        {
+            miso_map = CY_UTILS_GET_RESOURCE(miso, cyhal_pin_map_scb_spi_s_miso);
+        }
+        if (NC != ssel)
+        {
+            ssel_map = CY_UTILS_GET_RESOURCE(ssel, cyhal_pin_map_scb_spi_s_select0);
+        }
         sclk_map = CY_UTILS_GET_RESOURCE(sclk, cyhal_pin_map_scb_spi_s_clk);
-        ssel_map = CY_UTILS_GET_RESOURCE(ssel, cyhal_pin_map_scb_spi_s_select0);
     }
     else
     {
-        mosi_map = CY_UTILS_GET_RESOURCE(mosi, cyhal_pin_map_scb_spi_m_mosi);
-        miso_map = CY_UTILS_GET_RESOURCE(miso, cyhal_pin_map_scb_spi_m_miso);
+        if (NC != mosi)
+        {
+            mosi_map = CY_UTILS_GET_RESOURCE(mosi, cyhal_pin_map_scb_spi_m_mosi);
+        }
+        if (NC != miso)
+        {
+            miso_map = CY_UTILS_GET_RESOURCE(miso, cyhal_pin_map_scb_spi_m_miso);
+        }
+        if (NC != ssel)
+        {
+            ssel_map = CY_UTILS_GET_RESOURCE(ssel, cyhal_pin_map_scb_spi_m_select0);
+        }
         sclk_map = CY_UTILS_GET_RESOURCE(sclk, cyhal_pin_map_scb_spi_m_clk);
-        ssel_map = CY_UTILS_GET_RESOURCE(ssel, cyhal_pin_map_scb_spi_m_select0);
     }
     
-    if (NULL == mosi_map || NULL == miso_map || NULL == sclk_map || NULL == ssel_map ||
-        mosi_map->inst->block_num != miso_map->inst->block_num)
+    if (   ((NC != mosi) && (NULL == mosi_map))
+        || ((NC != miso) && (NULL == miso_map))
+        || (NULL == sclk_map)
+        || ((NC != ssel) && (NULL == ssel_map))
+        || ((NC != ssel) && (ssel_map->inst->block_num != sclk_map->inst->block_num))
+        || ((NC != mosi) && (mosi_map->inst->block_num != sclk_map->inst->block_num))
+        || ((NC != miso) && (miso_map->inst->block_num != sclk_map->inst->block_num))
+       )
     {
         return CYHAL_SPI_RSLT_ERR_INVALID_PIN;
     }
@@ -590,7 +617,7 @@ cy_rslt_t cyhal_spi_init(cyhal_spi_t *obj, cyhal_gpio_t mosi, cyhal_gpio_t miso,
     obj->resource = spi_inst;
 
     // reserve the MOSI pin
-    if (result == CY_RSLT_SUCCESS)
+    if ((result == CY_RSLT_SUCCESS) && (NC != mosi))
     {
         pin_rsc = cyhal_utils_get_gpio_resource(mosi);
         result = cyhal_hwmgr_reserve(&pin_rsc);
@@ -601,7 +628,7 @@ cy_rslt_t cyhal_spi_init(cyhal_spi_t *obj, cyhal_gpio_t mosi, cyhal_gpio_t miso,
     }
 
     //reseve the MISO pin
-    if (result == CY_RSLT_SUCCESS)
+    if ((result == CY_RSLT_SUCCESS) && (NC != miso))
     {
         pin_rsc = cyhal_utils_get_gpio_resource(miso);
         result = cyhal_hwmgr_reserve(&pin_rsc);
@@ -623,7 +650,7 @@ cy_rslt_t cyhal_spi_init(cyhal_spi_t *obj, cyhal_gpio_t mosi, cyhal_gpio_t miso,
     }
 
     //reseve the SSEL pin
-    if (result == CY_RSLT_SUCCESS)
+    if ((result == CY_RSLT_SUCCESS) && (NC != ssel))
     {
         if (is_slave) 
         {
@@ -673,11 +700,11 @@ cy_rslt_t cyhal_spi_init(cyhal_spi_t *obj, cyhal_gpio_t mosi, cyhal_gpio_t miso,
             result = cyhal_int_spi_frequency(obj, SPI_DEFAULT_SPEED, &ovr_sample_val);
         }
     }
-    if (result == CY_RSLT_SUCCESS)
+    if ((result == CY_RSLT_SUCCESS) && (NC != mosi))
     {
         result = cyhal_connect_pin(mosi_map);
     }
-    if (result == CY_RSLT_SUCCESS)
+    if ((result == CY_RSLT_SUCCESS) && (NC != miso))
     {
         result = cyhal_connect_pin(miso_map);
     }
@@ -685,7 +712,7 @@ cy_rslt_t cyhal_spi_init(cyhal_spi_t *obj, cyhal_gpio_t mosi, cyhal_gpio_t miso,
     {
         result = cyhal_connect_pin(sclk_map);
     }
-    if (result == CY_RSLT_SUCCESS)
+    if ((result == CY_RSLT_SUCCESS) && (NC != ssel))
     {
         if (is_slave)
         {
@@ -842,7 +869,7 @@ static cy_rslt_t cyhal_int_spi_frequency(cyhal_spi_t *obj, uint32_t hz, uint8_t 
                 }
             }
         }
-          *over_sample_val = last_ovrsmpl_val;
+        *over_sample_val = last_ovrsmpl_val;
     }
     else
     {
@@ -880,7 +907,7 @@ static cy_rslt_t cyhal_int_spi_frequency(cyhal_spi_t *obj, uint32_t hz, uint8_t 
 #define SSEL_INACTIVE    ( 1 )
 static void cyhal_set_ssel(cyhal_spi_t *obj)
 {
-    if (!obj->is_slave) 
+    if ((!obj->is_slave) && (CYHAL_NC_PIN_VALUE != obj->pin_ssel))
     {
        cyhal_gpio_write(obj->pin_ssel, SSEL_ACTIVE);
     }
@@ -888,7 +915,7 @@ static void cyhal_set_ssel(cyhal_spi_t *obj)
 
 static void cyhal_reset_ssel(cyhal_spi_t *obj)
 {
-    if (!obj->is_slave) 
+    if ((!obj->is_slave) && (CYHAL_NC_PIN_VALUE != obj->pin_ssel))  
     {
        cyhal_gpio_write(obj->pin_ssel, SSEL_INACTIVE);
     }
@@ -929,12 +956,24 @@ cy_rslt_t cyhal_spi_frequency(cyhal_spi_t *obj, uint32_t hz)
     return result;
 }
 
-cy_rslt_t cyhal_spi_read(cyhal_spi_t *obj, uint8_t *value)
+cy_rslt_t cyhal_spi_read(cyhal_spi_t *obj, uint32_t *value)
 {
     uint32_t read_value = CY_SCB_SPI_RX_NO_DATA;
 
     if (NULL == obj)
+    {
         return CYHAL_SPI_RSLT_BAD_ARGUMENT;
+    }
+
+    if ((obj->is_slave) && (CYHAL_NC_PIN_VALUE == obj->pin_mosi))
+    {
+        return CYHAL_SPI_RSLT_INVALID_PIN_API_NOT_SUPPORTED;
+    }
+
+    if ((!obj->is_slave) && (CYHAL_NC_PIN_VALUE == obj->pin_miso))
+    {
+        return CYHAL_SPI_RSLT_INVALID_PIN_API_NOT_SUPPORTED;
+    }
     
     while (read_value == CY_SCB_SPI_RX_NO_DATA)
     {
@@ -954,13 +993,23 @@ cy_rslt_t cyhal_spi_write(cyhal_spi_t *obj, uint32_t value)
     {
         return CYHAL_SPI_RSLT_BAD_ARGUMENT;
     }
+
+    if ((obj->is_slave) && (CYHAL_NC_PIN_VALUE == obj->pin_miso))
+    {
+        return CYHAL_SPI_RSLT_INVALID_PIN_API_NOT_SUPPORTED;
+    }
+
+    if ((!obj->is_slave) && (CYHAL_NC_PIN_VALUE == obj->pin_mosi))
+    {
+        return CYHAL_SPI_RSLT_INVALID_PIN_API_NOT_SUPPORTED;
+    }
  
-    if (!obj->is_slave) 
+    if (!obj->is_slave)
     {
         rx_count = Cy_SCB_SPI_GetNumInRxFifo(obj->base);
         if (rx_count == Cy_SCB_GetFifoSize(obj->base))
         {
-           return CYHAL_SPI_RSLT_BAD_ARGUMENT;
+           (void)Cy_SCB_SPI_Read(obj->base);
         }
         cyhal_set_ssel(obj);
     }
@@ -993,6 +1042,11 @@ cy_rslt_t cyhal_spi_transfer(cyhal_spi_t *obj, const uint8_t *tx, size_t tx_leng
     if (NULL == obj)
     {
         return CYHAL_SPI_RSLT_BAD_ARGUMENT;
+    }
+
+    if ((CYHAL_NC_PIN_VALUE == obj->pin_mosi) || (CYHAL_NC_PIN_VALUE == obj->pin_miso))
+    {
+        return CYHAL_SPI_RSLT_INVALID_PIN_API_NOT_SUPPORTED;
     }
 
     if (!obj->is_slave)
@@ -1048,8 +1102,9 @@ cy_rslt_t cyhal_spi_transfer(cyhal_spi_t *obj, const uint8_t *tx, size_t tx_leng
            }
 
         while ( CY_SCB_SPI_TRANSFER_ACTIVE & Cy_SCB_SPI_GetTransferStatus(obj->base, &(obj->context))) { };
-       }
-    } else
+        }
+    } 
+    else
     {
         xfr_length = (uint32_t) tx_length;
         Cy_SCB_SPI_Transfer(obj->base, (uint8_t *) tx, rx, xfr_length, &(obj->context));
@@ -1073,6 +1128,11 @@ cy_rslt_t cyhal_spi_transfer_async(cyhal_spi_t *obj, const uint8_t *tx, size_t t
     if (NULL == obj)
     {
         return CYHAL_SPI_RSLT_BAD_ARGUMENT;
+    }
+
+    if ((CYHAL_NC_PIN_VALUE == obj->pin_mosi) || (CYHAL_NC_PIN_VALUE == obj->pin_miso))
+    {
+        return CYHAL_SPI_RSLT_INVALID_PIN_API_NOT_SUPPORTED;
     }
 
     cyhal_set_ssel(obj);

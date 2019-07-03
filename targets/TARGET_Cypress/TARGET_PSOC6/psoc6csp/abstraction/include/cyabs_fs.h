@@ -1,5 +1,5 @@
 /***************************************************************************//**
-* \file cy_abstraction_fs.h
+* \file cyabs_fs.h
 *
 * \brief
 * Basic file system abstraction layer. This API provides convenience methods

@@ -54,7 +54,7 @@ static cyhal_i2c_irq_event_t cyhal_convert_interrupt_cause(uint32_t pdl_cause);
 static en_clk_dst_t get_scb_cls(uint8_t scb_block_instance);
 
 static cyhal_i2c_t *cyhal_i2c_config_structs[CY_IP_MXSCB_INSTANCES];
-static cyhal_i2c_irq_handler cyhal_i2c_user_callbacks[CY_IP_MXSCB_INSTANCES];
+static cyhal_i2c_irq_handler_t cyhal_i2c_user_callbacks[CY_IP_MXSCB_INSTANCES];
 static void *cyhal_i2c_callback_args[CY_IP_MXSCB_INSTANCES];
 
 static void cyhal_i2c_0_cb_wrapper(uint32_t event) __attribute__((unused));
@@ -257,7 +257,30 @@ static void (*cyhal_i2c_cb_wrapper_table[CY_IP_MXSCB_INSTANCES])(uint32_t event)
 
 static void cyhal_i2c_interrupts_dispatcher_IRQHandler(uint32_t i2c_num)
 {
-    Cy_SCB_I2C_Interrupt(cyhal_i2c_config_structs[i2c_num]->base, &(cyhal_i2c_config_structs[i2c_num]->context));
+    cyhal_i2c_t *obj = cyhal_i2c_config_structs[i2c_num];
+
+    if (NULL == obj)
+    {
+        return;
+    }
+
+    Cy_SCB_I2C_Interrupt(obj->base, &(obj->context));
+
+    if (obj->async)
+    {
+        if (0 == (Cy_SCB_I2C_MasterGetStatus(obj->base,  &obj->context) & CY_SCB_I2C_MASTER_BUSY))
+        {
+            if (obj->tx_config.bufferSize)
+            {
+                /* Start RX Transfer */
+                obj->pending = PENDING_RX;
+                Cy_SCB_I2C_MasterRead(obj->base, &obj->rx_config, &obj->context);
+                /* Finish Async Transfer */
+                obj->pending = PENDING_NONE;
+                obj->async = false;
+            }
+        }
+    }
 }
 static void cyhal_i2c_0_irq_handler(void)
 {
@@ -471,7 +494,7 @@ cy_rslt_t cyhal_i2c_init(cyhal_i2c_t *obj, cyhal_gpio_t sda, cyhal_gpio_t scl, c
         obj->is_shared_clock = (clk != NULL);
         if (clk == NULL)
         {
-            result = cyhal_hwmgr_allocate_clock(&(obj->clock), obj->clock.div_type, true);
+            result = cyhal_hwmgr_allocate_clock(&(obj->clock), CY_SYSCLK_DIV_16_BIT, false);
         }
         else
         {
@@ -559,7 +582,7 @@ cy_rslt_t cyhal_i2c_set_config(cyhal_i2c_t *obj, const cyhal_i2c_cfg_t *cfg)
     /* Set slave address mask if I2C is operate in slave mode */
     if (cfg->is_slave)
     {
-    	config_structure.slaveAddressMask = 0xFEU;
+        config_structure.slaveAddressMask = 0xFEU;
     }
 
     /* Set data rate */
@@ -695,7 +718,7 @@ cy_rslt_t cyhal_i2c_mem_write(cyhal_i2c_t *obj, uint16_t address, uint16_t mem_a
     /* Check if mem_addr_size is in valid range */
     if (mem_addr_size == 0 || mem_addr_size > 2)
     {
-    	return CYHAL_I2C_RSLT_ERR_INVALID_ADDRESS_SIZE;
+        return CYHAL_I2C_RSLT_ERR_INVALID_ADDRESS_SIZE;
     }
 
     /* Send mem_addr - start address in slave memory */
@@ -744,7 +767,7 @@ cy_rslt_t cyhal_i2c_mem_read(cyhal_i2c_t *obj, uint16_t address, uint16_t mem_ad
     /* Check if mem_addr_size is in valid range */
     if (mem_addr_size == 0 || mem_addr_size > 2)
     {
-    	return CYHAL_I2C_RSLT_ERR_INVALID_ADDRESS_SIZE;
+        return CYHAL_I2C_RSLT_ERR_INVALID_ADDRESS_SIZE;
     }
 
     /* Send mem_addr - start address in slave memory */
@@ -793,7 +816,7 @@ cy_rslt_t cyhal_i2c_mem_read(cyhal_i2c_t *obj, uint16_t address, uint16_t mem_ad
 
 cy_rslt_t cyhal_i2c_transfer_async(cyhal_i2c_t *obj, const void *tx, size_t tx_size, void *rx, size_t rx_size, uint16_t address)
 {
-	obj->rx_config.slaveAddress = address;
+    obj->rx_config.slaveAddress = address;
     obj->tx_config.slaveAddress = address;
 
     obj->rx_config.buffer = rx;
@@ -801,6 +824,8 @@ cy_rslt_t cyhal_i2c_transfer_async(cyhal_i2c_t *obj, const void *tx, size_t tx_s
 
     obj->tx_config.buffer = (void *)tx;
     obj->tx_config.bufferSize = tx_size;
+
+    obj->async = true;
 
     if (tx_size)
     {
@@ -813,7 +838,10 @@ cy_rslt_t cyhal_i2c_transfer_async(cyhal_i2c_t *obj, const void *tx, size_t tx_s
         {
             obj->pending = PENDING_TX;
         }
+        /* Transmit */
         Cy_SCB_I2C_MasterWrite(obj->base, &obj->tx_config, &obj->context);
+
+        /* Receive covered by interrupt handler */
     }
     else if (rx_size)
     {
@@ -944,7 +972,7 @@ static en_clk_dst_t get_scb_cls(uint8_t scb_block_instance)
     return source;
 }
 
-void cyhal_i2c_register_irq(cyhal_i2c_t *obj, cyhal_i2c_irq_handler handler, void *handler_arg)
+void cyhal_i2c_register_irq(cyhal_i2c_t *obj, cyhal_i2c_irq_handler_t handler, void *handler_arg)
 {
     uint8_t idx = obj->resource.block_num;
     cyhal_i2c_config_structs[idx] = obj;

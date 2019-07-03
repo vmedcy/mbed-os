@@ -30,9 +30,9 @@ extern nsapi_security_t whd_tosecurity(whd_security_t sec);
 extern whd_security_t whd_fromsecurity(nsapi_security_t sec);
 extern "C" void whd_emac_wifi_link_state_changed(bool state_up, whd_interface_t ifp);
 
-static const whd_event_num_t ap_client_events[] = { WLC_E_DEAUTH, WLC_E_DEAUTH_IND, WLC_E_DISASSOC, WLC_E_DISASSOC_IND, WLC_E_ASSOC_IND, WLC_E_REASSOC_IND, WLC_E_NONE };
-static whd_event_handler_t ap_event_handler;
 
+static const whd_event_num_t ap_client_events[] = { WLC_E_DEAUTH, WLC_E_DEAUTH_IND, WLC_E_DISASSOC, WLC_E_DISASSOC_IND, WLC_E_ASSOC_IND, WLC_E_REASSOC_IND, WLC_E_NONE };
+static uint16_t ap_event_entry = 2;
 
 WhdSoftAPInterface::WhdSoftAPInterface(WHD_EMAC &emac, OnboardNetworkStack &stack)
     : EMACInterface(emac, stack),
@@ -43,10 +43,9 @@ WhdSoftAPInterface::WhdSoftAPInterface(WHD_EMAC &emac, OnboardNetworkStack &stac
 
 
 int WhdSoftAPInterface::start(const char *ssid, const char *pass, nsapi_security_t security, uint8_t channel,
-    bool start_dhcp_server, const whd_custom_ie_info_t* ie)
+    bool start_dhcp_server, const whd_custom_ie_info_t* ie_info)
 {
     nsapi_error_t        err;
-    nsapi_connection_status_t stat;
 
     /* set up our interface */
     if (!_interface) {
@@ -70,14 +69,22 @@ int WhdSoftAPInterface::start(const char *ssid, const char *pass, nsapi_security
     /* set up the AP info */
     err = whd_wifi_init_ap(_whd_emac.ifp, &whd_ssid, whd_security, (const uint8_t*)pass, 
         strlen(pass), channel);
-    if (err != NSAPI_ERROR_OK)
-    {
+    if (err != NSAPI_ERROR_OK) {
         printf("whd_wifi_init_ap() ERROR: %d\n", err);
         return err;
     }
+
+    if (ie_info) {
+        err = whd_wifi_manage_custom_ie(_whd_emac.ifp, WHD_ADD_CUSTOM_IE, (const uint8_t *)ie_info->oui,
+            ie_info->subtype, (const void *)ie_info->data, ie_info->length, ie_info->which_packets);
+        if (err != NSAPI_ERROR_OK) {
+            printf("whd_wifi_manage_custom_ie() ERROR: %d\n", err);
+            return err;
+        }
+    }
+
     err = whd_wifi_start_ap(_whd_emac.ifp);
-    if (err != NSAPI_ERROR_OK)
-    {
+    if (err != NSAPI_ERROR_OK) {
         printf("whd_wifi_start_ap() ERROR: %d\n", err);
         return err;
     }
@@ -85,8 +92,7 @@ int WhdSoftAPInterface::start(const char *ssid, const char *pass, nsapi_security
     // Set static IP address for SoftAP and bring up
     set_dhcp(false);
 
-    if(whd_wifi_is_ready_to_transceive(_whd_emac.ifp) == WHD_SUCCESS)
-    {
+    if(whd_wifi_is_ready_to_transceive(_whd_emac.ifp) == WHD_SUCCESS) {
         whd_emac_wifi_link_state_changed(true, _whd_emac.ifp);
     }
 
@@ -96,8 +102,7 @@ int WhdSoftAPInterface::start(const char *ssid, const char *pass, nsapi_security
             _netmask[0] ? _netmask : 0,
             _gateway[0] ? _gateway : 0,
             DEFAULT_STACK);
-    if (err != NSAPI_ERROR_OK)
-    {
+    if (err != NSAPI_ERROR_OK) {
         printf("bringup() ERROR: %d\n", err);
     }
     return err;
@@ -112,43 +117,22 @@ int WhdSoftAPInterface::stop(void)
 
 int WhdSoftAPInterface::remove_custom_ie(const whd_custom_ie_info_t* ie_info)
 {
-    // wiced_result_t res;    
-    // res = wiced_wifi_remove_custom_ie( WICED_AP_INTERFACE, ie );
-    // return wiced_toerror(res);
-    return NSAPI_ERROR_UNSUPPORTED;
+    return whd_wifi_manage_custom_ie(_whd_emac.ifp, WHD_REMOVE_CUSTOM_IE, (const uint8_t *)ie_info->oui,
+        ie_info->subtype, (const void *)ie_info->data, ie_info->length, ie_info->which_packets);
 }
 
 int WhdSoftAPInterface::get_associated_client_list(void* client_list_buffer, uint16_t buffer_length)
 {
-    // wiced_result_t res;
-    // res = wiced_wifi_get_associated_client_list(client_list_buffer, buffer_length);
-    // return wiced_toerror(res);
-    return NSAPI_ERROR_UNSUPPORTED;
+    
+    return whd_wifi_get_associated_client_list(_whd_emac.ifp, client_list_buffer, buffer_length);
 }
 
 int WhdSoftAPInterface::register_event_handler(whd_event_handler_t softap_event_handler)
 {
-    // wiced_result_t res;
-    // ap_event_handler = (wwd_event_handler_t)softap_event_handler;
-    // res = (wiced_result_t)wwd_management_set_event_handler( ap_client_events, ap_event_handler,
-    //     NULL, WWD_AP_INTERFACE );
-    // return wiced_toerror(res);
-    return NSAPI_ERROR_UNSUPPORTED;
+    return whd_management_set_event_handler(_whd_emac.ifp, ap_client_events, softap_event_handler, NULL, &ap_event_entry);
 }
 
 int WhdSoftAPInterface::unregister_event_handler(void)
 {
-    // wiced_result_t res;
-    // res = (wiced_result_t) wwd_management_set_event_handler( ap_client_events, NULL, NULL, WWD_AP_INTERFACE );
-    // return wiced_toerror(res);
-    return NSAPI_ERROR_UNSUPPORTED;
-}
-
-
-int WhdSoftAPInterface::get_associated_client_rssi(int32_t* rssi, const whd_mac_t* client_mac_addr)
-{
-    // wiced_result_t res;
-    // res = (wiced_result_t) wwd_wifi_get_ap_client_rssi( rssi, client_mac_addr );
-    // return wiced_toerror(res);
-    return NSAPI_ERROR_UNSUPPORTED;
+    return whd_wifi_deregister_event_handler(_whd_emac.ifp, ap_event_entry);
 }

@@ -79,7 +79,7 @@ public:
      *                  see @a nsapi_error
      */
     int start(const char *ssid, const char *pass, nsapi_security_t security, uint8_t channel,
-                       bool start_dhcp_server = true, const whd_custom_ie_info_t* ie = NULL);
+                       bool start_dhcp_server = true, const whd_custom_ie_info_t* ie_info = NULL);
 
     /**
      * Remove Wi-Fi custom IE
@@ -130,19 +130,6 @@ public:
      */
     int unregister_event_handler(void);
 
-    
-    /**
-     * Gets rssi information about the AP's client, as selected by mac address
-     *
-     * @note Only applicable if STA (client) interface is associated to an AP
-     *
-     * @param[out] rssi     : Pointer to RSSI (received signal strength)
-     * @param[in] security  : Pointer to Client MAC address
-     *
-     *  @return          0 on success, or error code on failure
-     *                  see @a nsapi_error
-     */
-    int get_associated_client_rssi(int32_t* rssi, const whd_mac_t* client_mac_addr);
 
 protected:
     WHD_EMAC& _whd_emac;

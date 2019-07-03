@@ -78,7 +78,7 @@ int whd_toerror(whd_result_t res) {
         case WHD_TIMEOUT:
         case WHD_EAPOL_KEY_PACKET_M1_TIMEOUT:
         case WHD_EAPOL_KEY_PACKET_M3_TIMEOUT:
-        case WHD_EAPOL_KEY_PACKET_G1_TIMEOUT:   return NSAPI_ERROR_TIMEOUT;
+        case WHD_EAPOL_KEY_PACKET_G1_TIMEOUT:   return NSAPI_ERROR_CONNECTION_TIMEOUT;
         case WHD_WLAN_BUSY:                     return NSAPI_ERROR_BUSY;
         case WHD_WLAN_NODEVICE:                 return NSAPI_ERROR_DEVICE_ERROR;
         default:                                return -res;

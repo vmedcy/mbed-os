@@ -109,7 +109,11 @@
 #define TCPIP_THREAD_STACKSIZE      LWIP_ALIGN_UP(MBED_CONF_LWIP_TCPIP_THREAD_STACKSIZE, 8)
 #endif
 
-#define TCPIP_THREAD_PRIO           (osPriorityHigh)
+#ifdef MBED_CONF_LWIP_TCPIP_THREAD_PRIORITY
+#define TCPIP_THREAD_PRIO           (MBED_CONF_LWIP_TCPIP_THREAD_PRIORITY)
+#else
+#define TCPIP_THREAD_PRIO           (osPriorityNormal)
+#endif
 
 // Thread stack size for lwip system threads
 #ifndef MBED_CONF_LWIP_DEFAULT_THREAD_STACKSIZE

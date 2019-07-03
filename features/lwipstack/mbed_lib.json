@@ -120,6 +120,10 @@
             "help": "Stack size for lwip TCPIP thread",
             "value": 1200
         },
+         "tcpip-thread-priority": {
+            "help": "priority of lwip TCPIP thread",
+            "value": 24
+        },
         "default-thread-stacksize": {
             "help": "Stack size for lwip system threads",
             "value": 512
@@ -214,7 +218,7 @@
             "tcp-mss": 1540,
             "tcp-snd-buf": "(6 * TCP_MSS)",
             "tcp-wnd": "(TCP_MSS * 6)",
-            "pbuf-pool-size": 64,
+            "pbuf-pool-size": 48,
             "mem-size": 65536
         },
         "MIMXRT1050_EVK": {

@@ -398,6 +398,7 @@ extern void *whd_nan_scan_handler(const whd_event_header_t *event_header, const 
 /* Maximum number of events registered at a time */
 #define WHD_MAX_EVENT_SUBSCRIPTION 33
 
+#define WHD_EVENT_NOT_REGISTERED 0xFF
 /* Enum to index and find the entry of paricular event registered */
 typedef enum
 {

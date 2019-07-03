@@ -66,7 +66,7 @@ typedef whd_result_t (*whd_bus_sleep_t)(whd_driver_t whd_driver);
 typedef uint8_t (*whd_bus_backplane_read_padd_size_t)(whd_driver_t whd_driver);
 typedef whd_result_t (*whd_bus_send_buffer_t)(whd_driver_t whd_driver, whd_buffer_t buffer);
 typedef whd_result_t (*whd_bus_wait_for_wlan_event_t)(whd_driver_t whd_driver,
-                                                      whd_semaphore_type_t *transceive_semaphore);
+                                                      cy_semaphore_t *transceive_semaphore);
 typedef whd_bool_t (*whd_bus_use_status_report_scheme_t)(whd_driver_t whd_driver);
 typedef uint32_t (*whd_bus_get_max_transfer_size_t)(whd_driver_t whd_driver);
 

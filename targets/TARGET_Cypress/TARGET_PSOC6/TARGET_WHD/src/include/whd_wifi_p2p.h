@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "whd_rtos.h" /* For semaphores */
+#include "cyabs_rtos.h" /* For semaphores */
 #include "whd.h"
 
 

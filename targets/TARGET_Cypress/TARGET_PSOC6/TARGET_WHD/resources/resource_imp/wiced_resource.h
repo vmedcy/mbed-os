@@ -1,5 +1,18 @@
 /*
- * $ Copyright Cypress Semiconductor $
+ * Copyright 2019 Cypress Semiconductor Corporation
+ * SPDX-License-Identifier: Apache-2.0
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /** @file
@@ -28,70 +41,70 @@ extern "C" {
 
 
 /******************************************************
- *                     Macros
- ******************************************************/
+*                     Macros
+******************************************************/
 #ifndef MIN
-#define MIN( x, y ) ((x) < (y) ? (x) : (y))
+#define MIN(x, y) ( (x) < (y) ? (x) : (y) )
 #endif /* ifndef MIN */
 
 /* Suppress unused parameter warning */
 #ifndef UNUSED_PARAMETER
-#define UNUSED_PARAMETER( x ) ( (void)(x) )
+#define UNUSED_PARAMETER(x) ( (void)(x) )
 #endif
 
 #ifndef RESULT_ENUM
-#define RESULT_ENUM( prefix, name, value )  prefix ## name = (value)
+#define RESULT_ENUM(prefix, name, value)  prefix ## name = (value)
 #endif /* ifndef RESULT_ENUM */
 
 
 /* These Enum result values are for Resource errors
  * Values: 4000 - 4999
  */
-#define RESOURCE_RESULT_LIST( prefix )  \
-    RESULT_ENUM(  prefix, SUCCESS,                         0 ),   /**< Success */                           \
-    RESULT_ENUM(  prefix, UNSUPPORTED,                     7 ),   /**< Unsupported function */              \
-    RESULT_ENUM(  prefix, OFFSET_TOO_BIG,               4001 ),   /**< Offset past end of resource */       \
-    RESULT_ENUM(  prefix, FILE_OPEN_FAIL,               4002 ),   /**< Failed to open resource file */      \
-    RESULT_ENUM(  prefix, FILE_SEEK_FAIL,               4003 ),   /**< Failed to seek to requested offset in resource file */ \
-    RESULT_ENUM(  prefix, FILE_READ_FAIL,               4004 ),   /**< Failed to read resource file */
+#define RESOURCE_RESULT_LIST(prefix)  \
+    RESULT_ENUM(prefix, SUCCESS,                         0),      /**< Success */                           \
+    RESULT_ENUM(prefix, UNSUPPORTED,                     7),      /**< Unsupported function */              \
+    RESULT_ENUM(prefix, OFFSET_TOO_BIG,               4001),      /**< Offset past end of resource */       \
+    RESULT_ENUM(prefix, FILE_OPEN_FAIL,               4002),      /**< Failed to open resource file */      \
+    RESULT_ENUM(prefix, FILE_SEEK_FAIL,               4003),      /**< Failed to seek to requested offset in resource file */ \
+    RESULT_ENUM(prefix, FILE_READ_FAIL,               4004),      /**< Failed to read resource file */
 
-#define resource_get_size( resource ) ((resource)->size)
-
-/******************************************************
- *                    Constants
- ******************************************************/
-
-#define RESOURCE_ENUM_OFFSET  ( 1300 )
+#define resource_get_size(resource) ( (resource)->size )
 
 /******************************************************
- *                Enumerations
- ******************************************************/
+*                    Constants
+******************************************************/
+
+#define RESOURCE_ENUM_OFFSET  (1300)
+
+/******************************************************
+*                Enumerations
+******************************************************/
 
 /**
  * Result type for WICED Resource function
  */
 typedef enum
 {
-    RESOURCE_RESULT_LIST( RESOURCE_ )
+    RESOURCE_RESULT_LIST(RESOURCE_)
 } resource_result_t;
 
 /******************************************************
- *                 Type Definitions
- ******************************************************/
+*                 Type Definitions
+******************************************************/
 
-typedef const void*   resource_data_t;
+typedef const void *resource_data_t;
 typedef unsigned long resource_size_t;
 
 /******************************************************
- *                   Structures
- ******************************************************/
+*                   Structures
+******************************************************/
 
 /**
  * Memory handle
  */
 typedef struct
 {
-   const char* data;           /**< resource data */
+    const char *data;          /**< resource data */
 } memory_resource_handle_t;
 
 /**
@@ -100,7 +113,7 @@ typedef struct
 typedef struct
 {
     unsigned long offset;      /**< Offset to the start of the resource */
-    const char* filename;      /**< name of the resource                */
+    const char *filename;      /**< name of the resource                */
 } filesystem_resource_handle_t;
 
 
@@ -116,23 +129,23 @@ typedef enum
  */
 typedef struct
 {
-   resource_location_t location;        /**< resource location */
-   unsigned long size;                  /**< resource size     */
+    resource_location_t location;       /**< resource location */
+    unsigned long size;                 /**< resource size     */
     union
     {
-       filesystem_resource_handle_t fs;                       /** < filesystem resource handle */
-       memory_resource_handle_t     mem;                      /** < memory resource handle     */
-       void*                        external_storage_context; /** < external storage context   */
+        filesystem_resource_handle_t fs;                      /** < filesystem resource handle */
+        memory_resource_handle_t mem;                         /** < memory resource handle     */
+        void *external_storage_context;                       /** < external storage context   */
     } val;
 } resource_hnd_t;
 
 /******************************************************
- *                 Global Variables
- ******************************************************/
+*                 Global Variables
+******************************************************/
 
 /******************************************************
- *               Function Declarations
- ******************************************************/
+*               Function Declarations
+******************************************************/
 
 /*****************************************************************************/
 /** @addtogroup  resourceapi  Wiced Resource Management API's
@@ -163,7 +176,8 @@ typedef struct
  *
  * @return @ref resource_result_t
  */
-extern resource_result_t resource_read( const resource_hnd_t* resource, uint32_t offset, uint32_t maxsize, uint32_t* size, void* buffer );
+extern resource_result_t resource_read(const resource_hnd_t *resource, uint32_t offset, uint32_t maxsize,
+                                       uint32_t *size, void *buffer);
 
 /** Retrieve a read only resource buffer using the handle specified
  *
@@ -175,7 +189,8 @@ extern resource_result_t resource_read( const resource_hnd_t* resource, uint32_t
  *
  * @return @ref resource_result_t
  */
-extern resource_result_t resource_get_readonly_buffer ( const resource_hnd_t* resource, uint32_t offset, uint32_t maxsize, uint32_t* size_out, const void** buffer );
+extern resource_result_t resource_get_readonly_buffer(const resource_hnd_t *resource, uint32_t offset, uint32_t maxsize,
+                                                      uint32_t *size_out, const void **buffer);
 
 /** Free a read only resource buffer using the handle specified
  *
@@ -184,10 +199,11 @@ extern resource_result_t resource_get_readonly_buffer ( const resource_hnd_t* re
  *
  * @return @ref resource_result_t
  */
-extern resource_result_t resource_free_readonly_buffer( const resource_hnd_t* handle, const void* buffer );
+extern resource_result_t resource_free_readonly_buffer(const resource_hnd_t *handle, const void *buffer);
 /* @} */
 #ifdef __cplusplus
 } /*extern "C" */
 #endif
 
 #endif /* ifndef INCLUDED_RESOURCE_H_ */
+

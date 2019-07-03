@@ -25,9 +25,11 @@
 
 #include <stdlib.h>
 #include <string.h>  /* For memcpy */
-#include "whd_thread.h"
 
-#include "whd_rtos_interface.h"
+#include "cy_result.h"
+#include "cyabs_rtos.h"
+
+#include "whd_thread.h"
 #include "whd_chip.h"
 #include "whd_sdpcm.h"
 #include "whd_chip_constants.h"
@@ -44,7 +46,6 @@
 #include "whd_types_int.h"
 #include "whd_bus_types.h"
 
-#include "cy_result.h"
 
 
 /******************************************************
@@ -82,7 +83,7 @@
                                                ( ( ( uint32_t )(x) & ( uint32_t )0x00ff0000U ) << 8 ) | \
                                                ( ( ( uint32_t )(x) & ( uint32_t )0xff000000U ) >> 8 ) ) )
 
-#define WHD_THREAD_POLL_TIMEOUT      (NEVER_TIMEOUT)
+#define WHD_THREAD_POLL_TIMEOUT      (CY_RTOS_NEVER_TIMEOUT)
 
 #define WHD_THREAD_POKE_TIMEOUT      (100)
 
@@ -179,7 +180,7 @@ static void add_log_entry(gspi_log_direction_t dir, whd_bus_function_t function,
     gspi_log_data[next_gspi_log_pos].direction = dir;
     gspi_log_data[next_gspi_log_pos].function = function;
     gspi_log_data[next_gspi_log_pos].address = address;
-    gspi_log_data[next_gspi_log_pos].time = whd_rtos_get_time();
+    cy_rtos_get_time(&gspi_log_data[next_gspi_log_pos].time);
     gspi_log_data[next_gspi_log_pos].length = length;
 #if (SDIO_LOG_HEADER_SIZE != 0)
     memcpy(gspi_log_data[next_gspi_log_pos].header, gspi_data,
@@ -551,7 +552,7 @@ whd_result_t whd_bus_spi_init(whd_driver_t whd_driver)
               (NULL == memchr(&init_data[4], SPI_READ_TEST_REG_LSB_SFT2, (size_t)8) ) &&
               (NULL == memchr(&init_data[4], SPI_READ_TEST_REG_LSB_SFT3, (size_t)8) ) &&
               (loop_count < ( uint32_t )FEADBEAD_TIMEOUT_MS) &&
-              (whd_rtos_delay_milliseconds( (uint32_t)1 ), (1 == 1) ) );
+              (cy_rtos_delay_milliseconds( (uint32_t)1 ), (1 == 1) ) );
 
     /* Register interrupt handler */
     whd_bus_spi_irq_register(whd_driver);
@@ -618,7 +619,7 @@ whd_result_t whd_bus_spi_init(whd_driver_t whd_driver)
             ( (data16 & SBSDIO_ALP_AVAIL) == 0 ) &&
             (loop_count < ( uint32_t )ALP_AVAIL_TIMEOUT_MS) )
     {
-        whd_rtos_delay_milliseconds( (uint32_t)1 );
+        cy_rtos_delay_milliseconds( (uint32_t)1 );
         loop_count++;
     }
     if (loop_count >= ( uint32_t )ALP_AVAIL_TIMEOUT_MS)
@@ -667,7 +668,7 @@ whd_result_t whd_bus_spi_init(whd_driver_t whd_driver)
             ( (whd_bus_gspi_status & (1 << 5) ) == 0 ) &&
             (loop_count < ( uint32_t )F2_READY_TIMEOUT_MS) )
     {
-        whd_rtos_delay_milliseconds( (uint32_t)1 );
+        cy_rtos_delay_milliseconds( (uint32_t)1 );
         loop_count++;
     }
     if (loop_count >= ( uint32_t )F2_READY_TIMEOUT_MS)
@@ -704,7 +705,7 @@ whd_bool_t whd_bus_spi_wake_interrupt_present(whd_driver_t whd_driver)
     return WHD_FALSE;
 }
 
-whd_result_t whd_bus_spi_wait_for_wlan_event(whd_driver_t whd_driver, whd_semaphore_type_t *transceive_semaphore)
+whd_result_t whd_bus_spi_wait_for_wlan_event(whd_driver_t whd_driver, cy_semaphore_t *transceive_semaphore)
 {
     whd_result_t result = WHD_SUCCESS;
     uint32_t timeout_ms = 1;
@@ -724,7 +725,7 @@ whd_result_t whd_bus_spi_wait_for_wlan_event(whd_driver_t whd_driver, whd_semaph
 
         if (result == WHD_SUCCESS)
         {
-            timeout_ms = NEVER_TIMEOUT;
+            timeout_ms = CY_RTOS_NEVER_TIMEOUT;
         }
     }
 
@@ -735,15 +736,15 @@ whd_result_t whd_bus_spi_wait_for_wlan_event(whd_driver_t whd_driver, whd_semaph
         result = whd_bus_spi_poke_wlan(whd_driver);
         whd_assert("Poking failed!", result == WHD_SUCCESS);
 
-        result = whd_rtos_get_semaphore(transceive_semaphore, (uint32_t)MIN_OF(timeout_ms,
-                                                                               WHD_THREAD_POKE_TIMEOUT), WHD_FALSE);
+        result = cy_rtos_get_semaphore(transceive_semaphore, (uint32_t)MIN_OF(timeout_ms,
+                                                                              WHD_THREAD_POKE_TIMEOUT), WHD_FALSE);
     }
     else
     {
-        result = whd_rtos_get_semaphore(transceive_semaphore, (uint32_t)MIN_OF(timeout_ms,
-                                                                               WHD_THREAD_POLL_TIMEOUT), WHD_FALSE);
+        result = cy_rtos_get_semaphore(transceive_semaphore, (uint32_t)MIN_OF(timeout_ms,
+                                                                              WHD_THREAD_POLL_TIMEOUT), WHD_FALSE);
     }
-    whd_assert("Could not get whd sleep semaphore\n", (result == WHD_SUCCESS) || (result == WHD_TIMEOUT) );
+    whd_assert("Could not get whd sleep semaphore\n", (result == CY_RSLT_SUCCESS) || (result == CY_RTOS_TIMEOUT) );
 
     return result;
 }
@@ -979,7 +980,7 @@ static whd_result_t whd_spi_download_firmware(whd_driver_t whd_driver)
             ( (csr_val & SBSDIO_HT_AVAIL) == 0 ) &&
             (loop_count < ( uint32_t )HT_AVAIL_TIMEOUT_MS) )
     {
-        whd_rtos_delay_milliseconds( (uint32_t)1 );
+        cy_rtos_delay_milliseconds( (uint32_t)1 );
         loop_count++;
     }
     if (loop_count >= ( uint32_t )HT_AVAIL_TIMEOUT_MS)

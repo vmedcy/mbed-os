@@ -30,7 +30,7 @@ extern "C"
 {
 #endif
 
-/** @addtogroup busapi WHD Bus APIs
+/** @addtogroup busapi WHD Bus API
  * Allows WHD to operate with specific SDIO/SPI bus
  *  @{
  */
@@ -44,7 +44,7 @@ typedef enum whd_dev_gpio_sel
 } whd_dev_gpio_sel_t;
 
 /**
- * Structure for interrupt configuration
+ * Interrupt configuration structure
  */
 typedef struct whd_intr_config
 {
@@ -53,30 +53,30 @@ typedef struct whd_intr_config
 } whd_intr_config_t;
 
 /**
- * Enable interrupt to be signaled.
+ * Prototype for a user-defined function to enable interrupt to be signaled.
  *
  * This function must be provided whenever @ref WHD_BUS_SDIO_OOB_INTR is set.
  *
- * WHD will call this function to enable or disable an interrupt.  When the interrupt
+ * WHD will call this function to enable or disable an interrupt depending on the enable bool variable. When the interrupt
  * is asserted, the IRQ handler must call the appropriate "asserted" function with the WHD
  * context pointer associated with the IRQ.
  *
- *  @param  whd_drv         : Pointer to handle instance of the driver
- *  @param  intr            : Opaque interrupt signal
- *  @param  enable          : WHD_TRUE means to enable the interrupt, otherwise disable.
+ *  @param  whd_drv          Pointer to handle instance of the driver
+ *  @param  intr             Opaque interrupt signal
+ *  @param  enable           WHD_TRUE means to enable the interrupt, otherwise disable.
  */
 typedef void (*whd_enable_intr_func_t)(whd_driver_t whd_drv, const whd_variant_t intr, whd_bool_t enable);
 
 /**
- * Get interrupt configuration.
+ * Prototype for a user-defined function to get interrupt configuration.
  *
  * WHD calls this function to get an interrupt's configuration.
  *
  * This function must be provided whenever @ref WHD_BUS_SDIO_OOB_INTR is set.
  *
- *  @param  whd_driver  : Pointer to handle instance of the driver
- *  @param  intr        : Opaque interrupt signal
- *  @param  config      : Pointer to the interrupt configuration
+ *  @param  whd_driver   Pointer to handle instance of the driver
+ *  @param  intr         Opaque interrupt signal
+ *  @param  config       Pointer to the interrupt configuration
  */
 typedef void (*whd_get_intr_config_func_t)(whd_driver_t whd_driver, const whd_variant_t intr,
                                            whd_intr_config_t *config);

@@ -18,7 +18,7 @@
 #include "whd_int.h"
 #include "whd_cdc_bdc.h"
 #include "whd_events_int.h"
-#include "whd_rtos.h"
+#include "cyabs_rtos.h"
 #include "whd_network_types.h"
 #include "whd_types_int.h"
 #include "whd_wlioctl.h"
@@ -98,31 +98,31 @@ whd_result_t whd_cdc_bdc_info_init(whd_driver_t whd_driver)
     whd_cdc_bdc_info_t *cdc_bdc_info = &whd_driver->cdc_bdc_info;
 
     /* Create the mutex protecting the packet send queue */
-    if (whd_rtos_init_semaphore(&cdc_bdc_info->ioctl_mutex) != WHD_SUCCESS)
+    if (cy_rtos_init_semaphore(&cdc_bdc_info->ioctl_mutex, 1, 0) != WHD_SUCCESS)
     {
         return WHD_SEMAPHORE_ERROR;
     }
-    if (whd_rtos_set_semaphore(&cdc_bdc_info->ioctl_mutex, WHD_FALSE) != WHD_SUCCESS)
+    if (cy_rtos_set_semaphore(&cdc_bdc_info->ioctl_mutex, WHD_FALSE) != WHD_SUCCESS)
     {
         WPRINT_WHD_ERROR( ("Error setting semaphore in %s at %d \n", __func__, __LINE__) );
         return WHD_SEMAPHORE_ERROR;
     }
 
     /* Create the event flag which signals the whd thread needs to wake up */
-    if (whd_rtos_init_semaphore(&cdc_bdc_info->ioctl_sleep) != WHD_SUCCESS)
+    if (cy_rtos_init_semaphore(&cdc_bdc_info->ioctl_sleep, 1, 0) != WHD_SUCCESS)
     {
-        whd_rtos_deinit_semaphore(&cdc_bdc_info->ioctl_mutex);
+        cy_rtos_deinit_semaphore(&cdc_bdc_info->ioctl_mutex);
         return WHD_SEMAPHORE_ERROR;
     }
 
     /* Create semaphore to protect event list management */
-    if (whd_rtos_init_semaphore(&cdc_bdc_info->event_list_mutex) != WHD_SUCCESS)
+    if (cy_rtos_init_semaphore(&cdc_bdc_info->event_list_mutex, 1, 0) != WHD_SUCCESS)
     {
-        whd_rtos_deinit_semaphore(&cdc_bdc_info->ioctl_sleep);
-        whd_rtos_deinit_semaphore(&cdc_bdc_info->ioctl_mutex);
+        cy_rtos_deinit_semaphore(&cdc_bdc_info->ioctl_sleep);
+        cy_rtos_deinit_semaphore(&cdc_bdc_info->ioctl_mutex);
         return WHD_SEMAPHORE_ERROR;
     }
-    if (whd_rtos_set_semaphore(&cdc_bdc_info->event_list_mutex, WHD_FALSE) != WHD_SUCCESS)
+    if (cy_rtos_set_semaphore(&cdc_bdc_info->event_list_mutex, WHD_FALSE) != WHD_SUCCESS)
     {
         WPRINT_WHD_ERROR( ("Error setting semaphore in %s at %d \n", __func__, __LINE__) );
         return WHD_SEMAPHORE_ERROR;
@@ -170,7 +170,7 @@ whd_result_t whd_cdc_send_ioctl(whd_interface_t ifp, cdc_command_type_t type, ui
     whd_cdc_bdc_info_t *cdc_bdc_info = &whd_driver->cdc_bdc_info;
 
     /* Acquire mutex which prevents multiple simultaneous IOCTLs */
-    retval = whd_rtos_get_semaphore(&cdc_bdc_info->ioctl_mutex, NEVER_TIMEOUT, WHD_FALSE);
+    retval = cy_rtos_get_semaphore(&cdc_bdc_info->ioctl_mutex, CY_RTOS_NEVER_TIMEOUT, WHD_FALSE);
     if (retval != WHD_SUCCESS)
     {
         CHECK_RETURN(whd_buffer_release(whd_driver, send_buffer_hnd, WHD_NETWORK_TX) );
@@ -233,11 +233,11 @@ whd_result_t whd_cdc_send_ioctl(whd_interface_t ifp, cdc_command_type_t type, ui
 
 
     /* Wait till response has been received  */
-    retval = whd_rtos_get_semaphore(&cdc_bdc_info->ioctl_sleep, (uint32_t)WHD_IOCTL_TIMEOUT_MS, WHD_FALSE);
+    retval = cy_rtos_get_semaphore(&cdc_bdc_info->ioctl_sleep, (uint32_t)WHD_IOCTL_TIMEOUT_MS, WHD_FALSE);
     if (retval != WHD_SUCCESS)
     {
         /* Release the mutex since ioctl response will no longer be referenced. */
-        CHECK_RETURN(whd_rtos_set_semaphore(&cdc_bdc_info->ioctl_mutex, WHD_FALSE) );
+        CHECK_RETURN(cy_rtos_set_semaphore(&cdc_bdc_info->ioctl_mutex, WHD_FALSE) );
         return retval;
     }
 
@@ -260,7 +260,7 @@ whd_result_t whd_cdc_send_ioctl(whd_interface_t ifp, cdc_command_type_t type, ui
     cdc_bdc_info->ioctl_response = NULL;
 
     /* Release the mutex since ioctl response will no longer be referenced. */
-    CHECK_RETURN(whd_rtos_set_semaphore(&cdc_bdc_info->ioctl_mutex, WHD_FALSE) );
+    CHECK_RETURN(cy_rtos_set_semaphore(&cdc_bdc_info->ioctl_mutex, WHD_FALSE) );
 
     /* Check whether the IOCTL response indicates it failed. */
     if ( (flags & CDCF_IOC_ERROR) != 0 )
@@ -467,7 +467,7 @@ void whd_process_cdc(whd_driver_t whd_driver, whd_buffer_t buffer)
     id            = (uint16_t)( (flags & CDCF_IOC_ID_MASK) >> CDCF_IOC_ID_SHIFT );
 
     /* Validate request ioctl ID and check if whd_cdc_send_ioctl is still waiting for response*/
-    if ( ( (ioctl_mutex_res = whd_rtos_get_semaphore(&cdc_bdc_info->ioctl_mutex, 0, WHD_FALSE) ) != WHD_SUCCESS ) &&
+    if ( ( (ioctl_mutex_res = cy_rtos_get_semaphore(&cdc_bdc_info->ioctl_mutex, 0, WHD_FALSE) ) != WHD_SUCCESS ) &&
          (id == cdc_bdc_info->requested_ioctl_id) )
     {
         /* Save the response packet in a variable */
@@ -477,7 +477,7 @@ void whd_process_cdc(whd_driver_t whd_driver, whd_buffer_t buffer)
                               size) );
 
         /* Wake the thread which sent the IOCTL/IOVAR so that it will resume */
-        result = whd_rtos_set_semaphore(&cdc_bdc_info->ioctl_sleep, WHD_FALSE);
+        result = cy_rtos_set_semaphore(&cdc_bdc_info->ioctl_sleep, WHD_FALSE);
         if (result != WHD_SUCCESS)
             WPRINT_WHD_ERROR( ("Error setting semaphore in %s at %d \n", __func__, __LINE__) );
 
@@ -489,7 +489,7 @@ void whd_process_cdc(whd_driver_t whd_driver, whd_buffer_t buffer)
         if (ioctl_mutex_res == WHD_SUCCESS)
         {
             WPRINT_WHD_ERROR( ("whd_cdc_send_ioctl is already timed out, drop the buffer\n") );
-            result = whd_rtos_set_semaphore(&cdc_bdc_info->ioctl_mutex, WHD_FALSE);
+            result = cy_rtos_set_semaphore(&cdc_bdc_info->ioctl_mutex, WHD_FALSE);
             if (result != WHD_SUCCESS)
             {
                 WPRINT_WHD_ERROR( ("Error setting semaphore in %s at %d \n", __func__, __LINE__) );
@@ -539,7 +539,7 @@ void whd_process_bdc(whd_driver_t whd_driver, whd_buffer_t buffer)
 
     /* It is preferable to have IP data at address aligned to 4 bytes. IP data startes after ethernet header */
     ip_data_start_add =
-        (uint32_t )whd_buffer_get_current_piece_data_pointer(whd_driver, buffer) - WHD_ETHERNET_SIZE;
+        (uint32_t )whd_buffer_get_current_piece_data_pointer(whd_driver, buffer) + WHD_ETHERNET_SIZE;
     if ( ( (ip_data_start_add >> 2) << 2 ) != ip_data_start_add )
     {
         WPRINT_WHD_DATA_LOG( ("IP data not aligned to 4 bytes %lx\n", ip_data_start_add) );
@@ -650,7 +650,7 @@ void whd_process_bdc_event(whd_driver_t whd_driver, whd_buffer_t buffer, uint16_
     WHD_IOCTL_LOG_ADD_EVENT(whd_driver, whd_event->event_type, whd_event->status,
                             whd_event->reason);
 
-    if (whd_rtos_get_semaphore(&cdc_bdc_info->event_list_mutex, NEVER_TIMEOUT, WHD_FALSE) != WHD_SUCCESS)
+    if (cy_rtos_get_semaphore(&cdc_bdc_info->event_list_mutex, CY_RTOS_NEVER_TIMEOUT, WHD_FALSE) != WHD_SUCCESS)
     {
         WPRINT_WHD_DEBUG( ("Failed to obtain mutex for event list access!\n") );
         result = whd_buffer_release(whd_driver, buffer, WHD_NETWORK_RX);
@@ -681,7 +681,7 @@ void whd_process_bdc_event(whd_driver_t whd_driver, whd_buffer_t buffer, uint16_
         }
     }
 
-    result = whd_rtos_set_semaphore(&cdc_bdc_info->event_list_mutex, WHD_FALSE);
+    result = cy_rtos_set_semaphore(&cdc_bdc_info->event_list_mutex, WHD_FALSE);
     if (result != WHD_SUCCESS)
         WPRINT_WHD_ERROR( ("Error setting semaphore in %s at %d \n", __func__, __LINE__) );
 

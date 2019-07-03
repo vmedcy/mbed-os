@@ -34,32 +34,32 @@ int whd_buffer_printf(const char *format, ...)
     va_start (args, format);
 
     potential_num_written = vsnprintf (&(logbuf.buffer[logbuf.buffer_write]),
-        (size_t)(LOGGING_BUFFER_SIZE - (logbuf.buffer_write)) + 1, format, args);
+                                       (size_t)(LOGGING_BUFFER_SIZE - (logbuf.buffer_write) ) + 1, format, args);
 
-    if ( potential_num_written > (int)(LOGGING_BUFFER_SIZE - (logbuf.buffer_write)) )
+    if (potential_num_written > (int)(LOGGING_BUFFER_SIZE - (logbuf.buffer_write) ) )
     {
         /* full print did not fit in buffer - wipe what was just written
-          and reprint at start of buffer
-          */
-        memset( &(logbuf.buffer[logbuf.buffer_write]), 0xf, (size_t)(LOGGING_BUFFER_SIZE - (logbuf.buffer_write) ) );
+           and reprint at start of buffer
+         */
+        memset(&(logbuf.buffer[logbuf.buffer_write]), 0xf, (size_t)(LOGGING_BUFFER_SIZE - (logbuf.buffer_write) ) );
 
         logbuf.buffer_write = 0;
         potential_num_written = vsnprintf (&(logbuf.buffer[logbuf.buffer_write]),
-                                           (size_t)(LOGGING_BUFFER_SIZE - (logbuf.buffer_write)) + 1, format, args);
+                                           (size_t)(LOGGING_BUFFER_SIZE - (logbuf.buffer_write) ) + 1, format, args);
 
         logbuf.buffer_write += (unsigned)potential_num_written;
         logbuf.buffer_write %= LOGGING_BUFFER_SIZE;
 
-        if(logbuf.roll_over)
-             logbuf.over_write = WHD_TRUE;
+        if (logbuf.roll_over)
+            logbuf.over_write = WHD_TRUE;
 
         logbuf.roll_over = WHD_TRUE;
 
-        if ((logbuf.roll_over) && (logbuf.buffer_read < (logbuf.buffer_write)))
+        if ( (logbuf.roll_over) && (logbuf.buffer_read < (logbuf.buffer_write) ) )
         {
             logbuf.buffer_read = logbuf.buffer_write;
         }
-        if (logbuf.over_write && (logbuf.buffer_read != (logbuf.buffer_write)))
+        if (logbuf.over_write && (logbuf.buffer_read != (logbuf.buffer_write) ) )
         {
             logbuf.buffer_read = (logbuf.buffer_write);
         }
@@ -68,21 +68,21 @@ int whd_buffer_printf(const char *format, ...)
     {
         logbuf.buffer_write += (unsigned)potential_num_written;
 
-        if ((logbuf.buffer_write) >= LOGGING_BUFFER_SIZE)
+        if ( (logbuf.buffer_write) >= LOGGING_BUFFER_SIZE )
         {
             logbuf.buffer_write %= LOGGING_BUFFER_SIZE;
 
-            if(logbuf.roll_over)
+            if (logbuf.roll_over)
                 logbuf.over_write = WHD_TRUE;
 
             logbuf.roll_over = WHD_TRUE;
         }
 
-        if (logbuf.roll_over && (logbuf.buffer_read < logbuf.buffer_write))
+        if (logbuf.roll_over && (logbuf.buffer_read < logbuf.buffer_write) )
         {
             logbuf.buffer_read = logbuf.buffer_write;
         }
-        if (logbuf.over_write && (logbuf.buffer_read != logbuf.buffer_write))
+        if (logbuf.over_write && (logbuf.buffer_read != logbuf.buffer_write) )
         {
             logbuf.buffer_read = logbuf.buffer_write;
         }
@@ -94,11 +94,11 @@ int whd_buffer_printf(const char *format, ...)
 
 void whd_print_logbuffer(void)
 {
-    while(logbuf.roll_over || logbuf.over_write || (logbuf.buffer_read != logbuf.buffer_write))
+    while (logbuf.roll_over || logbuf.over_write || (logbuf.buffer_read != logbuf.buffer_write) )
     {
-        logbuf.roll_over=logbuf.over_write = WHD_FALSE;
+        logbuf.roll_over = logbuf.over_write = WHD_FALSE;
 
-        while(logbuf.buffer[logbuf.buffer_read] == 0xf)
+        while (logbuf.buffer[logbuf.buffer_read] == 0xf)
         {
             logbuf.buffer_read = (logbuf.buffer_read + 1) % LOGGING_BUFFER_SIZE;
         }
@@ -107,5 +107,6 @@ void whd_print_logbuffer(void)
         logbuf.buffer_read = (logbuf.buffer_read + 1) % LOGGING_BUFFER_SIZE;
     }
 }
+
 #endif /* ifdef WHD_LOGGING_BUFFER_ENABLE */
 

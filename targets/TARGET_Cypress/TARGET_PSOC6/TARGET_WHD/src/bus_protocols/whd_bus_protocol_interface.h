@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
+#include "cyabs_rtos.h"
+
 #include "whd.h"
-#include "whd_rtos.h"
 #include "whd_network_types.h"
 #include "whd_types_int.h"
 
@@ -95,7 +96,7 @@ extern whd_result_t whd_bus_read_frame(whd_driver_t whd_driver, whd_buffer_t *bu
 
 extern uint32_t     whd_bus_packet_available_to_read(whd_driver_t whd_driver);
 extern whd_result_t whd_bus_poke_wlan(whd_driver_t whd_driver);
-extern whd_result_t   whd_bus_wait_for_wlan_event(whd_driver_t whd_driver,  whd_semaphore_type_t *transceive_semaphore);
+extern whd_result_t   whd_bus_wait_for_wlan_event(whd_driver_t whd_driver,  cy_semaphore_t *transceive_semaphore);
 
 extern whd_result_t whd_bus_ack_interrupt(whd_driver_t whd_driver, uint32_t intstatus);
 extern whd_bool_t whd_bus_wake_interrupt_present(whd_driver_t whd_driver);

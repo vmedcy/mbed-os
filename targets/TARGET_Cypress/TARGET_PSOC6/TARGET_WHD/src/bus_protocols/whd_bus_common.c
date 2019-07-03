@@ -19,6 +19,8 @@
  *
  */
 #include <stdlib.h>
+#include "cyabs_rtos.h"
+
 #include "whd_bus_common.h"
 #include "whd_chip_reg.h"
 #include "whd_sdio.h"
@@ -27,7 +29,6 @@
 #include "whd_chip.h"
 #include "whd_bus_protocol_interface.h"
 #include "whd_debug.h"
-#include "whd_rtos_interface.h"
 #include "whd_buffer_api.h"
 #include "whd_resource_if.h"
 #include "whd_resource_api.h"
@@ -186,9 +187,9 @@ static whd_result_t whd_bus_common_download_resource(whd_driver_t whd_driver, wh
             transfer_progress = 0;
         for (j = 0; j < num_buff; j++)
         {
+            transfer_size = (uint16_t)MIN_OF(BLOCK_SIZE, image_size - transfer_progress);
             packet = (uint8_t *)whd_buffer_get_current_piece_data_pointer(whd_driver, buffer);
             memcpy(packet + sizeof(whd_buffer_header_t), &image[transfer_progress], transfer_size);
-
 
             /* Round up the size of the chunk */
             transfer_size = (uint16_t)ROUND_UP(transfer_size, WHD_BUS_ROUND_UP_ALIGNMENT);
@@ -299,6 +300,7 @@ void whd_delayed_bus_release_schedule_update(whd_driver_t whd_driver, whd_bool_t
 uint32_t whd_bus_handle_delayed_release(whd_driver_t whd_driver)
 {
     uint32_t time_until_release = 0;
+    uint32_t current_time = 0;
     struct whd_bus_common_info *bus_common = whd_driver->bus_common_info;
 
     if (bus_common->delayed_bus_release_timeout_ms_request != WHD_BUS_WLAN_ALLOW_SLEEP_INVALID_MS)
@@ -322,14 +324,17 @@ uint32_t whd_bus_handle_delayed_release(whd_driver_t whd_driver)
 
         if (bus_common->delayed_bus_release_timeout_ms != 0)
         {
-            bus_common->delayed_bus_release_deadline = whd_rtos_get_time( ) +
+            cy_rtos_get_time(&current_time);
+            bus_common->delayed_bus_release_deadline = current_time +
                                                        bus_common->delayed_bus_release_timeout_ms;
             time_until_release = bus_common->delayed_bus_release_timeout_ms;
         }
     }
     else if (bus_common->delayed_bus_release_deadline != 0)
     {
-        whd_time_t now = whd_rtos_get_time( );
+        whd_time_t now;
+
+        cy_rtos_get_time(&now);
 
         if (bus_common->delayed_bus_release_deadline - now <= bus_common->delayed_bus_release_timeout_ms)
         {

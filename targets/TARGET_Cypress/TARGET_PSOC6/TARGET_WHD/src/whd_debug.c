@@ -41,13 +41,13 @@ void whd_init_stats(whd_driver_t whd_driver)
 
 uint32_t whd_print_stats(whd_driver_t whd_driver, whd_bool_t reset_after_print)
 {
-    WPRINT_WHD_DEBUG( ("WHD Stats.. \n"
-                       "tx_total:%" PRIu32 ", rx_total:%" PRIu32 ", tx_no_mem:%" PRIu32 ", rx_no_mem:%" PRIu32 "\n"
-                       "tx_fail:%" PRIu32 ", no_credit:%" PRIu32 ", flow_control:%" PRIu32 "\n",
-                       whd_driver->whd_stats.tx_total, whd_driver->whd_stats.rx_total,
-                       whd_driver->whd_stats.tx_no_mem, whd_driver->whd_stats.rx_no_mem,
-                       whd_driver->whd_stats.tx_fail, whd_driver->whd_stats.no_credit,
-                       whd_driver->whd_stats.flow_control) );
+    WPRINT_MACRO( ("WHD Stats.. \n"
+                   "tx_total:%" PRIu32 ", rx_total:%" PRIu32 ", tx_no_mem:%" PRIu32 ", rx_no_mem:%" PRIu32 "\n"
+                   "tx_fail:%" PRIu32 ", no_credit:%" PRIu32 ", flow_control:%" PRIu32 "\n",
+                   whd_driver->whd_stats.tx_total, whd_driver->whd_stats.rx_total,
+                   whd_driver->whd_stats.tx_no_mem, whd_driver->whd_stats.rx_no_mem,
+                   whd_driver->whd_stats.tx_fail, whd_driver->whd_stats.no_credit,
+                   whd_driver->whd_stats.flow_control) );
 
     if (reset_after_print == WHD_TRUE)
     {

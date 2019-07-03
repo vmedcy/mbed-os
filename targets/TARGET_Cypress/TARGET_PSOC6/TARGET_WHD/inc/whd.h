@@ -16,7 +16,7 @@
  */
 
 /** @file whd.h
- *  Abstract type of whd_driver structure
+ *  Provides abstract pointer type to act as instance for: driver, interface, buffer funcs, network funcs, resource funcs and bus funcs.
  */
 
 #include "whd_types.h"
@@ -70,7 +70,7 @@ typedef struct whd_bus_funcs whd_spi_funcs_t;
 typedef struct whd_init_config
 {
     void *thread_stack_start;   /**< Pointer to the WHD thread stack  */
-    uint32_t thread_stack_size; /**< size of the WHD thread stack  */
+    uint32_t thread_stack_size; /**< Size of the WHD thread stack  */
     uint32_t thread_priority;   /**< Priority to be set to WHD Thread */
     whd_country_code_t country; /**< Variable to strore country code information */
 } whd_init_config_t;

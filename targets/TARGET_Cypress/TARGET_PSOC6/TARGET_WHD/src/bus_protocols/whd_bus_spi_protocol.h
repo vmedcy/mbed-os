@@ -65,7 +65,7 @@ extern whd_result_t whd_bus_spi_init(whd_driver_t whd_driver);
 extern whd_result_t whd_bus_spi_deinit(whd_driver_t whd_driver);
 extern whd_bool_t whd_bus_spi_wake_interrupt_present(whd_driver_t whd_driver);
 extern whd_result_t whd_bus_spi_wait_for_wlan_event(whd_driver_t whd_driver,
-                                                    whd_semaphore_type_t *transceive_semaphore);
+                                                    cy_semaphore_t *transceive_semaphore);
 extern whd_result_t whd_bus_spi_write_register_value(whd_driver_t whd_driver, whd_bus_function_t function,
                                                      uint32_t address, uint8_t value_length, uint32_t value);
 extern whd_result_t whd_bus_spi_read_register_value(whd_driver_t whd_driver, whd_bus_function_t function,

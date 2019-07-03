@@ -178,7 +178,7 @@ static void add_sdpcm_log_entry(sdpcm_log_direction_t dir, sdpcm_log_type_t type
 
     sdpcm_log[next_sdpcm_log_pos].direction = dir;
     sdpcm_log[next_sdpcm_log_pos].type = type;
-    sdpcm_log[next_sdpcm_log_pos].time = whd_rtos_get_time();
+    cy_rtos_get_time(&sdpcm_log[next_sdpcm_log_pos].time);
     sdpcm_log[next_sdpcm_log_pos].length = length;
     memcpy(sdpcm_log[next_sdpcm_log_pos].header, eth_data, SDPCM_LOG_HEADER_SIZE);
     next_sdpcm_log_pos++;
@@ -220,11 +220,11 @@ whd_result_t whd_sdpcm_init(whd_driver_t whd_driver)
     whd_sdpcm_info_t *sdpcm_info = &whd_driver->sdpcm_info;
 
     /* Create the sdpcm packet queue semaphore */
-    if (whd_rtos_init_semaphore(&sdpcm_info->send_queue_mutex) != WHD_SUCCESS)
+    if (cy_rtos_init_semaphore(&sdpcm_info->send_queue_mutex, 1, 0) != WHD_SUCCESS)
     {
         return WHD_SEMAPHORE_ERROR;
     }
-    if (whd_rtos_set_semaphore(&sdpcm_info->send_queue_mutex, WHD_FALSE) != WHD_SUCCESS)
+    if (cy_rtos_set_semaphore(&sdpcm_info->send_queue_mutex, WHD_FALSE) != WHD_SUCCESS)
     {
         WPRINT_WHD_ERROR( ("Error setting semaphore in %s at %d \n", __func__, __LINE__) );
         return WHD_SEMAPHORE_ERROR;
@@ -264,16 +264,16 @@ void whd_sdpcm_quit(whd_driver_t whd_driver)
     whd_result_t result;
 
     /* Delete the sleep mutex */
-    (void)whd_rtos_deinit_semaphore(&cdc_bdc_info->ioctl_sleep);    /* Ignore return - not much can be done about failure */
+    (void)cy_rtos_deinit_semaphore(&cdc_bdc_info->ioctl_sleep);    /* Ignore return - not much can be done about failure */
 
     /* Delete the queue mutex.  */
-    (void)whd_rtos_deinit_semaphore(&cdc_bdc_info->ioctl_mutex);    /* Ignore return - not much can be done about failure */
+    (void)cy_rtos_deinit_semaphore(&cdc_bdc_info->ioctl_mutex);    /* Ignore return - not much can be done about failure */
 
     /* Delete the SDPCM queue mutex */
-    (void)whd_rtos_deinit_semaphore(&sdpcm_info->send_queue_mutex);    /* Ignore return - not much can be done about failure */
+    (void)cy_rtos_deinit_semaphore(&sdpcm_info->send_queue_mutex);    /* Ignore return - not much can be done about failure */
 
     /* Delete the event list management mutex */
-    (void)whd_rtos_deinit_semaphore(&cdc_bdc_info->event_list_mutex);    /* Ignore return - not much can be done about failure */
+    (void)cy_rtos_deinit_semaphore(&cdc_bdc_info->event_list_mutex);    /* Ignore return - not much can be done about failure */
 
     /* Free any left over packets in the queue */
     while (sdpcm_info->send_queue_head != NULL)
@@ -488,7 +488,7 @@ whd_result_t whd_sdpcm_get_packet_to_send(whd_driver_t whd_driver, whd_buffer_t 
         }
 
         /* There is a packet waiting to be sent - send it then fix up queue and release packet */
-        if (whd_rtos_get_semaphore(&sdpcm_info->send_queue_mutex, NEVER_TIMEOUT, WHD_FALSE) != WHD_SUCCESS)
+        if (cy_rtos_get_semaphore(&sdpcm_info->send_queue_mutex, CY_RTOS_NEVER_TIMEOUT, WHD_FALSE) != WHD_SUCCESS)
         {
             /* Could not obtain mutex, push back the flow control semaphore */
             WPRINT_WHD_ERROR( ("Error manipulating a semaphore, %s failed at %d \n", __func__, __LINE__) );
@@ -502,7 +502,7 @@ whd_result_t whd_sdpcm_get_packet_to_send(whd_driver_t whd_driver, whd_buffer_t 
         {
             sdpcm_info->send_queue_tail = NULL;
         }
-        result = whd_rtos_set_semaphore(&sdpcm_info->send_queue_mutex, WHD_FALSE);
+        result = cy_rtos_set_semaphore(&sdpcm_info->send_queue_mutex, WHD_FALSE);
         if (result != WHD_SUCCESS)
             WPRINT_WHD_ERROR( ("Error setting semaphore in %s at %d \n", __func__, __LINE__) );
 
@@ -573,7 +573,7 @@ void whd_send_to_bus(whd_driver_t whd_driver, whd_buffer_t buffer,
                         (char *)whd_buffer_get_current_piece_data_pointer(whd_driver, buffer) );
 
     /* Add the length of the SDPCM header and pass "down" */
-    if (whd_rtos_get_semaphore(&sdpcm_info->send_queue_mutex, NEVER_TIMEOUT, WHD_FALSE) != WHD_SUCCESS)
+    if (cy_rtos_get_semaphore(&sdpcm_info->send_queue_mutex, CY_RTOS_NEVER_TIMEOUT, WHD_FALSE) != WHD_SUCCESS)
     {
         /* Could not obtain mutex */
         /* Fatal error */
@@ -593,7 +593,7 @@ void whd_send_to_bus(whd_driver_t whd_driver, whd_buffer_t buffer,
     {
         sdpcm_info->send_queue_head = buffer;
     }
-    result = whd_rtos_set_semaphore(&sdpcm_info->send_queue_mutex, WHD_FALSE);
+    result = cy_rtos_set_semaphore(&sdpcm_info->send_queue_mutex, WHD_FALSE);
     if (result != WHD_SUCCESS)
         WPRINT_WHD_ERROR( ("Error setting semaphore in %s at %d \n", __func__, __LINE__) );
 

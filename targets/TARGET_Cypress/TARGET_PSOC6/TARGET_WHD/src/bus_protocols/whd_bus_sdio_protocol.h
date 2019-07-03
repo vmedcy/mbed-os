@@ -214,7 +214,7 @@ extern whd_result_t whd_bus_sdio_reinit_stats(whd_driver_t whd_driver, whd_bool_
 uint8_t whd_bus_sdio_backplane_read_padd_size(whd_driver_t whd_driver);
 
 extern whd_result_t  whd_bus_sdio_wait_for_wlan_event(whd_driver_t whd_driver,
-                                                      whd_semaphore_type_t *transceive_semaphore);
+                                                      cy_semaphore_t *transceive_semaphore);
 extern whd_bool_t whd_bus_sdio_use_status_report_scheme(whd_driver_t whd_driver);
 extern uint32_t whd_bus_sdio_get_max_transfer_size(whd_driver_t whd_driver);
 /******************************************************

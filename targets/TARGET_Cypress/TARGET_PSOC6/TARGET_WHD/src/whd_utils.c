@@ -569,12 +569,9 @@ void whd_print_scan_result(whd_scan_result_t *record)
             str = "Any";
             break;
 
+        case WHD_BSS_TYPE_MESH:
         case WHD_BSS_TYPE_UNKNOWN:
             str = "Unknown";
-            break;
-
-        case WHD_BSS_TYPE_MESH:
-            str = "Mesh";
             break;
 
         default:

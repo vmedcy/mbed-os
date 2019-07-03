@@ -77,6 +77,7 @@ whd_result_t whd_add_interface(whd_driver_t whd_driver, uint8_t bsscfgidx, uint8
 
         if ( (ifp = (whd_interface_t)malloc(sizeof(struct whd_interface) ) ) != NULL )
         {
+            memset(ifp, 0, (sizeof(struct whd_interface) ) );
             *ifpp = ifp;
             ifp->whd_driver = whd_driver;
 
@@ -84,7 +85,7 @@ whd_result_t whd_add_interface(whd_driver_t whd_driver, uint8_t bsscfgidx, uint8
             /* strncpy doesn't terminate with null if the src string is long */
             ifp->if_name[WHD_MSG_IFNAME_MAX - 1] = '\0';
             strncpy(ifp->if_name, name, sizeof(ifp->if_name) - 1);
-            memset(ifp->event_reg_list, 0xFF, sizeof(ifp->event_reg_list) );
+            memset(ifp->event_reg_list, WHD_EVENT_NOT_REGISTERED, sizeof(ifp->event_reg_list) );
             /* Primary interface takes 0 as default */
             ifp->ifidx = ifidx;
             ifp->bsscfgidx = bsscfgidx;

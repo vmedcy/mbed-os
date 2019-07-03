@@ -849,6 +849,8 @@ typedef struct eventmsgs_ext
 #define IOVAR_STR_DLTRO                  "dltro"
 #define IOVAR_STR_SAE_PASSWORD           "sae_password"
 
+#define IOVAR_STR_BTC_LESCAN_PARAMS      "btc_lescan_params"
+
 /* This value derived from the above strings, which appear maxed out in the 20s */
 #define IOVAR_NAME_STR_MAX_SIZE          32
 

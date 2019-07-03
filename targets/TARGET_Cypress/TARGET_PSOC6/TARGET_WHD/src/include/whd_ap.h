@@ -22,7 +22,7 @@
 #define INCLUDED_WHD_AP_H
 
 #include "whd.h"
-#include "whd_rtos_interface.h"
+#include "cyabs_rtos.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,14 +50,14 @@ extern "C" {
                                                      NULL){ WPRINT_WHD_ERROR( ("Buffer alloc failed in %s at %d \n", \
                                                                                __func__, __LINE__) ); \
                                                             whd_assert("Buffer alloc failed\n", 0 == 1); \
-                                                            (void)whd_rtos_deinit_semaphore(sema); \
+                                                            (void)cy_rtos_deinit_semaphore(sema); \
                                                             return WHD_BUFFER_ALLOC_FAIL; }
 
 #define CHECK_RETURN_WITH_SEMAPHORE(expr, sema)  { whd_result_t check_res = (expr); if (check_res != WHD_SUCCESS) \
                                                    { WPRINT_WHD_ERROR( ("Command failed in %s at %d \n", __func__, \
                                                                         __LINE__) ); \
                                                      whd_assert("Command failed\n", 0 == 1); \
-                                                     (void)whd_rtos_deinit_semaphore(sema); \
+                                                     (void)cy_rtos_deinit_semaphore(sema); \
                                                      return check_res; } }
 
 /******************************************************
@@ -66,7 +66,7 @@ extern "C" {
 typedef struct whd_ap_int_info
 {
     whd_bool_t ap_is_up;
-    whd_semaphore_type_t whd_wifi_sleep_flag;
+    cy_semaphore_t whd_wifi_sleep_flag;
 
 } whd_ap_int_info_t;
 

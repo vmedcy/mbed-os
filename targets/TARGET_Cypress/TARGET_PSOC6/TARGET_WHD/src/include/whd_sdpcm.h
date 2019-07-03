@@ -26,7 +26,7 @@
 
 #include "whd.h"
 #include "whd_events_int.h"
-#include "whd_rtos.h"
+#include "cyabs_rtos.h"
 #include "whd_network_types.h"
 #include "whd_types_int.h"
 #include "whd_cdc_bdc.h"
@@ -65,7 +65,7 @@ typedef struct whd_sdpcm_info
     uint8_t largest_credit_diff;
 
     /* Packet send queue variables */
-    whd_semaphore_type_t send_queue_mutex;
+    cy_semaphore_t send_queue_mutex;
     whd_buffer_t send_queue_head;
     whd_buffer_t send_queue_tail;
 

@@ -37,7 +37,7 @@
 #include "whd_debug.h"
 #include "whd_thread.h"
 #include "bus_protocols/whd_bus_protocol_interface.h"
-#include "whd_rtos_interface.h"
+#include "cyabs_rtos.h"
 #include "whd_int.h"
 #include "whd_chip.h"
 #include "whd_poll.h"
@@ -57,7 +57,7 @@ void whd_thread_info_init(whd_driver_t whd_driver, whd_init_config_t *whd_init_c
     memset(&whd_driver->thread_info, 0, sizeof(whd_driver->thread_info) );
     whd_driver->thread_info.thread_stack_start = whd_init_config->thread_stack_start;
     whd_driver->thread_info.thread_stack_size = whd_init_config->thread_stack_size;
-    whd_driver->thread_info.thread_priority = whd_init_config->thread_priority;
+    whd_driver->thread_info.thread_priority = (cy_thread_priority_t)whd_init_config->thread_priority;
 }
 
 /** Initialises the WHD Thread
@@ -82,7 +82,7 @@ whd_result_t whd_thread_init(whd_driver_t whd_driver)
     }
 
     /* Create the event flag which signals the WHD thread needs to wake up */
-    retval = whd_rtos_init_semaphore(&whd_driver->thread_info.transceive_semaphore);
+    retval = cy_rtos_init_semaphore(&whd_driver->thread_info.transceive_semaphore, 1, 0);
     if (retval != WHD_SUCCESS)
     {
         WPRINT_WHD_ERROR( ("Could not initialize WHD thread semaphore\n") );
@@ -90,16 +90,10 @@ whd_result_t whd_thread_init(whd_driver_t whd_driver)
         return retval;
     }
 
-    whd_driver->thread_info.thread_stack_size = 3 * 1024;
-    if (whd_driver->thread_info.thread_stack_start == NULL)
-    {
-        whd_driver->thread_info.thread_stack_start = (char *)malloc(whd_driver->thread_info.thread_stack_size);
-    }
-
-    retval = whd_rtos_create_thread_with_arg(&whd_driver->thread_info.whd_thread, whd_thread_func,
-                                             "WHD", whd_driver->thread_info.thread_stack_start,
-                                             whd_driver->thread_info.thread_stack_size,
-                                             whd_driver->thread_info.thread_priority, (uint32_t)whd_driver);
+    retval = cy_rtos_create_thread(&whd_driver->thread_info.whd_thread, whd_thread_func,
+                                   "WHD", whd_driver->thread_info.thread_stack_start,
+                                   whd_driver->thread_info.thread_stack_size,
+                                   whd_driver->thread_info.thread_priority, (uint32_t)whd_driver);
     if (retval != WHD_SUCCESS)
     {
         /* Could not start WHD main thread */
@@ -222,14 +216,14 @@ void whd_thread_quit(whd_driver_t whd_driver)
 
     /* signal main thread and wake it */
     whd_driver->thread_info.thread_quit_flag = WHD_TRUE;
-    result = whd_rtos_set_semaphore(&whd_driver->thread_info.transceive_semaphore, WHD_FALSE);
+    result = cy_rtos_set_semaphore(&whd_driver->thread_info.transceive_semaphore, WHD_FALSE);
     if (result == WHD_SUCCESS)
     {
         /* Wait for the WHD thread to end */
-        whd_rtos_join_thread(&whd_driver->thread_info.whd_thread);
+        cy_rtos_join_thread(&whd_driver->thread_info.whd_thread);
 
         /* Ignore return - not much can be done about failure */
-        (void)whd_rtos_delete_terminated_thread(&whd_driver->thread_info.whd_thread);
+        (void)cy_rtos_terminate_thread(&whd_driver->thread_info.whd_thread);
     }
     else
     {
@@ -253,7 +247,7 @@ void whd_thread_notify_irq(whd_driver_t whd_driver)
     /* just wake up the main thread and let it deal with the data */
     if (whd_driver->thread_info.whd_inited == WHD_TRUE)
     {
-        (void)whd_rtos_set_semaphore(&whd_driver->thread_info.transceive_semaphore, WHD_TRUE);
+        (void)cy_rtos_set_semaphore(&whd_driver->thread_info.transceive_semaphore, WHD_TRUE);
     }
 }
 
@@ -263,7 +257,7 @@ void whd_thread_notify(whd_driver_t whd_driver)
     if (whd_driver->thread_info.whd_inited == WHD_TRUE)
     {
         /* Ignore return - not much can be done about failure */
-        (void)whd_rtos_set_semaphore(&whd_driver->thread_info.transceive_semaphore, WHD_FALSE);
+        (void)cy_rtos_set_semaphore(&whd_driver->thread_info.transceive_semaphore, WHD_FALSE);
     }
 }
 
@@ -286,6 +280,8 @@ static void whd_thread_func(whd_thread_arg_t thread_input)
 {
     int8_t rx_status;
     int8_t tx_status;
+    uint8_t rx_cnt;
+
     whd_driver_t whd_driver = ( whd_driver_t )thread_input;
     whd_thread_info_t *thread_info = &whd_driver->thread_info;
 
@@ -296,6 +292,7 @@ static void whd_thread_func(whd_thread_arg_t thread_input)
 
     while (thread_info->thread_quit_flag != WHD_TRUE)
     {
+        rx_cnt = 0;
         /* Check if we were woken by interrupt */
         if ( (thread_info->bus_interrupt == WHD_TRUE) ||
              (whd_bus_use_status_report_scheme(whd_driver) ) )
@@ -309,7 +306,8 @@ static void whd_thread_func(whd_thread_arg_t thread_input)
                 do
                 {
                     rx_status = whd_thread_receive_one_packet(whd_driver);
-                } while (rx_status != 0);
+                    rx_cnt++;
+                } while (rx_status != 0 && rx_cnt < WHD_THREAD_RX_BOUND);
             }
         }
 
@@ -318,6 +316,12 @@ static void whd_thread_func(whd_thread_arg_t thread_input)
         {
             tx_status = whd_thread_send_one_packet(whd_driver);
         } while (tx_status != 0);
+
+        if (rx_cnt >= WHD_THREAD_RX_BOUND)
+        {
+            thread_info->bus_interrupt = WHD_TRUE;
+            continue;
+        }
 
         /* Sleep till WLAN do something */
         whd_bus_wait_for_wlan_event(whd_driver, &thread_info->transceive_semaphore);
@@ -332,15 +336,20 @@ static void whd_thread_func(whd_thread_arg_t thread_input)
 
     /* Delete the semaphore */
     /* Ignore return - not much can be done about failure */
-    (void)whd_rtos_deinit_semaphore(&thread_info->transceive_semaphore);
+    (void)cy_rtos_deinit_semaphore(&thread_info->transceive_semaphore);
 
     whd_sdpcm_quit(whd_driver);
 
     WPRINT_WHD_DATA_LOG( ("Stopped whd Thread\n") );
 
-    if (WHD_SUCCESS != whd_rtos_finish_thread(&thread_info->whd_thread) )
+    if (WHD_SUCCESS != cy_rtos_join_thread(&thread_info->whd_thread) )
     {
-        WPRINT_WHD_DEBUG( ("Could not close WHD thread\n") );
+        WPRINT_WHD_ERROR( ("Could not join WHD thread\n") );
+    }
+
+    if (WHD_SUCCESS != cy_rtos_terminate_thread(&thread_info->whd_thread) )
+    {
+        WPRINT_WHD_ERROR( ("Could not close WHD thread\n") );
     }
 }
 

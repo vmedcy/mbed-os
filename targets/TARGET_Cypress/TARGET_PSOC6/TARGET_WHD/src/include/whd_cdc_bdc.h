@@ -19,7 +19,7 @@
 #define INCLUDED_WHD_CDC_BDC_H
 
 #include "whd.h"
-#include "whd_rtos.h"
+#include "cyabs_rtos.h"
 #include "whd_events_int.h"
 #include "whd_types_int.h"
 
@@ -109,13 +109,13 @@ typedef struct whd_cdc_info
 {
     /* Event list variables */
     event_list_elem_t whd_event_list[WHD_EVENT_HANDLER_LIST_SIZE];
-    whd_semaphore_type_t event_list_mutex;
+    cy_semaphore_t event_list_mutex;
 
     /* IOCTL variables*/
     uint16_t requested_ioctl_id;
-    whd_semaphore_type_t ioctl_mutex;
+    cy_semaphore_t ioctl_mutex;
     whd_buffer_t ioctl_response;
-    whd_semaphore_type_t ioctl_sleep;
+    cy_semaphore_t ioctl_sleep;
 
 } whd_cdc_bdc_info_t;
 

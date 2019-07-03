@@ -65,7 +65,7 @@ struct whd_interface
     char if_name[WHD_MSG_IFNAME_MAX];
     whd_interface_role_t role;
     whd_mac_t mac_addr;
-    uint16_t event_reg_list[WHD_EVENT_ENTRY_MAX];
+    uint8_t event_reg_list[WHD_EVENT_ENTRY_MAX];
     whd_bool_t state;
 };
 

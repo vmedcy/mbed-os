@@ -98,7 +98,7 @@ whd_result_t whd_bus_sleep(whd_driver_t whd_driver)
     return whd_driver->bus_if->whd_bus_sleep_fptr(whd_driver);
 }
 
-whd_result_t whd_bus_wait_for_wlan_event(whd_driver_t whd_driver, whd_semaphore_type_t *transceive_semaphore)
+whd_result_t whd_bus_wait_for_wlan_event(whd_driver_t whd_driver, cy_semaphore_t *transceive_semaphore)
 {
     return whd_driver->bus_if->whd_bus_wait_for_wlan_event_fptr(whd_driver, transceive_semaphore);
 }

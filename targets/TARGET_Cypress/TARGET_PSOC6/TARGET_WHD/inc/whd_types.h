@@ -34,7 +34,7 @@ extern "C"
 /******************************************************
 *                      Macros
 ******************************************************/
-#define SSID_NAME_SIZE           (32) /**< SSID Length */
+#define SSID_NAME_SIZE           (32)  /**< SSID Length */
 
 #define WEP_ENABLED            0x0001  /**< Flag to enable WEP Security        */
 #define TKIP_ENABLED           0x0002  /**< Flag to enable TKIP Encryption     */
@@ -123,7 +123,7 @@ typedef struct wl_af_params whd_af_params_t;
  * The maximum size in bytes of a packet used within whd.
  * Pool should be atleast of this size.
  * Usually buffer pools needs implementation specific headers like pbuf header etc, that should be
- * taken into account along with this during buffer pool creation. Also align with
+ * taken into account along with this during buffer pool creation. Also buffer pools needs alignment with
  * cache size of the platform for better performance
  */
 #define WHD_LINK_MTU            (WHD_PAYLOAD_MTU + WHD_PHYSICAL_HEADER)
@@ -237,12 +237,12 @@ typedef enum
 } whd_802_11_band_t;
 
 /**
- * Enumeration of custom IE management actions
+ * Enumeration of custom IE(Information Element) management actions
  */
 typedef enum
 {
-    WHD_ADD_CUSTOM_IE,   /**< Add a custom IE    */
-    WHD_REMOVE_CUSTOM_IE /**< Remove a custom IE */
+    WHD_ADD_CUSTOM_IE,   /**< Add a custom IE(Information Element)    */
+    WHD_REMOVE_CUSTOM_IE /**< Remove a custom IE(Information Element) */
 } whd_custom_ie_action_t;
 
 
@@ -260,9 +260,9 @@ typedef enum
  */
 typedef enum
 {
-    WHD_SCAN_INCOMPLETE,
-    WHD_SCAN_COMPLETED_SUCCESSFULLY,
-    WHD_SCAN_ABORTED,
+    WHD_SCAN_INCOMPLETE,                /**< Denotes that scan is not finished */
+    WHD_SCAN_COMPLETED_SUCCESSFULLY,    /**< Successful completion of scan */
+    WHD_SCAN_ABORTED,                   /**< Scan is aborted */
 } whd_scan_status_t;
 
 /**
@@ -271,8 +271,8 @@ typedef enum
 typedef struct
 {
     int32_t number_of_bands; /**< Number of bands supported, currently 1 or 2      */
-    int32_t current_band;    /**< Current band type : WLC_BAND_2G or WLC_BAND_5G   */
-    int32_t other_band;      /**< If number of bands is 2 then the other band type */
+    int32_t current_band;    /**< Current band type: WLC_BAND_2G or WLC_BAND_5G   */
+    int32_t other_band;      /**< If value of number_of_bands parameter is 2, then this member specifies the 2nd band */
 } whd_band_list_t;
 
 /**
@@ -339,9 +339,13 @@ typedef enum
  */
 typedef enum
 {
-    WHD_IOVAR_STR_BWTE_BWTE_GCI_MASK = 0, /**< IOVAR to set trigger mask for GCI mailbox send message */
-    WHD_IOVAR_STR_BWTE_GCI_SENDMSG,       /**< IOVAR to send GCI mailbox message form WLAN to Blue-tooth chip */
-
+    WHD_IOVAR_SET_MFP = 0,
+    WHD_IOVAR_SET_MPC,
+    WHD_IOVAR_SET_AMPDU_BA_WINDOW_SIZE,
+    WHD_IOVAR_SET_AMPDU_MPDU,
+    WHD_IOVAR_SET_LISTEN_INTERVAL_BEACON,
+    WHD_IOVAR_SET_LISTEN_INTERVAL_DTIM,
+    WHD_IOVAR_SET_LISTEN_INTERVAL_ASSOC,
 } whd_usr_iovar_set_list_t;
 
 /**
@@ -349,16 +353,20 @@ typedef enum
  */
 typedef enum
 {
-    WHD_IOVAR_BWTE_BWTE_GCI_MASK = 0, /**< Get Listen Interval mask */
-    WHD_IOVAR_STR_LISTEN_INTERVAL,    /**< Get Listen Interval value */
-    WHD_GET_MAC_ADDRESS,              /**< Get mac address */
+    WHD_IOVAR_GET_MFP = 0,
+    WHD_IOVAR_GET_MPC,
+    WHD_IOVAR_GET_AMPDU_BA_WINDOW_SIZE,
+    WHD_IOVAR_GET_AMPDU_MPDU,
+    WHD_IOVAR_GET_LISTEN_INTERVAL,          /**< Get Listen Interval value */
+    WHD_IOVAR_GET_MAC_ADDRESS,              /**< Get mac address */
 } whd_usr_iovar_get_list_t;
 
 /******************************************************
 *                 Type Definitions
 ******************************************************/
-/**< type definition for whd_event_msg */
+/** @cond */
 typedef struct whd_event_msg whd_event_header_t;
+/** @endcond */
 
 /**
  * Structure for storing a MAC address (Wi-Fi Media Access Control address).
@@ -681,8 +689,8 @@ typedef struct whd_scan_result
     uint8_t ccode[2];                           /**< Two letter ISO country code from AP                                       */
     uint8_t flags;                              /**< flags                                                                     */
     struct whd_scan_result *next;               /**< Pointer to the next scan result                                           */
-    uint8_t *ie_ptr;                            /**< Pointer to received Beacon/Probe Response IE                              */
-    uint32_t ie_len;                            /**< Length of IE                                                              */
+    uint8_t *ie_ptr;                            /**< Pointer to received Beacon/Probe Response IE(Information Element)         */
+    uint32_t ie_len;                            /**< Length of IE(Information Element)                                         */
 } whd_scan_result_t;
 #pragma pack()
 
@@ -701,9 +709,9 @@ typedef struct whd_simple_scan_result
 typedef uint16_t wl_chanspec_t;  /**< Channel specified in uint16_t */
 #define MCSSET_LEN    16 /**< Maximum allowed mcs rate */
 
-/** BSS info structure
+/** BSS(Basic Service Set) information structure
  *
- * Applications MUST CHECK ie_offset field and length field to access IEs and
+ * Applications MUST CHECK ie_offset field and length field to access IEs(Information Elements) and
  * next bss_info structure in a vector (in whd_sync_scan_result_t)
  */
 typedef struct wl_bss_info_struct
@@ -711,18 +719,18 @@ typedef struct wl_bss_info_struct
     uint32_t version;              /**< version field */
     uint32_t length;               /**< byte length of data in this record, starting at version and including IEs */
     whd_mac_t BSSID;               /**< Unique 6-byte MAC address */
-    uint16_t beacon_period;        /**< units are Kusec */
+    uint16_t beacon_period;        /**< Interval between two consecutive beacon frames. Units are Kusec */
     uint16_t capability;           /**< Capability information */
     uint8_t SSID_len;              /**< SSID length */
     uint8_t SSID[32];              /**< Array to store SSID */
     struct
     {
-        uint32_t count;            /**< # rates in this set */
-        uint8_t rates[16];         /**< rates in 500kbps units w/hi bit set if basic */
+        uint32_t count;            /**< Count of rates in this set */
+        uint8_t rates[16];         /**< rates in 500kbps units, higher bit set if basic */
     } rateset;                     /**< supported rates */
-    wl_chanspec_t chanspec;        /**< chanspec for bss */
-    uint16_t atim_window;          /**< units are Kusec */
-    uint8_t dtim_period;           /**< DTIM period */
+    wl_chanspec_t chanspec;        /**< Channel specification for basic service set */
+    uint16_t atim_window;          /**< Announcement traffic indication message window size. Units are Kusec */
+    uint8_t dtim_period;           /**< Delivery traffic indication message period */
     int16_t RSSI;                  /**< receive signal strength (in dBm) */
     int8_t phy_noise;              /**< noise (in dBm) */
 
@@ -736,7 +744,7 @@ typedef struct wl_bss_info_struct
 
     uint16_t ie_offset;            /**< offset at which IEs start, from beginning */
     uint32_t ie_length;            /**< byte length of Information Elements */
-    int16_t SNR;                   /**< average SNR of during frame reception */
+    int16_t SNR;                   /**< Average SNR(signal to noise ratio) during frame reception */
     /* Add new fields here */
     /* variable length Information Elements */
 } wl_bss_info_t;
@@ -834,6 +842,7 @@ typedef uint32_t whd_result_t;
 #define WHD_RTOS_ERROR                   WHD_RESULT_CREATE(1067)   /**< RTOS operation failed */
 #define WHD_CLM_BLOB_DLOAD_ERROR         WHD_RESULT_CREATE(1068)   /**< CLM blob download failed */
 #define WHD_HAL_ERROR                    WHD_RESULT_CREATE(1069)   /**< WHD HAL Error */
+#define WHD_RTOS_STATIC_MEM_LIMIT        WHD_RESULT_CREATE(1070)   /**< Exceeding the RTOS static objects memory */
 
 #define WLAN_ENUM_OFFSET 2000            /**< WLAN enum offset for WHD_WLAN error processing */
 
@@ -930,7 +939,7 @@ typedef struct
 {
     uint8_t index;    /**< WEP key index [0/1/2/3]                                         */
     uint8_t length;   /**< WEP key length. Either 5 bytes (40-bits) or 13-bytes (104-bits) */
-    uint8_t data[32]; /**< WEP key as values NOT chars                                     */
+    uint8_t data[32]; /**< WEP key as values NOT characters                                */
 } whd_wep_key_t;
 
 /**
@@ -956,7 +965,7 @@ typedef struct whd_sdio_config
     uint32_t flags;                   /**< Configuration flags (see WHD_BUS_SDIO_XXX constants). */
     /* Bus config */
     whd_bool_t sdio_1bit_mode;        /**< Default is false, means SDIO operates under 4 bit mode */
-    whd_bool_t high_speed_sdio_clock; /**< Default is false, means operates in normal clock rate */
+    whd_bool_t high_speed_sdio_clock; /**< Default is false, means SDIO operates in normal clock rate */
     whd_variant_t oob_intr;           /**< Caller provided opaque data (@ref WHD_BUS_SDIO_OOB_INTR) */
 } whd_sdio_config_t;
 
@@ -981,8 +990,29 @@ typedef enum
     VENDOR_IE_AUTH_RESPONSE = 0x8,  /**< Denotes authentication response packet */
     VENDOR_IE_PROBE_REQUEST = 0x10, /**< Denotes probe request packet           */
     VENDOR_IE_ASSOC_REQUEST = 0x20, /**< Denotes association request packet     */
-    VENDOR_IE_CUSTOM = 0x100        /**< Denotes a custom IE identifier         */
+    VENDOR_IE_CUSTOM = 0x100        /**< Denotes a custom IE(Information Element) identifier */
 } whd_ie_packet_flag_t;
+
+/**
+ * Structure for LE Scan parameters
+ */
+typedef struct whd_btc_lescan_params
+{
+    uint16_t priority;      /**< LE scan priority */
+    uint16_t duty_cycle;    /**< LE scan duty cycle */
+    uint16_t max_win;       /**< LE Max Scan window */
+    uint16_t int_grant;     /**< LE Small Interval Grant */
+    uint16_t scan_int;      /**< LE scan interval */
+    uint16_t scan_win;      /**< LE scan Window */
+} whd_btc_lescan_params_t;
+
+/**
+ * Structure for coex config parameters which can be set by application
+ */
+typedef struct whd_coex_config
+{
+    whd_btc_lescan_params_t le_scan_params;  /**< LE Scan Parameters */
+} whd_coex_config_t;
 
 #ifdef __cplusplus
 }     /* extern "C" */

@@ -144,6 +144,16 @@ extern "C"
                        ( ( ( (unsigned char *)a )[4] ) == 0 ) && \
                        ( ( ( (unsigned char *)a )[5] ) == 0 ) )
 
+/**
+ *	Macro for checking for Broadcast address
+ */
+#define BROADCAST_ID(a)  ( ( ( ( (unsigned char *)a )[0] ) == 255 ) && \
+                           ( ( ( (unsigned char *)a )[1] ) == 255 ) && \
+                           ( ( ( (unsigned char *)a )[2] ) == 255 ) && \
+                           ( ( ( (unsigned char *)a )[3] ) == 255 ) && \
+                           ( ( ( (unsigned char *)a )[4] ) == 255 ) && \
+                           ( ( ( (unsigned char *)a )[5] ) == 255 ) )
+
 /* Suppress unused variable warning occurring due to an assert which is disabled in release mode */
 #define REFERENCE_DEBUG_ONLY_VARIABLE(x) ( (void)(x) )
 

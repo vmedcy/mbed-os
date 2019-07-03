@@ -18,7 +18,7 @@
 #include "whd_int.h"
 #include "whd_cdc_bdc.h"
 #include "whd_events_int.h"
-#include "whd_rtos.h"
+#include "cyabs_rtos.h"
 #include "whd_network_types.h"
 #include "whd_types_int.h"
 #include "whd_wlioctl.h"
@@ -297,7 +297,7 @@ whd_result_t whd_management_set_event_handler(whd_interface_t ifp, const whd_eve
     }
 
     /* Acquire mutex preventing multiple threads accessing the handler at the same time */
-    res = whd_rtos_get_semaphore(&cdc_bdc_info->event_list_mutex, NEVER_TIMEOUT, WHD_FALSE);
+    res = cy_rtos_get_semaphore(&cdc_bdc_info->event_list_mutex, CY_RTOS_NEVER_TIMEOUT, WHD_FALSE);
     if (res != WHD_SUCCESS)
     {
         return res;
@@ -341,7 +341,7 @@ whd_result_t whd_management_set_event_handler(whd_interface_t ifp, const whd_eve
      * as the RX thread also waits on this Mutex when an ASYNC Event received
      * causing deadlock
      */
-    CHECK_RETURN(whd_rtos_set_semaphore(&cdc_bdc_info->event_list_mutex, WHD_FALSE) );
+    CHECK_RETURN(cy_rtos_set_semaphore(&cdc_bdc_info->event_list_mutex, WHD_FALSE) );
 
     CHECK_RETURN(whd_cdc_send_iovar(prim_ifp, CDC_SET, buffer, 0) );
 
@@ -350,7 +350,7 @@ whd_result_t whd_management_set_event_handler(whd_interface_t ifp, const whd_eve
     return WHD_SUCCESS;
 
 set_event_handler_exit:
-    CHECK_RETURN(whd_rtos_set_semaphore(&cdc_bdc_info->event_list_mutex, WHD_FALSE) );
+    CHECK_RETURN(cy_rtos_set_semaphore(&cdc_bdc_info->event_list_mutex, WHD_FALSE) );
     return res;
 }
 
@@ -388,7 +388,7 @@ whd_result_t whd_wifi_set_event_handler(whd_interface_t ifp, const uint32_t *eve
     }
 
     /* Acquire mutex preventing multiple threads accessing the handler at the same time */
-    res = whd_rtos_get_semaphore(&cdc_bdc_info->event_list_mutex, NEVER_TIMEOUT, WHD_FALSE);
+    res = cy_rtos_get_semaphore(&cdc_bdc_info->event_list_mutex, CY_RTOS_NEVER_TIMEOUT, WHD_FALSE);
     if (res != WHD_SUCCESS)
     {
         return res;
@@ -433,7 +433,7 @@ whd_result_t whd_wifi_set_event_handler(whd_interface_t ifp, const uint32_t *eve
      * as the RX thread also waits on this Mutex when an ASYNC Event received
      * causing deadlock
      */
-    CHECK_RETURN(whd_rtos_set_semaphore(&cdc_bdc_info->event_list_mutex, WHD_FALSE) );
+    CHECK_RETURN(cy_rtos_set_semaphore(&cdc_bdc_info->event_list_mutex, WHD_FALSE) );
 
     CHECK_RETURN(whd_cdc_send_iovar(prim_ifp, CDC_SET, buffer, 0) );
 
@@ -442,7 +442,7 @@ whd_result_t whd_wifi_set_event_handler(whd_interface_t ifp, const uint32_t *eve
     return WHD_SUCCESS;
 
 set_event_handler_exit:
-    CHECK_RETURN(whd_rtos_set_semaphore(&cdc_bdc_info->event_list_mutex, WHD_FALSE) );
+    CHECK_RETURN(cy_rtos_set_semaphore(&cdc_bdc_info->event_list_mutex, WHD_FALSE) );
     return res;
 }
 

@@ -18,10 +18,11 @@
 #ifndef INCLUDED_WHD_CHIP_H
 #define INCLUDED_WHD_CHIP_H
 
+#include "cyabs_rtos.h" /* For cy_semaphore_t */
+
 #include "whd_endian.h"
 #include "whd.h"
 #include "whd_wifi_api.h"
-#include "whd_rtos_interface.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -330,9 +331,9 @@ typedef struct whd_internal_info
     whd_scan_result_t **whd_scan_result_ptr;
     /* The semaphore used to wait for completion of a join;
      * whd_wifi_join_halt uses this to release waiting threads (if any) */
-    whd_semaphore_type_t *active_join_semaphore;
+    cy_semaphore_t *active_join_semaphore;
     whd_bool_t active_join_mutex_initted;
-    whd_semaphore_type_t active_join_mutex;
+    cy_semaphore_t active_join_mutex;
     uint con_lastpos;
     whd_bool_t whd_wifi_p2p_go_is_up;
     uint32_t whd_join_status[3];

@@ -24,6 +24,9 @@
  */
 
 #include <stdlib.h>
+#include "cyabs_rtos.h"
+#include "cyhal_sdio.h"
+
 #include "whd_bus_sdio_protocol.h"
 #include "whd_bus.h"
 #include "whd_bus_common.h"
@@ -32,12 +35,10 @@
 #include "whd_int.h"
 #include "whd_chip.h"
 #include "whd_sdpcm.h"
-#include "whd_rtos_interface.h"
 #include "whd_debug.h"
 #include "whd_sdio.h"
 #include "whd_buffer_api.h"
 #include "whd_resource_if.h"
-#include "cyhal_sdio.h"
 #include "whd_types_int.h"
 #include "whd_bus_types.h"
 
@@ -62,7 +63,7 @@
 
 #define INITIAL_READ   4
 
-#define WHD_THREAD_POLL_TIMEOUT      (NEVER_TIMEOUT)
+#define WHD_THREAD_POLL_TIMEOUT      (CY_RTOS_NEVER_TIMEOUT)
 
 #define WHD_THREAD_POKE_TIMEOUT      (100)
 
@@ -141,7 +142,7 @@ static void add_log_entry(whd_bus_transfer_direction_t dir, whd_bus_function_t f
     sdio_log_data[next_sdio_log_pos].direction = dir;
     sdio_log_data[next_sdio_log_pos].function = function;
     sdio_log_data[next_sdio_log_pos].address = address;
-    sdio_log_data[next_sdio_log_pos].time = whd_rtos_get_time();
+    cy_rtos_get_time(&sdio_log_data[next_sdio_log_pos].time);
     sdio_log_data[next_sdio_log_pos].length = length;
 #if (SDIO_LOG_HEADER_SIZE != 0)
     memcpy(sdio_log_data[next_sdio_log_pos].header, data,
@@ -245,7 +246,7 @@ whd_result_t whd_bus_sdio_ack_interrupt(whd_driver_t whd_driver, uint32_t intsta
     return whd_bus_write_backplane_value(whd_driver, (uint32_t)SDIO_INT_STATUS, (uint8_t)4, intstatus);
 }
 
-whd_result_t whd_bus_sdio_wait_for_wlan_event(whd_driver_t whd_driver, whd_semaphore_type_t *transceive_semaphore)
+whd_result_t whd_bus_sdio_wait_for_wlan_event(whd_driver_t whd_driver, cy_semaphore_t *transceive_semaphore)
 {
     whd_result_t result = WHD_SUCCESS;
     uint32_t timeout_ms = 1;
@@ -265,7 +266,7 @@ whd_result_t whd_bus_sdio_wait_for_wlan_event(whd_driver_t whd_driver, whd_semap
 
         if (result == WHD_SUCCESS)
         {
-            timeout_ms = NEVER_TIMEOUT;
+            timeout_ms = CY_RTOS_NEVER_TIMEOUT;
         }
     }
 
@@ -276,15 +277,15 @@ whd_result_t whd_bus_sdio_wait_for_wlan_event(whd_driver_t whd_driver, whd_semap
         result = whd_bus_poke_wlan(whd_driver);
         whd_assert("Poking failed!", result == WHD_SUCCESS);
 
-        result = whd_rtos_get_semaphore(transceive_semaphore, (uint32_t)MIN_OF(timeout_ms,
-                                                                               WHD_THREAD_POKE_TIMEOUT), WHD_FALSE);
+        result = cy_rtos_get_semaphore(transceive_semaphore, (uint32_t)MIN_OF(timeout_ms,
+                                                                              WHD_THREAD_POKE_TIMEOUT), WHD_FALSE);
     }
     else
     {
-        result = whd_rtos_get_semaphore(transceive_semaphore, (uint32_t)MIN_OF(timeout_ms,
-                                                                               WHD_THREAD_POLL_TIMEOUT), WHD_FALSE);
+        result = cy_rtos_get_semaphore(transceive_semaphore, (uint32_t)MIN_OF(timeout_ms,
+                                                                              WHD_THREAD_POLL_TIMEOUT), WHD_FALSE);
     }
-    whd_assert("Could not get whd sleep semaphore\n", (result == WHD_SUCCESS) || (result == WHD_TIMEOUT) );
+    whd_assert("Could not get whd sleep semaphore\n", (result == CY_RSLT_SUCCESS) || (result == CY_RTOS_TIMEOUT) );
 
     return result;
 }
@@ -315,7 +316,7 @@ whd_result_t whd_bus_sdio_init(whd_driver_t whd_driver)
     uint8_t byte_data;
     whd_result_t result;
     uint32_t loop_count;
-    whd_time_t elapsed_time;
+    whd_time_t elapsed_time, current_time;
     uint32_t wifi_firmware_image_size = 0;
     uint16_t chip_id;
 
@@ -332,7 +333,7 @@ whd_result_t whd_bus_sdio_init(whd_driver_t whd_driver)
                                                   SDIO_FUNC_ENABLE_1) );
         if (loop_count != 0)
         {
-            (void)whd_rtos_delay_milliseconds( (uint32_t)1 );    /* Ignore return - nothing can be done if it fails */
+            (void)cy_rtos_delay_milliseconds( (uint32_t)1 );    /* Ignore return - nothing can be done if it fails */
         }
         CHECK_RETURN(whd_bus_read_register_value (whd_driver, BUS_FUNCTION, SDIOD_CCCR_IOEN, (uint8_t)1, &byte_data) );
         loop_count++;
@@ -366,7 +367,7 @@ whd_result_t whd_bus_sdio_init(whd_driver_t whd_driver)
             (byte_data != (uint8_t)SDIO_64B_BLOCK) &&
             (loop_count < (uint32_t)F0_WORKING_TIMEOUT_MS) )
     {
-        (void)whd_rtos_delay_milliseconds( (uint32_t)1 );    /* Ignore return - nothing can be done if it fails */
+        (void)cy_rtos_delay_milliseconds( (uint32_t)1 );    /* Ignore return - nothing can be done if it fails */
         loop_count++;
         if (loop_count >= (uint32_t)F0_WORKING_TIMEOUT_MS)
         {
@@ -421,7 +422,7 @@ whd_result_t whd_bus_sdio_init(whd_driver_t whd_driver)
             ( (byte_data & SDIO_FUNC_READY_1) == 0 ) &&
             (loop_count < (uint32_t)F1_AVAIL_TIMEOUT_MS) )
     {
-        (void)whd_rtos_delay_milliseconds( (uint32_t)1 );   /* Ignore return - nothing can be done if it fails */
+        (void)cy_rtos_delay_milliseconds( (uint32_t)1 );   /* Ignore return - nothing can be done if it fails */
         loop_count++;
     }
     if (loop_count >= (uint32_t)F1_AVAIL_TIMEOUT_MS)
@@ -442,7 +443,7 @@ whd_result_t whd_bus_sdio_init(whd_driver_t whd_driver)
             ( (byte_data & SBSDIO_ALP_AVAIL) == 0 ) &&
             (loop_count < (uint32_t)ALP_AVAIL_TIMEOUT_MS) )
     {
-        (void)whd_rtos_delay_milliseconds( (uint32_t)1 );   /* Ignore return - nothing can be done if it fails */
+        (void)cy_rtos_delay_milliseconds( (uint32_t)1 );   /* Ignore return - nothing can be done if it fails */
         loop_count++;
     }
     if (loop_count >= (uint32_t)ALP_AVAIL_TIMEOUT_MS)
@@ -478,9 +479,10 @@ whd_result_t whd_bus_sdio_init(whd_driver_t whd_driver)
     CHECK_RETURN(whd_bus_read_backplane_value(whd_driver, CHIPCOMMON_BASE_ADDRESS, 2, (uint8_t *)&chip_id) );
     whd_chip_set_chip_id(whd_driver, chip_id);
 
-    elapsed_time = whd_rtos_get_time( );
+    cy_rtos_get_time(&elapsed_time);
     result = whd_bus_sdio_download_firmware(whd_driver);
-    elapsed_time = whd_rtos_get_time( ) - elapsed_time;
+    cy_rtos_get_time(&current_time);
+    elapsed_time = current_time - elapsed_time;
     CHECK_RETURN(whd_resource_size(whd_driver, WHD_RESOURCE_WLAN_FIRMWARE, &wifi_firmware_image_size) );
     WPRINT_WHD_INFO( ("WLAN FW download size: %" PRIu32 " bytes\n", wifi_firmware_image_size) );
     WPRINT_WHD_INFO( ("WLAN FW download time: %" PRIu32 " ms\n", elapsed_time) );
@@ -499,7 +501,7 @@ whd_result_t whd_bus_sdio_init(whd_driver_t whd_driver)
             ( (byte_data & SDIO_FUNC_READY_2) == 0 ) &&
             (loop_count < (uint32_t)F2_READY_TIMEOUT_MS) )
     {
-        (void)whd_rtos_delay_milliseconds( (uint32_t)1 );   /* Ignore return - nothing can be done if it fails */
+        (void)cy_rtos_delay_milliseconds( (uint32_t)1 );   /* Ignore return - nothing can be done if it fails */
         loop_count++;
     }
     if (loop_count >= (uint32_t)F2_READY_TIMEOUT_MS)
@@ -979,7 +981,7 @@ static whd_result_t whd_bus_sdio_download_firmware(whd_driver_t whd_driver)
             ( (csr_val & SBSDIO_HT_AVAIL) == 0 ) &&
             (loop_count < (uint32_t)HT_AVAIL_TIMEOUT_MS) )
     {
-        (void)whd_rtos_delay_milliseconds( (uint32_t)1 );   /* Ignore return - nothing can be done if it fails */
+        (void)cy_rtos_delay_milliseconds( (uint32_t)1 );   /* Ignore return - nothing can be done if it fails */
         loop_count++;
     }
     if (loop_count >= (uint32_t)HT_AVAIL_TIMEOUT_MS)
@@ -1106,20 +1108,20 @@ void whd_bus_sdio_init_stats(whd_driver_t whd_driver)
 
 whd_result_t whd_bus_sdio_print_stats(whd_driver_t whd_driver, whd_bool_t reset_after_print)
 {
-    WPRINT_WHD_DEBUG( ("Bus Stats.. \n"
-                       "cmd52:%" PRIu32 ", cmd53_read:%" PRIu32 ", cmd53_write:%" PRIu32 "\n"
-                       "cmd52_fail:%" PRIu32 ", cmd53_read_fail:%" PRIu32 ", cmd53_write_fail:%" PRIu32 "\n"
-                       "oob_intrs:%" PRIu32 ", sdio_intrs:%" PRIu32 ", error_intrs:%" PRIu32 ", read_aborts:%" PRIu32
-                       "\n",
-                       whd_driver->bus_priv->whd_bus_stats.cmd52, whd_driver->bus_priv->whd_bus_stats.cmd53_read,
-                       whd_driver->bus_priv->whd_bus_stats.cmd53_write,
-                       whd_driver->bus_priv->whd_bus_stats.cmd52_fail,
-                       whd_driver->bus_priv->whd_bus_stats.cmd53_read_fail,
-                       whd_driver->bus_priv->whd_bus_stats.cmd53_write_fail,
-                       whd_driver->bus_priv->whd_bus_stats.oob_intrs,
-                       whd_driver->bus_priv->whd_bus_stats.sdio_intrs,
-                       whd_driver->bus_priv->whd_bus_stats.error_intrs,
-                       whd_driver->bus_priv->whd_bus_stats.read_aborts) );
+    WPRINT_MACRO( ("Bus Stats.. \n"
+                   "cmd52:%" PRIu32 ", cmd53_read:%" PRIu32 ", cmd53_write:%" PRIu32 "\n"
+                   "cmd52_fail:%" PRIu32 ", cmd53_read_fail:%" PRIu32 ", cmd53_write_fail:%" PRIu32 "\n"
+                   "oob_intrs:%" PRIu32 ", sdio_intrs:%" PRIu32 ", error_intrs:%" PRIu32 ", read_aborts:%" PRIu32
+                   "\n",
+                   whd_driver->bus_priv->whd_bus_stats.cmd52, whd_driver->bus_priv->whd_bus_stats.cmd53_read,
+                   whd_driver->bus_priv->whd_bus_stats.cmd53_write,
+                   whd_driver->bus_priv->whd_bus_stats.cmd52_fail,
+                   whd_driver->bus_priv->whd_bus_stats.cmd53_read_fail,
+                   whd_driver->bus_priv->whd_bus_stats.cmd53_write_fail,
+                   whd_driver->bus_priv->whd_bus_stats.oob_intrs,
+                   whd_driver->bus_priv->whd_bus_stats.sdio_intrs,
+                   whd_driver->bus_priv->whd_bus_stats.error_intrs,
+                   whd_driver->bus_priv->whd_bus_stats.read_aborts) );
 
     if (reset_after_print == WHD_TRUE)
     {
@@ -1147,7 +1149,7 @@ whd_result_t whd_bus_sdio_reinit_stats(whd_driver_t whd_driver, whd_bool_t wake_
                                                   SDIO_FUNC_ENABLE_1) );
         if (loop_count != 0)
         {
-            (void)whd_rtos_delay_milliseconds( (uint32_t)1 );  /* Ignore return - nothing can be done if it fails */
+            (void)cy_rtos_delay_milliseconds( (uint32_t)1 );  /* Ignore return - nothing can be done if it fails */
         }
 
         CHECK_RETURN(whd_bus_read_register_value (whd_driver, BUS_FUNCTION, SDIOD_CCCR_IOEN, (uint8_t)1, &byte_data) );
@@ -1180,7 +1182,7 @@ whd_result_t whd_bus_sdio_reinit_stats(whd_driver_t whd_driver, whd_bool_t wake_
             (byte_data != (uint8_t)SDIO_64B_BLOCK) &&
             (loop_count < (uint32_t)F0_WORKING_TIMEOUT_MS) )
     {
-        (void)whd_rtos_delay_milliseconds( (uint32_t)1 );    /* Ignore return - nothing can be done if it fails */
+        (void)cy_rtos_delay_milliseconds( (uint32_t)1 );    /* Ignore return - nothing can be done if it fails */
         loop_count++;
         if (loop_count >= (uint32_t)F0_WORKING_TIMEOUT_MS)
         {
@@ -1233,7 +1235,7 @@ whd_result_t whd_bus_sdio_reinit_stats(whd_driver_t whd_driver, whd_bool_t wake_
             ( (byte_data & SDIO_FUNC_READY_1) == 0 ) &&
             (loop_count < (uint32_t)F1_AVAIL_TIMEOUT_MS) )
     {
-        (void)whd_rtos_delay_milliseconds( (uint32_t)1 );   /* Ignore return - nothing can be done if it fails */
+        (void)cy_rtos_delay_milliseconds( (uint32_t)1 );   /* Ignore return - nothing can be done if it fails */
         loop_count++;
     }
 
@@ -1254,7 +1256,7 @@ whd_result_t whd_bus_sdio_reinit_stats(whd_driver_t whd_driver, whd_bool_t wake_
             ( ( (byte_data & SBSDIO_ALP_AVAIL) == 0 ) &&
               (loop_count < (uint32_t)ALP_AVAIL_TIMEOUT_MS) ) )
     {
-        (void)whd_rtos_delay_milliseconds( (uint32_t)1 );   /* Ignore return - nothing can be done if it fails */
+        (void)cy_rtos_delay_milliseconds( (uint32_t)1 );   /* Ignore return - nothing can be done if it fails */
         loop_count++;
     }
     if (loop_count >= (uint32_t)ALP_AVAIL_TIMEOUT_MS)
@@ -1303,7 +1305,7 @@ whd_result_t whd_bus_sdio_reinit_stats(whd_driver_t whd_driver, whd_bool_t wake_
             ( ( (byte_data & SDIO_FUNC_READY_2) == 0 ) &&
               (loop_count < (uint32_t)F2_READY_TIMEOUT_MS) ) )
     {
-        (void)whd_rtos_delay_milliseconds( (uint32_t)1 );   /* Ignore return - nothing can be done if it fails */
+        (void)cy_rtos_delay_milliseconds( (uint32_t)1 );   /* Ignore return - nothing can be done if it fails */
         loop_count++;
     }
 

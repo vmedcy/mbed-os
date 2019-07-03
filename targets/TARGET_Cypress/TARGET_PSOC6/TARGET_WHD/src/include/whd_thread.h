@@ -31,7 +31,7 @@
  *  Received messages are delivered in the context of the whd Thread, so the callback function needs to avoid blocking.
  *
  */
-#include "whd_rtos.h"
+#include "cyabs_rtos.h"
 #include "whd.h"
 
 #ifndef INCLUDED_WHD_THREAD_H_
@@ -42,17 +42,22 @@ extern "C"
 {
 #endif
 
+/******************************************************
+*             Constants
+******************************************************/
+#define WHD_THREAD_RX_BOUND           (20)
+
 typedef struct whd_thread_info
 {
 
     volatile whd_bool_t thread_quit_flag;
     volatile whd_bool_t whd_inited;
-    whd_thread_type_t whd_thread;
-    whd_semaphore_type_t transceive_semaphore;
+    cy_thread_t whd_thread;
+    cy_semaphore_t transceive_semaphore;
     volatile whd_bool_t bus_interrupt;
     void *thread_stack_start;
     uint32_t thread_stack_size;
-    uint32_t thread_priority;
+    cy_thread_priority_t thread_priority;
 
 } whd_thread_info_t;
 

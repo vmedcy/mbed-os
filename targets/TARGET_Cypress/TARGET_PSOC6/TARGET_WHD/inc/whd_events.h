@@ -31,11 +31,7 @@ extern "C"
 {
 #endif
 
-/**
- * List of events
- */
-/* Maximum of 5 event handlers can registered simultaneously , this also includes the internal
-   event handler registration which happens during scan, join and starting an AP*/
+/* List of events */
 #define WLC_E_NONE                         (0x7FFFFFFE) /**< Indicates the end of the event array list */
 
 #define WLC_E_SET_SSID                     0 /**< Indicates status of set SSID. This event occurs when STA tries to join the AP*/
@@ -56,9 +52,7 @@ extern "C"
 #define WLC_E_ACTION_FRAME_COMPLETE       60 /**< Indicates Action frame Tx complete */
 #define WLC_E_ESCAN_RESULT                69 /**< escan result event occurs when we scan for the networks */
 
-/**
- * List of status codes - Applicable for any event type
- */
+/* List of status codes - Applicable for any event type */
 #define WLC_E_STATUS_SUCCESS        0   /**< operation was successful */
 #define WLC_E_STATUS_FAIL           1   /**< operation failed */
 #define WLC_E_STATUS_TIMEOUT        2   /**< operation timed out */
@@ -77,6 +71,8 @@ extern "C"
 #define WLC_E_STATUS_CS_ABORT       15  /**< abort channel select */
 #define WLC_E_STATUS_ERROR          16  /**< request failed due to error */
 #define WLC_E_STATUS_INVALID        0xff /**< Invalid status code to init variables. */
+
+#define WLC_SUP_STATUS_OFFSET      (256) /**< Status offset added to the status codes to match the values from firmware. */
 
 /**
  * @brief Status code for event WLC_E_PSK_SUP
@@ -102,21 +98,21 @@ extern "C"
  */
 typedef enum sup_auth_status
 {
-    WLC_SUP_DISCONNECTED = 0,                               /**< Disconnected */
-    WLC_SUP_CONNECTING,                                     /**< Connecting */
-    WLC_SUP_IDREQUIRED,                                     /**< ID Required */
-    WLC_SUP_AUTHENTICATING,                                 /**< Authenticating */
-    WLC_SUP_AUTHENTICATED,                                  /**< Authenticated */
-    WLC_SUP_KEYXCHANGE,                                     /**< Key Exchange */
-    WLC_SUP_KEYED,                                          /**< Key Exchanged */
-    WLC_SUP_TIMEOUT,                                        /**< Timeout */
-    WLC_SUP_LAST_BASIC_STATE,                               /**< Last Basic State */
-    WLC_SUP_KEYXCHANGE_WAIT_M1 = WLC_SUP_AUTHENTICATED,     /**< Waiting to receive handshake msg M1 */
-    WLC_SUP_KEYXCHANGE_PREP_M2 = WLC_SUP_KEYXCHANGE,        /**< Preparing to send handshake msg M2 */
-    WLC_SUP_KEYXCHANGE_WAIT_M3 = WLC_SUP_LAST_BASIC_STATE,  /**< Waiting to receive handshake msg M3 */
-    WLC_SUP_KEYXCHANGE_PREP_M4,                             /**< Preparing to send handshake msg M4 */
-    WLC_SUP_KEYXCHANGE_WAIT_G1,                             /**< Waiting to receive handshake msg G1 */
-    WLC_SUP_KEYXCHANGE_PREP_G2                              /**< Preparing to send handshake msg G2 */
+    WLC_SUP_DISCONNECTED = 0 + WLC_SUP_STATUS_OFFSET,        /**< Disconnected */
+    WLC_SUP_CONNECTING = 1 + WLC_SUP_STATUS_OFFSET,          /**< Connecting */
+    WLC_SUP_IDREQUIRED = 2 + WLC_SUP_STATUS_OFFSET,          /**< ID Required */
+    WLC_SUP_AUTHENTICATING = 3 + WLC_SUP_STATUS_OFFSET,      /**< Authenticating */
+    WLC_SUP_AUTHENTICATED = 4 + WLC_SUP_STATUS_OFFSET,       /**< Authenticated */
+    WLC_SUP_KEYXCHANGE = 5 + WLC_SUP_STATUS_OFFSET,          /**< Key Exchange */
+    WLC_SUP_KEYED = 6 + WLC_SUP_STATUS_OFFSET,               /**< Key Exchanged */
+    WLC_SUP_TIMEOUT = 7 + WLC_SUP_STATUS_OFFSET,             /**< Timeout */
+    WLC_SUP_LAST_BASIC_STATE = 8 + WLC_SUP_STATUS_OFFSET,    /**< Last Basic State */
+    WLC_SUP_KEYXCHANGE_WAIT_M1 = WLC_SUP_AUTHENTICATED,      /**< Waiting to receive handshake msg M1 */
+    WLC_SUP_KEYXCHANGE_PREP_M2 = WLC_SUP_KEYXCHANGE,         /**< Preparing to send handshake msg M2 */
+    WLC_SUP_KEYXCHANGE_WAIT_M3 = WLC_SUP_LAST_BASIC_STATE,   /**< Waiting to receive handshake msg M3 */
+    WLC_SUP_KEYXCHANGE_PREP_M4 = 9 + WLC_SUP_STATUS_OFFSET,  /**< Preparing to send handshake msg M4 */
+    WLC_SUP_KEYXCHANGE_WAIT_G1 = 10 + WLC_SUP_STATUS_OFFSET, /**< Waiting to receive handshake msg G1 */
+    WLC_SUP_KEYXCHANGE_PREP_G2  = 11 + WLC_SUP_STATUS_OFFSET /**< Preparing to send handshake msg G2 */
 } sup_auth_status_t;
 
 #define WHD_MSG_IFNAME_MAX 16 /**< Max length of Interface name */
@@ -129,10 +125,10 @@ typedef enum sup_auth_status
 typedef struct whd_event_eth_hdr
 {
     uint16_t subtype;      /**< Vendor specific..32769 */
-    uint16_t length;       /**< Length */
+    uint16_t length;       /**< Length of ethernet header*/
     uint8_t version;       /**< Version is 0 */
-    uint8_t oui[3];        /**< OUI */
-    uint16_t usr_subtype;  /**< user specific Data */
+    uint8_t oui[3];        /**< Organizationally Unique Identifier */
+    uint16_t usr_subtype;  /**< User specific data */
 } whd_event_eth_hdr_t;
 
 /**
@@ -152,13 +148,13 @@ struct whd_event_msg
 {
     uint16_t version;               /**< Version */
     uint16_t flags;                 /**< see flags below */
-    uint32_t event_type;            /**< Message (see below) */
-    uint32_t status;                /**< Status code (see below) */
-    uint32_t reason;                /**< Reason code (if applicable) */
-    uint32_t auth_type;             /**< WLC_E_AUTH */
-    uint32_t datalen;               /**< data buf */
+    uint32_t event_type;            /**< Event type indicating a response from firmware for IOCTLs/IOVARs sent */
+    uint32_t status;                /**< Status code corresponding to any event type */
+    uint32_t reason;                /**< Reason code associated with the event occurred */
+    uint32_t auth_type;             /**< WLC_E_AUTH: 802.11 AUTH request */
+    uint32_t datalen;               /**< Length of data in event message */
     whd_mac_t addr;                 /**< Station address (if applicable) */
-    char ifname[WHD_MSG_IFNAME_MAX];               /**< name of the packet incoming interface */
+    char ifname[WHD_MSG_IFNAME_MAX];               /**< name of the incoming packet interface */
     uint8_t ifidx;                                 /**< destination OS i/f index */
     uint8_t bsscfgidx;                             /**< source bsscfg index */
 };
@@ -176,16 +172,16 @@ typedef struct whd_event
 
 #pragma pack()
 
-/** @addtogroup event WHD Event handling APIs
+/** @addtogroup event WHD Event handling API
  *  Functions that allow user applications to receive event callbacks and set event handlers
  *  @{
  */
 /** Event handler prototype definition
  *
- *  @param  ifp                 : Pointer to handle instance of whd interface
- *  @param  event_header        : whd event header
- *  @param  event_data          : event data
- *  @param  handler_user_data   : semaphore data
+ *  @param  ifp                  Pointer to handle instance of whd interface
+ *  @param  event_header         whd event header
+ *  @param  event_data           event data
+ *  @param  handler_user_data    semaphore data
  */
 typedef void *(*whd_event_handler_t)(whd_interface_t ifp, const whd_event_header_t *event_header,
                                      const uint8_t *event_data, void *handler_user_data);
@@ -196,16 +192,16 @@ typedef void *(*whd_event_handler_t)(whd_interface_t ifp, const whd_event_header
  *  a particular event is received.
  *
  *
- *  @note : Currently each event may only be registered to one handler
- *          and there is a limit to the number of simultaneously registered
- *          events
+ *  @note   Currently each event may only be registered to one handler and there is a limit to the number of simultaneously
+ *          registered events. Maximum of 5 event handlers can registered simultaneously, this also includes the internal
+ *          event handler registration which happens during scan, join and starting an AP.
  *
- *  @param  ifp               : Pointer to handle instance of whd interface
- *  @param  event_type        : Pointer to the event list array
- *  @param  handler_func      : A function pointer to the handler callback
- *  @param  handler_user_data : A pointer value which will be passed to the event handler function
- *                              at the time an event is triggered (NULL is allowed)
- *  @param[out] uint16_t*     : entry where the event handler is registered in the list
+ *  @param  ifp                Pointer to handle instance of whd interface
+ *  @param  event_type         Pointer to the event list array
+ *  @param  handler_func       A function pointer to the handler callback
+ *  @param  handler_user_data  A pointer value which will be passed to the event handler function
+ *                             at the time an event is triggered (NULL is allowed)
+ *  @param  event_index        Entry where the event handler is registered in the list
  *
  *  @return WHD_SUCCESS or Error code
  */
@@ -215,8 +211,8 @@ uint32_t whd_wifi_set_event_handler(whd_interface_t ifp, const uint32_t *event_t
 
 /** Delete/Deregister the event entry where callback is registered
  *
- *  @param  ifp               : Pointer to handle instance of whd interface
- *  @param  event_index       : Event index obtained during registration by whd_wifi_set_event_handler
+ *  @param  ifp                Pointer to handle instance of whd interface
+ *  @param  event_index        Event index obtained during registration by whd_wifi_set_event_handler
  *
  *  @return WHD_SUCCESS or Error code
  */

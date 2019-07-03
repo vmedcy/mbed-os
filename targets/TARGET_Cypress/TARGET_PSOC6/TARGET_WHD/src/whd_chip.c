@@ -39,7 +39,7 @@
 #define SPINWAIT(exp, us) { \
         uint countdown = (us) + (SPINWAIT_POLL_PERIOD - 1); \
         while ( (exp) && (countdown >= SPINWAIT_POLL_PERIOD) ){ \
-            whd_rtos_delay_milliseconds(SPINWAIT_POLL_PERIOD); \
+            cy_rtos_delay_milliseconds(SPINWAIT_POLL_PERIOD); \
             countdown -= SPINWAIT_POLL_PERIOD; \
         } \
 }
@@ -180,7 +180,7 @@ whd_result_t whd_reset_core(whd_driver_t whd_driver, device_core_t core_id, uint
 
     /* put core into reset state */
     result = whd_bus_write_backplane_value(whd_driver, base + AI_RESETCTRL_OFFSET, (uint8_t)1, ( uint32_t )AIRC_RESET);
-    (void)whd_rtos_delay_milliseconds( (uint32_t)10 );   /* Ignore return - nothing can be done if it fails */
+    (void)cy_rtos_delay_milliseconds( (uint32_t)10 );   /* Ignore return - nothing can be done if it fails */
 
     /* ensure there are no pending backplane operations */
     SPINWAIT( ( ( (result = whd_bus_read_backplane_value(whd_driver, base + AI_RESETSTATUS_OFFSET, (uint8_t)1,
@@ -215,7 +215,7 @@ whd_result_t whd_reset_core(whd_driver_t whd_driver, device_core_t core_id, uint
 
     result = whd_bus_write_backplane_value(whd_driver, base + AI_IOCTRL_OFFSET, (uint8_t)1, (bits | SICF_CLOCK_EN) );
 
-    (void)whd_rtos_delay_milliseconds( (uint32_t)1 );   /* Ignore return - nothing can be done if it fails */
+    (void)cy_rtos_delay_milliseconds( (uint32_t)1 );   /* Ignore return - nothing can be done if it fails */
 
     if (result != WHD_SUCCESS)
     {
@@ -273,7 +273,7 @@ whd_result_t whd_disable_device_core(whd_driver_t whd_driver, device_core_t core
         return result;
     }
 
-    (void)whd_rtos_delay_milliseconds( (uint32_t)1 );
+    (void)cy_rtos_delay_milliseconds( (uint32_t)1 );
 
     result = whd_bus_write_backplane_value(whd_driver, base + AI_RESETCTRL_OFFSET, (uint8_t)1, ( uint32_t )AIRC_RESET);
     if (result != WHD_SUCCESS)
@@ -282,7 +282,7 @@ whd_result_t whd_disable_device_core(whd_driver_t whd_driver, device_core_t core
         return result;
     }
 
-    (void)whd_rtos_delay_milliseconds( (uint32_t)1 );
+    (void)cy_rtos_delay_milliseconds( (uint32_t)1 );
 
     return result;
 }
@@ -326,7 +326,7 @@ whd_result_t whd_reset_device_core(whd_driver_t whd_driver, device_core_t core_i
         return result;
     }
 
-    (void)whd_rtos_delay_milliseconds( (uint32_t)1 );
+    (void)cy_rtos_delay_milliseconds( (uint32_t)1 );
 
     result =
         whd_bus_write_backplane_value(whd_driver, base + AI_IOCTRL_OFFSET, (uint8_t)1,
@@ -345,7 +345,7 @@ whd_result_t whd_reset_device_core(whd_driver_t whd_driver, device_core_t core_i
         return result;
     }
 
-    (void)whd_rtos_delay_milliseconds( (uint32_t)1 );
+    (void)cy_rtos_delay_milliseconds( (uint32_t)1 );
 
     return result;
 }
@@ -389,7 +389,7 @@ whd_result_t whd_wlan_armcore_run(whd_driver_t whd_driver, device_core_t core_id
         return result;
     }
 
-    (void)whd_rtos_delay_milliseconds( (uint32_t)1 );
+    (void)cy_rtos_delay_milliseconds( (uint32_t)1 );
 
     result =
         whd_bus_write_backplane_value(whd_driver, base + AI_IOCTRL_OFFSET, (uint8_t)1,
@@ -408,7 +408,7 @@ whd_result_t whd_wlan_armcore_run(whd_driver_t whd_driver, device_core_t core_id
         return result;
     }
 
-    (void)whd_rtos_delay_milliseconds( (uint32_t)1 );
+    (void)cy_rtos_delay_milliseconds( (uint32_t)1 );
 
     return result;
 }
@@ -801,7 +801,7 @@ whd_result_t whd_wifi_read_wlan_log(whd_driver_t whd_driver, char *buffer, uint3
     if (wlan_chip_id == 43362)
     {
         return whd_wifi_read_wlan_log_unsafe(whd_driver, ( (GET_C_VAR(whd_driver, CHIP_RAM_SIZE) +
-                                                              PLATFORM_WLAN_RAM_BASE) - 4 ), buffer, buffer_size);
+                                                            PLATFORM_WLAN_RAM_BASE) - 4 ), buffer, buffer_size);
     }
     else if (wlan_chip_id == 43909)
     {
@@ -887,7 +887,7 @@ whd_result_t whd_ensure_wlan_bus_is_up(whd_driver_t whd_driver)
                                                      (uint8_t)1, &csr) );
             --attempts;
         } while ( ( (csr & SBSDIO_HT_AVAIL) == 0 ) && (attempts != 0) &&
-                  (whd_rtos_delay_milliseconds( (uint32_t)1 ), 1 == 1) );
+                  (cy_rtos_delay_milliseconds( (uint32_t)1 ), 1 == 1) );
 
         if (attempts == 0)
         {
@@ -912,7 +912,7 @@ whd_result_t whd_ensure_wlan_bus_is_up(whd_driver_t whd_driver)
                                                          (uint8_t)sizeof(csr), &csr) );
                 --attempts;
             } while ( ( (csr & SBSDIO_HT_AVAIL) == 0 ) && (attempts != 0) &&
-                      (whd_rtos_delay_milliseconds( ( uint32_t )HT_AVAIL_WAIT_MS ), 1 == 1) );
+                      (cy_rtos_delay_milliseconds( ( uint32_t )HT_AVAIL_WAIT_MS ), 1 == 1) );
 
             if (attempts == 0)
             {
@@ -1187,7 +1187,7 @@ static whd_result_t whd_kso_enable(whd_driver_t whd_driver, whd_bool_t enable)
             break;
         }
 
-        whd_rtos_delay_milliseconds( ( uint32_t )KSO_WAIT_MS );
+        cy_rtos_delay_milliseconds( ( uint32_t )KSO_WAIT_MS );
 
         CHECK_RETURN_IGNORE(whd_bus_write_register_value(whd_driver, BACKPLANE_FUNCTION, (uint32_t)SDIO_SLEEP_CSR,
                                                          (uint8_t)1, write_value) );
@@ -1254,7 +1254,7 @@ whd_result_t whd_wlan_bus_complete_ds_wake(whd_driver_t whd_driver, whd_bool_t w
                whd_bus_write_register_value(whd_driver, BUS_FUNCTION, SDIOD_CCCR_IOEN, (uint8_t)1, SDIO_FUNC_ENABLE_1) )
         {
             WPRINT_WHD_DEBUG( ("Retry IOEN write\n") );
-            whd_rtos_delay_milliseconds(10);
+            cy_rtos_delay_milliseconds(10);
         }
 
         CHECK_RETURN(whd_bus_read_backplane_value(whd_driver, D11SHM_ADDR(wake_event_indication_addr), 2,
@@ -1344,7 +1344,7 @@ whd_result_t whd_wlan_bus_complete_ds_wake(whd_driver_t whd_driver, whd_bool_t w
             {
                 WPRINT_WHD_DEBUG_DS( ("Retrying backplane write; addr=%x\n",
                                       (unsigned int )D11SHM_ADDR(sdio_control_addr) ) );
-                whd_rtos_delay_milliseconds(100);
+                cy_rtos_delay_milliseconds(100);
             }
 
             WPRINT_WHD_DEBUG_DS( ("wake host\n") );
@@ -1360,7 +1360,7 @@ whd_result_t whd_wlan_bus_complete_ds_wake(whd_driver_t whd_driver, whd_bool_t w
 
                 if ( (WHD_SUCCESS != read_result) || !( (val) & C_DS1_CTRL_PROC_DONE ) )
                 {
-                    whd_rtos_delay_milliseconds (WHD_SHARED_MEMORY_POLLING_DELAY);
+                    cy_rtos_delay_milliseconds (WHD_SHARED_MEMORY_POLLING_DELAY);
                 }
                 else
                 {

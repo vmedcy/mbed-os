@@ -128,6 +128,10 @@
         "ppp-thread-stacksize": {
             "help": "Thread stack size for PPP (obsolete: use netsocket/ppp configuration instead)",
             "value": 768
+        },
+        "rawipsocket-enabled": {
+            "help": "Enable ICMP RAW",
+            "value": false
         }
     },
     "target_overrides": {
